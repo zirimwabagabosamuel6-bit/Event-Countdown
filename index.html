@@ -13,13 +13,13 @@
       }
       :root {
         --accent: #ffd24a;
-        --muted: #e8f1ff;
+        --muted: #0b3b4f;
         --card-radius: 14px;
         --ui-bg: rgba(255, 255, 255, 0.95);
         --ui-text: #072238;
-        --ui-border: rgba(7, 18, 43, 0.08);
-        --page-bg: #000;
+        --page-bg: #07131a;
         --hero-fg: #fff;
+        --chip-bg: #ffffff;
       }
       html,
       body {
@@ -28,64 +28,63 @@
       body {
         font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto,
           "Helvetica Neue", Arial;
-        color: var(--muted);
-        padding: 24px;
-        min-height: 100vh;
-        overflow-x: hidden;
         background: var(--page-bg);
+        color: var(--muted);
+        padding: 20px;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
 
-      /* ---------- hero ---------- */
+      /* ---------- hero (uses <img> for reliable crop) ---------- */
       .hero {
         position: relative;
-        height: 340px;
         max-width: 1200px;
         margin: 12px auto 18px;
+        height: 340px;
         border-radius: 14px;
         overflow: hidden;
-        background-size: cover;
-        background-position: center;
-        display: flex;
-        align-items: flex-end;
-        padding: 28px;
+      }
+      .hero img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        display: block;
       }
       .hero::after {
         content: "";
         position: absolute;
         inset: 0;
-        pointer-events: none;
         background: linear-gradient(
           to bottom,
-          rgba(0, 0, 0, 0) 45%,
-          rgba(0, 0, 0, 0.85) 100%
+          rgba(0, 0, 0, 0) 42%,
+          rgba(0, 0, 0, 0.78) 100%
         );
+        pointer-events: none;
       }
       .hero .hero-header {
         position: relative;
         z-index: 2;
-        color: var(--hero-fg);
-        width: 100%;
         display: flex;
-        gap: 16px;
-        align-items: flex-start;
+        align-items: flex-end;
         justify-content: space-between;
+        padding: 22px;
+        color: var(--hero-fg);
       }
       .hero h1 {
         font-size: 1.6rem;
-        color: var(--hero-fg);
         margin: 0;
         font-weight: 800;
         letter-spacing: 0.4px;
         text-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
       }
       .hero .hint {
-        color: rgba(255, 255, 255, 0.93);
-        max-width: 760px;
-        line-height: 1.25;
-        margin-top: 8px;
-        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+        font-size: 0.95rem;
+        opacity: 0.95;
+        max-width: 720px;
+        line-height: 1.2;
       }
 
       /* ---------- controls ---------- */
@@ -93,49 +92,27 @@
         display: flex;
         gap: 12px;
         align-items: center;
-        margin-top: 8px;
         flex-wrap: wrap;
+        margin-top: 10px;
       }
       input[type="search"],
       select {
         padding: 10px 14px;
         border-radius: 10px;
-        font-size: 14px;
-        transition: box-shadow 0.15s, transform 0.12s;
-        border: 1px solid var(--ui-border);
+        border: 1px solid rgba(7, 18, 43, 0.08);
         background: var(--ui-bg);
         color: var(--ui-text);
         box-shadow: 0 6px 18px rgba(2, 8, 23, 0.06);
-        -webkit-appearance: none;
-        appearance: none;
       }
       input[type="search"]::placeholder {
-        color: #6b7b8d;
-      }
-      input[type="search"]:focus,
-      select:focus {
-        outline: none;
-        box-shadow: 0 10px 30px rgba(7, 18, 43, 0.08);
-        transform: translateY(-1px);
-      }
-      select {
-        background-image: linear-gradient(
-            180deg,
-            rgba(255, 255, 255, 0.95),
-            rgba(255, 255, 255, 0.95)
-          ),
-          url("data:image/svg+xml,%3Csvg width='14' height='9' viewBox='0 0 14 9' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 9L0 0h14L7 9z' fill='%23072B3A' fill-opacity='0.65'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 12px center;
-        padding-right: 40px;
+        color: #7b8a96;
       }
       .btn {
         padding: 8px 12px;
         border-radius: 10px;
-        cursor: pointer;
         border: none;
         background: rgba(255, 255, 255, 0.06);
-        color: var(--muted);
+        cursor: pointer;
         font-weight: 700;
       }
       .btn.primary {
@@ -148,23 +125,23 @@
       .pinned-column {
         position: fixed;
         right: 18px;
-        top: 120px;
-        width: 260px;
-        max-height: calc(100vh - 160px);
-        overflow-y: auto;
+        top: 110px;
+        width: 280px;
+        max-height: calc(100vh - 140px);
+        overflow: auto;
         display: flex;
         flex-direction: column;
         gap: 10px;
-        padding: 10px;
+        padding: 12px;
         z-index: 999;
-        background: rgba(255, 255, 255, 0.92);
+        background: var(--chip-bg);
         border-radius: 12px;
         box-shadow: 0 20px 60px rgba(2, 8, 23, 0.18);
       }
       .pinned-column.collapsed {
-        width: 56px;
-        overflow: visible;
-        padding: 6px;
+        width: 60px;
+        padding: 8px;
+        align-items: center;
       }
       .pinned-column .panel-top {
         display: flex;
@@ -174,66 +151,114 @@
       }
       .collapse-btn {
         background: none;
-        border: none;
+        border: 0;
         font-weight: 800;
         cursor: pointer;
         padding: 6px 8px;
         border-radius: 8px;
       }
-
       .pinned-chip {
-        background: transparent;
-        border-radius: 10px;
+        background: #fff;
         padding: 10px;
+        border-radius: 10px;
+        min-width: 200px;
+        border: 1px solid rgba(2, 8, 23, 0.04);
+        box-shadow: 0 8px 20px rgba(2, 8, 23, 0.06);
         display: flex;
         flex-direction: column;
         gap: 6px;
-        align-items: flex-start;
-        min-width: 200px;
-        box-shadow: 0 8px 20px rgba(2, 8, 23, 0.06);
-        border: 1px solid rgba(2, 8, 23, 0.04);
-        background: #fff;
-        color: #072238;
       }
-      .pinned-chip .pinned-title {
+      .pinned-title {
         font-weight: 800;
+        color: #072238;
         font-size: 14px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
       }
-      .pinned-chip .pinned-sub {
+      .pinned-sub {
         font-size: 12px;
         color: #2a3b57;
       }
-      .pinned-chip .pinned-count {
+      .pinned-count {
         font-weight: 800;
-        font-size: 13px;
         color: #ffb84d;
       }
 
-      /* ---------- main grid & cards ---------- */
+      /* toggle button always visible (useful when collapsed) */
+      #pinnedToggleBtn {
+        position: fixed;
+        right: 18px;
+        top: 60%;
+        transform: translateY(-50%);
+        z-index: 1000;
+        width: 48px;
+        height: 48px;
+        border-radius: 999px;
+        border: none;
+        background: linear-gradient(180deg, var(--accent), #ffecb5);
+        box-shadow: 0 10px 30px rgba(2, 8, 23, 0.16);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #pinnedToggleBtn.collapsed {
+        right: 12px;
+      }
+
+      /* ---------- main content & layout ---------- */
       .wrap {
         max-width: 1200px;
         margin: 20px auto 120px;
         padding: 0 12px;
       }
+      .top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 8px;
+      }
+      #pageTitle {
+        font-size: 1.4rem;
+        color: #fff;
+        margin: 0;
+        text-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      }
+      #subtitle {
+        color: rgba(255, 255, 255, 0.92);
+        margin-top: 6px;
+      }
+
       .grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
         gap: 20px;
-        position: relative;
       }
+
+      /* make card layout consistent using a column layout with fixed min-heights for areas */
       .card {
         position: relative;
-        overflow: hidden;
         border-radius: var(--card-radius);
-        padding: 18px 18px 22px;
         background: linear-gradient(180deg, #ffffff, #fafafa);
-        color: #072238;
+        padding: 16px;
         box-shadow: 0 10px 30px rgba(2, 8, 23, 0.08);
-        transition: transform 0.18s ease, box-shadow 0.18s ease;
-        min-height: 150px;
+        display: flex;
+        flex-direction: column;
+        min-height: 170px;
+      }
+      .card .pin-btn {
+        position: absolute;
+        right: 12px;
+        top: 12px;
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        border: none;
+        background: rgba(7, 18, 43, 0.04);
+        cursor: pointer;
+      }
+      .card .pin-btn.active {
+        background: linear-gradient(90deg, #ffd24a, #ffecb5);
+        box-shadow: 0 8px 20px rgba(255, 180, 60, 0.12);
       }
       .month-strip {
         position: absolute;
@@ -244,24 +269,53 @@
         border-top-left-radius: 14px;
         border-bottom-left-radius: 14px;
       }
-      .pin-btn {
-        position: absolute;
-        right: 12px;
-        top: 12px;
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
+
+      .card-content {
         display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(7, 18, 43, 0.04);
-        border: none;
-        cursor: pointer;
+        flex-direction: column;
+        gap: 8px;
+        flex: 1;
       }
-      .pin-btn.active {
-        background: linear-gradient(90deg, #ffd24a, #ffecb5);
+      .title {
+        min-height: 44px;
+      }
+      .title .fill {
+        display: inline-block;
+        background-clip: text;
+        color: transparent;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 800;
+        font-size: 18px;
+      }
+      .title .fallback {
+        font-weight: 800;
+        font-size: 18px;
         color: #072238;
-        box-shadow: 0 8px 20px rgba(255, 180, 60, 0.12);
+      }
+      .meta {
+        font-size: 13px;
+        color: #27506b;
+        min-height: 18px;
+      }
+      .countdown {
+        font-weight: 800;
+        font-size: 15px;
+        color: var(--accent);
+        min-height: 22px;
+      }
+      .status {
+        font-size: 13px;
+        color: #16344f;
+        font-weight: 600;
+        min-height: 20px;
+      }
+      .date-badge {
+        align-self: flex-start;
+        padding: 6px 8px;
+        border-radius: 9px;
+        background: rgba(7, 18, 43, 0.04);
+        font-weight: 800;
       }
 
       .big-letter {
@@ -269,48 +323,12 @@
         right: -12px;
         top: -18px;
         font-weight: 800;
-        font-size: 96px;
+        font-size: 72px;
         color: rgba(7, 18, 43, 0.06);
         pointer-events: none;
       }
-      .title .fill {
-        display: inline-block;
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-        -webkit-text-fill-color: transparent;
-        background-size: cover;
-        background-position: center;
-        transition: opacity 0.22s ease;
-        opacity: 0;
-        font-weight: 800;
-        font-size: 18px;
-      }
-      .title .fallback {
-        color: #072238;
-        font-weight: 800;
-        font-size: 18px;
-      }
 
-      .meta {
-        font-size: 13px;
-        color: #27506b;
-        margin-top: 6px;
-        margin-bottom: 8px;
-      }
-      .countdown {
-        font-weight: 800;
-        font-size: 15px;
-        color: var(--accent);
-        margin-bottom: 6px;
-      }
-      .status {
-        font-size: 13px;
-        color: #16344f;
-        font-weight: 600;
-      }
-
-      /* museum mode */
+      /* museum adjustments */
       .museum .grid {
         position: relative;
         min-height: 520px;
@@ -318,45 +336,91 @@
       .museum .card {
         width: 260px;
         position: absolute;
-        box-shadow: 0 22px 60px rgba(2, 8, 23, 0.18);
         cursor: grab;
+        box-shadow: 0 22px 60px rgba(2, 8, 23, 0.18);
       }
 
-      /* responsive pinned column */
       @media (max-width: 900px) {
         .pinned-column {
           right: 12px;
-          top: unset;
+          left: 12px;
           bottom: 18px;
-          left: 18px;
-          width: auto;
-          max-height: 160px;
+          top: auto;
+          display: flex;
           flex-direction: row;
-          overflow-x: auto;
+          max-height: 120px;
+          padding: 8px;
+          overflow: auto;
         }
-        .pinned-column.collapsed {
-          width: 56px;
-          bottom: 18px;
-          left: auto;
-          right: 12px;
-        }
-        .pinned-chip {
-          min-width: 140px;
+        #pinnedToggleBtn {
+          display: none;
         }
         .hero {
           height: 260px;
-          padding: 18px;
+        }
+        .big-letter {
+          font-size: 56px;
         }
       }
     </style>
   </head>
   <body>
-    <section
-      class="hero"
-      id="hero"
-      role="img"
-      aria-label="Hero banner image"
-    ></section>
+    <!-- hero with <img> so cropping is reliable -->
+    <section class="hero" id="hero" aria-label="Hero image">
+      <img
+        id="heroImg"
+        alt="Maxwell banner"
+        src="https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/04/VideoCover-1.jpeg?resize=767%2C500&ssl=1"
+      />
+      <div class="hero-header">
+        <div>
+          <h1>Maxwell Events Countdown</h1>
+          <div class="hint">2025-2026 schedule</div>
+          <div
+            class="controls"
+            role="region"
+            aria-label="Search and filters"
+            style="margin-top: 12px"
+          >
+            <input
+              id="searchBox"
+              type="search"
+              placeholder="Search events..."
+              aria-label="Search events"
+            />
+            <select id="monthFilter" aria-label="Filter by month">
+              <option value="">All Months</option>
+              <option value="01">January</option>
+              <option value="02">February</option>
+              <option value="03">March</option>
+              <option value="04">April</option>
+              <option value="05">May</option>
+              <option value="06">June</option>
+              <option value="07">July</option>
+              <option value="08">August</option>
+              <option value="09">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+            <div style="display: flex; gap: 8px; align-items: center">
+              <button id="gridBtn" class="btn primary" title="Grid view">
+                Grid
+              </button>
+              <button id="museumBtn" class="btn" title="Museum view">
+                Museum
+              </button>
+              <button id="presentBtn" class="btn" title="Present mode">
+                Present
+              </button>
+            </div>
+          </div>
+        </div>
+        <div style="text-align: right; color: var(--hero-fg); font-weight: 700">
+          Maxwell • 2025–26
+        </div>
+      </div>
+    </section>
 
     <canvas
       id="stars"
@@ -364,11 +428,9 @@
       style="position: fixed; inset: 0; z-index: -1; pointer-events: none"
     ></canvas>
 
-    <!-- Next up banner -->
+    <!-- next up (unchanged) -->
     <section
       id="nextUp"
-      class="next-up"
-      aria-live="polite"
       style="
         display: none;
         max-width: 1200px;
@@ -393,13 +455,13 @@
       <div style="text-align: right">
         <div style="font-size: 12px; color: #0b2547">Tip</div>
         <div style="font-size: 12px; color: #07284f">
-          Use the right panel to pin events for quick access. Drag cards into
-          the panel or click 📌.
+          Pin events using the 📌 on cards or drag them into the right panel for
+          quick access.
         </div>
       </div>
     </section>
 
-    <!-- pinned column on the right -->
+    <!-- pinned column (right) -->
     <aside id="pinnedColumn" class="pinned-column" aria-label="Pinned events">
       <div class="panel-top">
         <strong style="font-size: 14px; color: #072238">Pinned</strong>
@@ -407,103 +469,34 @@
           id="pinCollapseBtn"
           class="collapse-btn"
           aria-pressed="false"
-          title="Collapse pinned panel"
+          title="Collapse panel"
         >
           ⤫
         </button>
       </div>
-      <!-- chips injected here -->
+      <!-- pinned chips injected here -->
     </aside>
 
+    <!-- always-visible toggle (handy on collapsed/mobile) -->
+    <button id="pinnedToggleBtn" title="Toggle pinned panel">📌</button>
+
     <main class="wrap">
-      <div
-        style="
-          max-width: 1200px;
-          margin: 0 auto 6px;
-          display: flex;
-          gap: 16px;
-          align-items: flex-start;
-          justify-content: space-between;
-        "
-      >
+      <div class="top-row">
         <div>
-          <h1
-            id="pageTitle"
-            style="
-              font-size: 1.4rem;
-              color: #fff;
-              margin: 0;
-              text-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-            "
-          >
-            School Events Countdown
-          </h1>
-          <div
-            id="subtitle"
-            style="color: rgba(255, 255, 255, 0.92); margin-top: 6px"
-          >
-            2025-2026 schedule
-          </div>
-
-          <div
-            class="controls"
-            role="region"
-            aria-label="Search and filters"
-            style="margin-top: 10px"
-          >
-            <input
-              id="searchBox"
-              type="search"
-              placeholder="Search events..."
-              aria-label="Search events"
-            />
-            <select id="monthFilter" aria-label="Filter by month">
-              <option value="">All Months</option>
-              <option value="01">January</option>
-              <option value="02">February</option>
-              <option value="03">March</option>
-              <option value="04">April</option>
-              <option value="05">May</option>
-              <option value="06">June</option>
-              <option value="07">July</option>
-              <option value="08">August</option>
-              <option value="09">September</option>
-              <option value="10">October</option>
-              <option value="11">November</option>
-              <option value="12">December</option>
-            </select>
-
-            <div style="display: flex; gap: 8px; align-items: center">
-              <button
-                id="gridBtn"
-                class="btn primary"
-                title="Grid view (default)"
-              >
-                Grid
-              </button>
-              <button
-                id="museumBtn"
-                class="btn"
-                title="Museum (draggable) view"
-              >
-                Museum
-              </button>
-              <button id="presentBtn" class="btn" title="Present mode">
-                Present
-              </button>
-            </div>
-          </div>
+          <h1 id="pageTitle">School Events Countdown</h1>
+          <div id="subtitle">2025-2026 schedule</div>
         </div>
-
         <div
           style="
             display: flex;
             flex-direction: column;
             gap: 8px;
             align-items: flex-end;
+            color: #fff;
+            font-weight: 700;
           "
         >
-          <div style="color: #fff; font-weight: 700">Maxwell • 2025–26</div>
+          Maxwell • 2025–26
         </div>
       </div>
 
@@ -513,7 +506,7 @@
     </main>
 
     <script>
-      // ---------- data ----------
+      /* ---------- data ---------- */
       const HERO_IMAGE =
         "https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/04/VideoCover-1.jpeg?resize=767%2C500&ssl=1";
       const NATURE_IMAGES = [
@@ -538,7 +531,7 @@
         { name: "Week of Prayer", start: "2025-09-15", end: "2025-09-20" },
         { name: "Camping Trip", start: "2025-09-21", end: "2025-09-23" },
         { name: "Online Parent-Teacher Conferences", start: "2025-09-30" },
-        // "Midterm" intentionally removed per your request (was 2025-10-03)
+        // midterm removed per request
         { name: "Midterm Break", start: "2025-10-09", end: "2025-10-20" },
         { name: "Music Sabbath", start: "2025-10-25" },
         {
@@ -618,7 +611,7 @@
         12: "#7bdbdb",
       };
 
-      // ---------- helpers ----------
+      /* ---------- helpers ---------- */
       function byId(id) {
         return document.getElementById(id);
       }
@@ -629,6 +622,24 @@
         return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(
           d.getDate()
         )}`;
+      }
+      function shortMonth(d) {
+        return d.toLocaleString("en", { month: "short" });
+      }
+      function formatDateBadge(start, end) {
+        const s = parseStart(start);
+        const e = end ? parseStart(end) : null;
+        if (!e) return `${shortMonth(s)} ${s.getDate()}`;
+        // same month
+        if (
+          s.getFullYear() === e.getFullYear() &&
+          s.getMonth() === e.getMonth()
+        )
+          return `${shortMonth(s)} ${s.getDate()}–${e.getDate()}`;
+        // different months (show short range)
+        return `${shortMonth(s)} ${s.getDate()} – ${shortMonth(
+          e
+        )} ${e.getDate()}`;
       }
       function slugify(name, idx) {
         return (
@@ -654,26 +665,26 @@
         return e.includes("T") ? new Date(e) : new Date(e + "T23:59:59.999");
       }
 
-      // ---------- stars ----------
-      (function initStars() {
-        const canvas = byId("stars");
-        if (!canvas) return;
-        const ctx = canvas.getContext("2d");
-        function resize() {
-          canvas.width = innerWidth;
-          canvas.height = innerHeight;
+      /* ---------- stars ---------- */
+      (function () {
+        const c = byId("stars");
+        if (!c) return;
+        const ctx = c.getContext("2d");
+        function r() {
+          c.width = innerWidth;
+          c.height = innerHeight;
         }
-        window.addEventListener("resize", resize);
-        resize();
+        window.addEventListener("resize", r);
+        r();
         const stars = Array.from({ length: 100 }, () => ({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
+          x: Math.random() * c.width,
+          y: Math.random() * c.height,
           r: Math.random() * 1.4 + 0.2,
           dy: Math.random() * 0.6 + 0.02,
-          alpha: 0.35 + Math.random() * 0.6,
+          alpha: 0.25 + Math.random() * 0.7,
         }));
-        function twinkle() {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        function t() {
+          ctx.clearRect(0, 0, c.width, c.height);
           for (const s of stars) {
             ctx.globalAlpha =
               s.alpha * (0.7 + Math.sin(Date.now() / 1000 + s.x) * 0.3);
@@ -682,22 +693,22 @@
             ctx.fillStyle = "#ffffff";
             ctx.fill();
             s.y += s.dy;
-            if (s.y > canvas.height + 10) {
+            if (s.y > c.height + 10) {
               s.y = -10;
-              s.x = Math.random() * canvas.width;
+              s.x = Math.random() * c.width;
             }
           }
-          requestAnimationFrame(twinkle);
+          requestAnimationFrame(t);
         }
-        twinkle();
+        t();
       })();
 
-      // ---------- state & persistence ----------
+      /* ---------- state & persistence ---------- */
       let items = [];
       let tickHandle = null;
       let mode = "grid";
-      const STORAGE_KEY = "school_events_positions_v1";
-      const PINNED_KEY = "school_events_pinned_v1";
+      const STORAGE_KEY = "school_events_positions_v2";
+      const PINNED_KEY = "school_events_pinned_v2";
       const PIN_LIMIT = 6;
       const pinnedContainer = byId("pinnedColumn");
       function getPinned() {
@@ -707,33 +718,33 @@
           return [];
         }
       }
-      function setPinned(arr) {
-        localStorage.setItem(PINNED_KEY, JSON.stringify(arr));
+      function setPinned(a) {
+        localStorage.setItem(PINNED_KEY, JSON.stringify(a));
         renderPinnedRow();
       }
-      function isPinned(idx) {
-        return getPinned().includes(idx);
+      function isPinned(i) {
+        return getPinned().includes(i);
       }
-      function togglePin(idx) {
-        const pins = getPinned();
-        const pos = pins.indexOf(idx);
-        if (pos === -1) {
-          pins.unshift(idx);
-          while (pins.length > 30) pins.pop();
-        } else pins.splice(pos, 1);
-        setPinned(pins);
+      function togglePin(i) {
+        const p = getPinned();
+        const idx = p.indexOf(i);
+        if (idx === -1) {
+          p.unshift(i);
+          while (p.length > 30) p.pop();
+        } else p.splice(idx, 1);
+        setPinned(p);
       }
       function savePosition(id, x, y) {
         try {
-          const store = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-          store[id] = { x, y, savedAt: Date.now() };
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+          const s = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+          s[id] = { x, y, savedAt: Date.now() };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
         } catch (e) {
-          console.warn("savePosition failed", e);
+          console.warn(e);
         }
       }
 
-      // ---------- rendering ----------
+      /* ---------- rendering ---------- */
       function sortEvents() {
         EVENTS.sort((a, b) => parseStart(a.start) - parseStart(b.start));
       }
@@ -746,20 +757,20 @@
         );
       }
       function renderNextUp() {
-        const next = findNextUpcoming();
-        const banner = byId("nextUp");
-        if (!banner) return;
-        if (!next) {
-          banner.style.display = "none";
+        const n = findNextUpcoming();
+        const b = byId("nextUp");
+        if (!b) return;
+        if (!n) {
+          b.style.display = "none";
           return;
         }
-        banner.style.display = "flex";
-        byId("nextUpName").textContent = next.name;
-        byId("nextUpDetail").textContent = next.end
-          ? `From ${formatISO(parseStart(next.start))} → ${formatISO(
-              parseStart(next.end)
+        b.style.display = "flex";
+        byId("nextUpName").textContent = n.name;
+        byId("nextUpDetail").textContent = n.end
+          ? `From ${formatISO(parseStart(n.start))} → ${formatISO(
+              parseStart(n.end)
             )}`
-          : `On ${formatISO(parseStart(next.start))}`;
+          : `On ${formatISO(parseStart(n.start))}`;
       }
       function clearTick() {
         if (tickHandle) {
@@ -770,42 +781,9 @@
       function clearRendered() {
         clearTick();
         items = [];
-        const grid = byId("eventsGrid");
-        if (grid) grid.innerHTML = "";
+        const g = byId("eventsGrid");
+        if (g) g.innerHTML = "";
         document.getElementById("stage").classList.remove("museum");
-      }
-
-      function updateOne(item, now) {
-        const { id, start, end, el } = item;
-        const cd = byId("cd-" + id);
-        const st = byId("st-" + id);
-        if (!cd || !st) return;
-        if (now.getTime() < start.getTime()) {
-          el.classList.remove("happening", "finished");
-          el.classList.add("upcoming");
-          const diff = start.getTime() - now.getTime();
-          const d = Math.floor(diff / 86400000);
-          const h = Math.floor((diff % 86400000) / 3600000);
-          const m = Math.floor((diff % 3600000) / 60000);
-          const s = Math.floor((diff % 60000) / 1000);
-          cd.textContent = `${d}d ${h}h ${m}m ${s}s left`;
-          st.textContent = "Coming soon!";
-        } else if (now.getTime() > end.getTime()) {
-          el.classList.remove("upcoming", "happening");
-          el.classList.add("finished");
-          cd.textContent = `Ended on ${formatISO(end)}`;
-          st.textContent = "Event finished.";
-        } else {
-          el.classList.remove("upcoming", "finished");
-          el.classList.add("happening");
-          const diff = end.getTime() - now.getTime();
-          const d = Math.floor(diff / 86400000);
-          const h = Math.floor((diff % 86400000) / 3600000);
-          const m = Math.floor((diff % 3600000) / 60000);
-          const s = Math.floor((diff % 60000) / 1000);
-          cd.textContent = `${d}d ${h}h ${m}m ${s}s remaining`;
-          st.textContent = "Happening now!";
-        }
       }
 
       function renderAll() {
@@ -822,44 +800,47 @@
           const start = parseStart(ev.start);
           const end = parseEnd(ev.end, start);
           const id = slugify(ev.name, idx);
-          const imgUrl = NATURE_IMAGES[idx % NATURE_IMAGES.length];
+          const img = NATURE_IMAGES[idx % NATURE_IMAGES.length];
           const card = document.createElement("article");
           card.className = "card";
           card.setAttribute("data-id", id);
           card.setAttribute("data-idx", idx);
-          const bigLetter =
-            ev.name && ev.name[0] ? ev.name[0].toUpperCase() : "E";
           const mm = pad(start.getMonth() + 1);
           const monthColor = MONTH_COLORS[mm] || "#ccc";
-          card.innerHTML = ` <div class="month-strip" style="background:${monthColor}"></div> <button class="pin-btn" title="Pin event" aria-label="Pin event" data-idx="${idx}">📌</button> <div class="big-letter" aria-hidden="true">${bigLetter}</div> <div class="title" id="title-wrap-${id}"> <span class="fill" id="title-fill-${id}">${
+          card.innerHTML = `<div class="month-strip" style="background:${monthColor}"></div><button class="pin-btn" title="Pin event" aria-label="Pin event" data-idx="${idx}">📌</button><div class="big-letter" aria-hidden="true">${
+            ev.name[0] || "E"
+          }</div><div class="card-content"><div class="title" id="title-wrap-${id}"><span class="fill" id="title-fill-${id}">${
             ev.name
-          }</span> <span class="fallback" id="title-fallback-${id}">${
+          }</span><span class="fallback" id="title-fallback-${id}">${
             ev.name
-          }</span> </div> <div class="meta">${
+          }</span></div><div class="meta">${
             ev.end
               ? `${formatISO(start)} → ${formatISO(parseStart(ev.end))}`
               : formatISO(start)
-          }</div> <div class="countdown" id="cd-${id}" aria-live="polite">—</div> <div class="status" id="st-${id}">—</div> <div class="tag" aria-hidden="true">${bigLetter}</div> `;
+          }</div><div class="countdown" id="cd-${id}">—</div><div class="status" id="st-${id}">—</div><div class="date-badge" id="db-${id}">${formatDateBadge(
+            ev.start,
+            ev.end
+          )}</div></div>`;
           grid.appendChild(card);
-          items.push({ id, name: ev.name, start, end, el: card, imgUrl, idx });
+          items.push({ id, name: ev.name, start, end, el: card, img, idx });
           const pinBtn = card.querySelector(".pin-btn");
           if (pinBtn) {
-            function refreshPinVisual() {
+            function refresh() {
               if (isPinned(idx)) pinBtn.classList.add("active");
               else pinBtn.classList.remove("active");
             }
             pinBtn.addEventListener("click", (e) => {
               e.stopPropagation();
               togglePin(idx);
-              refreshPinVisual();
+              refresh();
               renderPinnedRow();
             });
-            refreshPinVisual();
+            refresh();
           }
           (function preloadAndApply(idLocal, url) {
-            const img = new Image();
-            img.crossOrigin = "anonymous";
-            img.onload = () => {
+            const imgObj = new Image();
+            imgObj.crossOrigin = "anonymous";
+            imgObj.onload = () => {
               const fill = byId("title-fill-" + idLocal);
               const fallback = byId("title-fallback-" + idLocal);
               if (fill) {
@@ -870,9 +851,9 @@
                 if (fallback) fallback.style.opacity = "0";
               }
             };
-            img.onerror = () => {};
-            img.src = url;
-          })(id, imgUrl);
+            imgObj.onerror = () => {};
+            imgObj.src = url;
+          })(id, img);
         });
         tickHandle = setInterval(() => {
           const now = new Date();
@@ -885,14 +866,49 @@
         applyMode();
       }
 
-      // ---------- pinned column ----------
+      function updateOne(item, now) {
+        const { id, start, end, el } = item;
+        const cd = byId("cd-" + id);
+        const st = byId("st-" + id);
+        if (!cd || !st) return;
+        if (now.getTime() < start.getTime()) {
+          el.classList.remove("happening", "finished");
+          el.classList.add("upcoming");
+          const diff = start.getTime() - now.getTime();
+          const d = Math.floor(diff / 86400000);
+          const h = Math.floor((diff % 86400000) / 3600000);
+          const m = Math.floor((diff % 3600000) / 60000);
+          const s = Math.floor((diff % 60000) / 1000);
+          cd.textContent = `${d}d ${h}h ${m}m ${s}s left`;
+          st.innerHTML = "⏳ Coming soon";
+        } else if (now.getTime() > end.getTime()) {
+          el.classList.remove("upcoming", "happening");
+          el.classList.add("finished");
+          cd.textContent = `Ended on ${formatISO(end)}`;
+          st.innerHTML = "✅ Finished";
+        } else {
+          el.classList.remove("upcoming", "finished");
+          el.classList.add("happening");
+          const diff = end.getTime() - now.getTime();
+          const d = Math.floor(diff / 86400000);
+          const h = Math.floor((diff % 86400000) / 3600000);
+          const m = Math.floor((diff % 3600000) / 60000);
+          const s = Math.floor((diff % 60000) / 1000);
+          cd.textContent = `${d}d ${h}h ${m}m ${s}s remaining`;
+          st.innerHTML = "🔴 Happening now";
+        }
+      }
+
+      /* ---------- pinned column rendering ---------- */
       function renderPinnedRow() {
         const container = pinnedContainer || byId("pinnedColumn");
-        if (!container) return;
-        container.querySelectorAll(".pinned-chip").forEach((n) => n.remove());
+        if (!container) return; // remove old chips
+        Array.from(container.querySelectorAll(".pinned-chip")).forEach((n) =>
+          n.remove()
+        );
         const now = new Date();
-        const pinnedIndices = getPinned();
-        const pinnedSet = new Set(pinnedIndices);
+        const pinned = getPinned();
+        const pinnedSet = new Set(pinned);
         const mapped = EVENTS.map((ev, idx) => ({
           ev,
           idx,
@@ -903,7 +919,7 @@
           .filter((o) => o.end.getTime() >= now.getTime())
           .sort((a, b) => a.start - b.start);
         const finalPins = [];
-        for (const p of pinnedIndices) {
+        for (const p of pinned) {
           if (finalPins.length >= PIN_LIMIT) break;
           if (EVENTS[p])
             finalPins.push({
@@ -925,29 +941,24 @@
           chip.setAttribute("tabindex", "0");
           chip.dataset.eventIndex = String(o.idx);
           chip.id = id;
-          chip.innerHTML = ` <div class="pinned-title">${
+          chip.innerHTML = `<div class="pinned-title">${
             o.ev.name
-          }</div> <div class="pinned-sub">${
+          }</div><div class="pinned-sub">${
             o.ev.end
               ? formatISO(o.start) + " → " + formatISO(parseStart(o.ev.end))
               : formatISO(o.start)
-          }</div> <div class="pinned-count" id="count-${id}">—</div> `;
+          }</div><div class="pinned-count" id="count-${id}">—</div>`;
           chip.addEventListener("click", () => {
             const idx = Number(chip.dataset.eventIndex);
-            const targetItem = items.find((it) => it.idx === idx);
-            if (targetItem && targetItem.el) {
-              targetItem.el.scrollIntoView({
-                behavior: "smooth",
-                block: "center",
-              });
-              targetItem.el.style.transition =
-                "box-shadow .18s, transform .18s";
-              targetItem.el.style.boxShadow =
-                "0 20px 60px rgba(255,180,60,0.32)";
-              targetItem.el.style.transform = "translateY(-8px)";
+            const t = items.find((it) => it.idx === idx);
+            if (t && t.el) {
+              t.el.scrollIntoView({ behavior: "smooth", block: "center" });
+              t.el.style.transition = "box-shadow .18s, transform .18s";
+              t.el.style.boxShadow = "0 20px 60px rgba(255,180,60,0.32)";
+              t.el.style.transform = "translateY(-8px)";
               setTimeout(() => {
-                targetItem.el.style.boxShadow = "";
-                targetItem.el.style.transform = "";
+                t.el.style.boxShadow = "";
+                t.el.style.transform = "";
               }, 1200);
             }
           });
@@ -955,11 +966,11 @@
         });
         if (finalPins.length === 0) {
           const placeholder = document.createElement("div");
-          placeholder.style.opacity = ".9";
+          placeholder.style.opacity = ".95";
           placeholder.style.color = "#072238";
           placeholder.style.fontSize = "14px";
           placeholder.textContent =
-            "No pinned events — pin by clicking the 📌 on a card or dragging a card to the panel.";
+            "No pinned events — pin by clicking the 📌 on a card or dragging a card here.";
           container.appendChild(placeholder);
         }
       }
@@ -976,34 +987,35 @@
           if (!ev) return;
           const start = parseStart(ev.start);
           const end = parseEnd(ev.end, start);
-          let text = "";
+          let txt = "";
           if (now.getTime() < start.getTime()) {
             const diff = start.getTime() - now.getTime();
             const d = Math.floor(diff / 86400000);
             const h = Math.floor((diff % 86400000) / 3600000);
             const m = Math.floor((diff % 3600000) / 60000);
             const s = Math.floor((diff % 60000) / 1000);
-            text = `${d}d ${h}h ${m}m ${s}s left`;
+            txt = `${d}d ${h}h ${m}m ${s}s left`;
           } else if (now.getTime() > end.getTime()) {
             const diff = now.getTime() - end.getTime();
             const d = Math.floor(diff / 86400000);
             const h = Math.floor((diff % 86400000) / 3600000);
             const m = Math.floor((diff % 3600000) / 60000);
             const s = Math.floor((diff % 60000) / 1000);
-            text = `Ended ${d}d ${h}h ${m}m ${s}s ago`;
+            txt = `Ended ${d}d ${h}h ${m}m ${s}s ago`;
           } else {
             const diff = end.getTime() - now.getTime();
             const d = Math.floor(diff / 86400000);
             const h = Math.floor((diff % 86400000) / 3600000);
             const m = Math.floor((diff % 3600000) / 60000);
             const s = Math.floor((diff % 60000) / 1000);
-            text = `${d}d ${h}h ${m}m ${s}s remaining`;
+            txt = `${d}d ${h}h ${m}m ${s}s remaining`;
           }
           const countEl = chip.querySelector(`#count-${chip.id}`);
-          if (countEl) countEl.textContent = text ? text : "Finished";
+          if (countEl) countEl.textContent = txt;
         });
       }
 
+      /* ---------- drag & museum ---------- */
       function checkDropToPinned(el, idx) {
         const pinEl = pinnedContainer || byId("pinnedColumn");
         if (!pinEl) return false;
@@ -1015,7 +1027,7 @@
           rect.bottom < pinRect.top ||
           rect.top > pinRect.bottom
         );
-        const nearRight = rect.right > pinRect.left - 20;
+        const nearRight = rect.right > pinRect.left - 40;
         if (overlap || nearRight) {
           togglePin(idx);
           renderPinnedRow();
@@ -1028,7 +1040,6 @@
         return false;
       }
 
-      // ---------- drag behaviors ----------
       function applyMode() {
         const stage = byId("stage");
         const grid = byId("eventsGrid");
@@ -1042,16 +1053,16 @@
         })();
         if (mode === "museum") {
           stage.classList.add("museum");
-          items.forEach((it, idx) => {
+          items.forEach((it, i) => {
             const el = it.el;
             el.style.position = "absolute";
             const savedPos = saved[it.id] || {};
-            const left = savedPos.x ?? 20 + (idx % 4) * 280;
-            const top = savedPos.y ?? 20 + Math.floor(idx / 4) * 220;
+            const left = savedPos.x ?? 20 + (i % 4) * 280;
+            const top = savedPos.y ?? 20 + Math.floor(i / 4) * 220;
             el.style.left = left + "px";
             el.style.top = top + "px";
             el.style.width = "260px";
-            el.style.zIndex = 50 + idx;
+            el.style.zIndex = 50 + i;
             enableDrag(el, it.idx);
             el.addEventListener("pointermove", cardPointerTilt);
             el.addEventListener("pointerleave", cardResetTilt);
@@ -1143,7 +1154,7 @@
         this.style.transform = "";
       }
 
-      // ---------- present mode ----------
+      /* ---------- present & UI ---------- */
       function enterPresentMode() {
         document.body.classList.add("present-mode");
         try {
@@ -1157,14 +1168,14 @@
         } catch (e) {}
       }
 
-      // ---------- UI wiring ----------
       function wireUI() {
-        const gridBtn = byId("gridBtn");
-        const museumBtn = byId("museumBtn");
-        const presentBtn = byId("presentBtn");
-        const searchBox = byId("searchBox");
-        const monthFilter = byId("monthFilter");
-        const pinCollapseBtn = byId("pinCollapseBtn");
+        const gridBtn = byId("gridBtn"),
+          museumBtn = byId("museumBtn"),
+          presentBtn = byId("presentBtn"),
+          searchBox = byId("searchBox"),
+          monthFilter = byId("monthFilter"),
+          pinCollapseBtn = byId("pinCollapseBtn"),
+          pinnedToggle = byId("pinnedToggleBtn");
         if (gridBtn && museumBtn) {
           gridBtn.addEventListener("click", () => {
             mode = "grid";
@@ -1203,13 +1214,20 @@
             pinCollapseBtn.textContent = pressed ? "⤢" : "⤫";
           });
         }
+        if (pinnedToggle) {
+          pinnedToggle.addEventListener("click", () => {
+            const panel = byId("pinnedColumn");
+            if (!panel) return;
+            panel.classList.toggle("collapsed");
+            pinnedToggle.classList.toggle("collapsed");
+          });
+        }
       }
 
-      // ---------- hero setup & boot ----------
+      /* ---------- hero setup & init ---------- */
       function setHeroImage(url) {
-        const hero = byId("hero");
-        if (!hero) return;
-        hero.style.backgroundImage = `url('${url}')`;
+        const img = byId("heroImg");
+        if (img) img.src = url;
       }
 
       function init() {
@@ -1217,11 +1235,9 @@
         wireUI();
         renderAll();
       }
-
-      // boot
       document.addEventListener("DOMContentLoaded", init);
 
-      // expose for debugging
+      // debug
       window.__SE_DEBUG = { EVENTS, renderAll, items };
     </script>
   </body>
