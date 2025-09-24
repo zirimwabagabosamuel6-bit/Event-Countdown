@@ -1,9 +1,22 @@
 <!DOCTYPE html>
+<!--
+  Maxwell Events — single-file page
+  Improvements in this version:
+    1) Pinned panel collapsed by default on load
+    2) Automatically generated month filter buttons (click a month button to filter; click month heading to focus that month)
+    3) Accent color extraction attempt from a LOCAL hero image (/images/hero.jpg) first, then from the in-page image if CORS allows; fallback is to use the next-up month color. To enable reliable color extraction on GitHub Pages, drop your hero file at /images/hero.jpg in the repo.
+    4) Export-ready: the page will prefer a local /images/hero.jpg if present; otherwise it falls back to the Drive URL you provided.
+    5) Desktop cropping improved: the hero shows the top part of the image for large screens (object-position: top) and centers on small screens.
+
+  Notes:
+    • If the Drive image is not publicly shared, it may fail to load. For best results host the hero at /images/hero.jpg in your repository and the color-sampling will work.
+    • Color sampling may still be blocked by cross-origin restrictions. The script handles that and uses sensible fallbacks.
+-->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Maxwell Events Countdown</title>
+    <title>Maxwell Events — 2025–2026</title>
     <style>
       /* ---------- Reset & base ---------- */
       * {
@@ -12,14 +25,16 @@
         padding: 0;
       }
       :root {
-        --accent: #ffd24a;
+        --accent: #ffd24a; /* will be overridden by sampling when possible */
+        --accent-text: #072238;
         --muted: #0b3b4f;
         --card-radius: 14px;
-        --ui-bg: rgba(255, 255, 255, 0.95);
+        --ui-bg: rgba(255, 255, 255, 0.98);
         --ui-text: #072238;
         --page-bg: #07131a;
         --hero-fg: #fff;
         --chip-bg: #ffffff;
+        --panel-width: 300px;
       }
       html,
       body {
@@ -35,7 +50,7 @@
         -moz-osx-font-smoothing: grayscale;
       }
 
-      /* ---------- hero (uses <img> for reliable crop) ---------- */
+      /* ---------- hero ---------- */
       .hero {
         position: relative;
         max-width: 1200px;
@@ -50,8 +65,15 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
-        object-position: center;
+        object-position: center center;
         display: block;
+        transition: transform 0.45s;
+      }
+      /* Desktop: focus on top part of the image */
+      @media (min-width: 900px) {
+        .hero img {
+          object-position: center top;
+        }
       }
       .hero::after {
         content: "";
@@ -76,9 +98,10 @@
       .hero h1 {
         font-size: 1.6rem;
         margin: 0;
-        font-weight: 800;
+        font-weight: 900;
         letter-spacing: 0.4px;
         text-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.18);
       }
       .hero .hint {
         font-size: 0.95rem;
@@ -87,7 +110,7 @@
         line-height: 1.2;
       }
 
-      /* ---------- controls ---------- */
+      /* controls & month buttons */
       .controls {
         display: flex;
         gap: 12px;
@@ -117,16 +140,34 @@
       }
       .btn.primary {
         background: linear-gradient(90deg, var(--accent), #ffecb5);
-        color: #072238;
+        color: var(--accent-text);
         box-shadow: 0 8px 24px rgba(2, 8, 23, 0.12);
       }
+      .month-buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .month-btn {
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: none;
+        background: rgba(255, 255, 255, 0.06);
+        color: #fff;
+        cursor: pointer;
+        font-weight: 700;
+      }
+      .month-btn.active {
+        background: linear-gradient(90deg, var(--accent), #ffecb5);
+        color: var(--accent-text);
+      }
 
-      /* ---------- pinned column (right) ---------- */
+      /* pinned column */
       .pinned-column {
         position: fixed;
         right: 18px;
         top: 110px;
-        width: 280px;
+        width: var(--panel-width);
         max-height: calc(100vh - 140px);
         overflow: auto;
         display: flex;
@@ -139,7 +180,7 @@
         box-shadow: 0 20px 60px rgba(2, 8, 23, 0.18);
       }
       .pinned-column.collapsed {
-        width: 60px;
+        width: 64px;
         padding: 8px;
         align-items: center;
       }
@@ -157,6 +198,18 @@
         padding: 6px 8px;
         border-radius: 8px;
       }
+      .panel-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .clear-btn {
+        background: #ffecb5;
+        border: none;
+        padding: 6px 8px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
       .pinned-chip {
         background: #fff;
         padding: 10px;
@@ -168,10 +221,16 @@
         flex-direction: column;
         gap: 6px;
       }
+      .pinned-row-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
       .pinned-title {
         font-weight: 800;
         color: #072238;
         font-size: 14px;
+        text-align: left;
       }
       .pinned-sub {
         font-size: 12px;
@@ -181,8 +240,18 @@
         font-weight: 800;
         color: #ffb84d;
       }
-
-      /* toggle button always visible (useful when collapsed) */
+      .pinned-progress {
+        height: 6px;
+        background: rgba(2, 8, 23, 0.06);
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .pinned-progress > i {
+        display: block;
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent), #ffb84d);
+        width: 0%;
+      }
       #pinnedToggleBtn {
         position: fixed;
         right: 18px;
@@ -204,7 +273,7 @@
         right: 12px;
       }
 
-      /* ---------- main content & layout ---------- */
+      /* main */
       .wrap {
         max-width: 1200px;
         margin: 20px auto 120px;
@@ -228,13 +297,23 @@
         margin-top: 6px;
       }
 
+      /* grid + month headings */
       .grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
         gap: 20px;
       }
+      .month-heading {
+        grid-column: 1/-1;
+        padding: 8px 0;
+        font-weight: 900;
+        color: #fff;
+        opacity: 0.95;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        cursor: pointer;
+      }
 
-      /* make card layout consistent using a column layout with fixed min-heights for areas */
+      /* card layout */
       .card {
         position: relative;
         border-radius: var(--card-radius);
@@ -244,6 +323,7 @@
         display: flex;
         flex-direction: column;
         min-height: 170px;
+        transition: transform 0.18s, box-shadow 0.18s;
       }
       .card .pin-btn {
         position: absolute;
@@ -269,7 +349,6 @@
         border-top-left-radius: 14px;
         border-bottom-left-radius: 14px;
       }
-
       .card-content {
         display: flex;
         flex-direction: column;
@@ -317,7 +396,6 @@
         background: rgba(7, 18, 43, 0.04);
         font-weight: 800;
       }
-
       .big-letter {
         position: absolute;
         right: -12px;
@@ -326,6 +404,27 @@
         font-size: 72px;
         color: rgba(7, 18, 43, 0.06);
         pointer-events: none;
+      }
+
+      /* status visuals */
+      .card.finished {
+        opacity: 0.68;
+        filter: grayscale(40%);
+      }
+      .card.happening {
+        box-shadow: 0 16px 40px rgba(255, 90, 70, 0.1);
+        animation: glow 2.6s infinite;
+      }
+      @keyframes glow {
+        0% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-3px);
+        }
+        100% {
+          transform: translateY(0);
+        }
       }
 
       /* museum adjustments */
@@ -365,12 +464,12 @@
     </style>
   </head>
   <body>
-    <!-- hero with <img> so cropping is reliable -->
     <section class="hero" id="hero" aria-label="Hero image">
+      <!-- prefer local hero at /images/hero.jpg (same-origin) for color-sampling on GitHub Pages. Falls back to Drive link if not present. -->
       <img
         id="heroImg"
         alt="Maxwell banner"
-        src="https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/04/VideoCover-1.jpeg?resize=767%2C500&ssl=1"
+        src="https://drive.google.com/uc?export=view&id=1K8apPa465CryF-oTh2fmd-VcfQv6U-i6"
       />
       <div class="hero-header">
         <div>
@@ -403,6 +502,11 @@
               <option value="11">November</option>
               <option value="12">December</option>
             </select>
+            <div
+              id="monthButtons"
+              class="month-buttons"
+              aria-hidden="false"
+            ></div>
             <div style="display: flex; gap: 8px; align-items: center">
               <button id="gridBtn" class="btn primary" title="Grid view">
                 Grid
@@ -428,7 +532,6 @@
       style="position: fixed; inset: 0; z-index: -1; pointer-events: none"
     ></canvas>
 
-    <!-- next up (unchanged) -->
     <section
       id="nextUp"
       style="
@@ -461,23 +564,25 @@
       </div>
     </section>
 
-    <!-- pinned column (right) -->
     <aside id="pinnedColumn" class="pinned-column" aria-label="Pinned events">
       <div class="panel-top">
         <strong style="font-size: 14px; color: #072238">Pinned</strong>
-        <button
-          id="pinCollapseBtn"
-          class="collapse-btn"
-          aria-pressed="false"
-          title="Collapse panel"
-        >
-          ⤫
-        </button>
+        <div class="panel-actions">
+          <button id="clearPins" class="clear-btn" title="Clear all pins">
+            Clear
+          </button>
+          <button
+            id="pinCollapseBtn"
+            class="collapse-btn"
+            aria-pressed="false"
+            title="Collapse panel"
+          >
+            ⤫
+          </button>
+        </div>
       </div>
-      <!-- pinned chips injected here -->
     </aside>
 
-    <!-- always-visible toggle (handy on collapsed/mobile) -->
     <button id="pinnedToggleBtn" title="Toggle pinned panel">📌</button>
 
     <main class="wrap">
@@ -499,21 +604,22 @@
           Maxwell • 2025–26
         </div>
       </div>
-
       <div id="stage">
         <div id="eventsGrid" class="grid" aria-live="polite"></div>
       </div>
     </main>
 
     <script>
-      /* ---------- data ---------- */
-      const HERO_IMAGE =
-        "https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/04/VideoCover-1.jpeg?resize=767%2C500&ssl=1";
+      /* ---------------- data ---------------- */
+      const LOCAL_HERO = "/images/hero.jpg"; // place hero at this path in your repo for best results
+      const DRIVE_HERO =
+        "https://drive.google.com/uc?export=view&id=1K8apPa465CryF-oTh2fmd-VcfQv6U-i6";
+      const HERO_IMAGE = LOCAL_HERO; // we'll try local first and fall back to drive if missing
+
       const NATURE_IMAGES = [
-        HERO_IMAGE,
+        DRIVE_HERO,
         "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1600&q=80&auto=format&fit=crop",
         "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1600&q=80&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1503264116251-35a269479413?w=1600&q=80&auto=format&fit=crop",
       ];
 
       const EVENTS = [
@@ -531,7 +637,6 @@
         { name: "Week of Prayer", start: "2025-09-15", end: "2025-09-20" },
         { name: "Camping Trip", start: "2025-09-21", end: "2025-09-23" },
         { name: "Online Parent-Teacher Conferences", start: "2025-09-30" },
-        // midterm removed per request
         { name: "Midterm Break", start: "2025-10-09", end: "2025-10-20" },
         { name: "Music Sabbath", start: "2025-10-25" },
         {
@@ -630,13 +735,11 @@
         const s = parseStart(start);
         const e = end ? parseStart(end) : null;
         if (!e) return `${shortMonth(s)} ${s.getDate()}`;
-        // same month
         if (
           s.getFullYear() === e.getFullYear() &&
           s.getMonth() === e.getMonth()
         )
           return `${shortMonth(s)} ${s.getDate()}–${e.getDate()}`;
-        // different months (show short range)
         return `${shortMonth(s)} ${s.getDate()} – ${shortMonth(
           e
         )} ${e.getDate()}`;
@@ -646,7 +749,7 @@
           String(name)
             .toLowerCase()
             .replace(/[’'\"]/g, "")
-            .replace(/[:\/\\(),.!?#\u2013\u2014]/g, "")
+            .replace(/[:\\/\\(),.!?#\u2013\u2014]/g, "")
             .replace(/\s+/g, "-")
             .replace(/[^a-z0-9\-]/g, "") +
           "-" +
@@ -665,7 +768,7 @@
         return e.includes("T") ? new Date(e) : new Date(e + "T23:59:59.999");
       }
 
-      /* ---------- stars ---------- */
+      /* ---------- starfield ---------- */
       (function () {
         const c = byId("stars");
         if (!c) return;
@@ -707,9 +810,9 @@
       let items = [];
       let tickHandle = null;
       let mode = "grid";
-      const STORAGE_KEY = "school_events_positions_v2";
-      const PINNED_KEY = "school_events_pinned_v2";
-      const PIN_LIMIT = 6;
+      const STORAGE_KEY = "school_events_positions_v3";
+      const PINNED_KEY = "school_events_pinned_v3";
+      const PIN_LIMIT = 8;
       const pinnedContainer = byId("pinnedColumn");
       function getPinned() {
         try {
@@ -718,8 +821,8 @@
           return [];
         }
       }
-      function setPinned(a) {
-        localStorage.setItem(PINNED_KEY, JSON.stringify(a));
+      function setPinned(arr) {
+        localStorage.setItem(PINNED_KEY, JSON.stringify(arr));
         renderPinnedRow();
       }
       function isPinned(i) {
@@ -730,7 +833,7 @@
         const idx = p.indexOf(i);
         if (idx === -1) {
           p.unshift(i);
-          while (p.length > 30) p.pop();
+          while (p.length > 50) p.pop();
         } else p.splice(idx, 1);
         setPinned(p);
       }
@@ -786,6 +889,39 @@
         document.getElementById("stage").classList.remove("museum");
       }
 
+      function updateOne(item, now) {
+        const { id, start, end, el } = item;
+        const cd = byId("cd-" + id);
+        const st = byId("st-" + id);
+        if (!cd || !st) return;
+        if (now.getTime() < start.getTime()) {
+          el.classList.remove("happening", "finished");
+          el.classList.add("upcoming");
+          const diff = start.getTime() - now.getTime();
+          const d = Math.floor(diff / 86400000);
+          const h = Math.floor((diff % 86400000) / 3600000);
+          const m = Math.floor((diff % 3600000) / 60000);
+          const s = Math.floor((diff % 60000) / 1000);
+          cd.textContent = `${d}d ${h}h ${m}m ${s}s left`;
+          st.innerHTML = "⏳ Coming soon";
+        } else if (now.getTime() > end.getTime()) {
+          el.classList.remove("upcoming", "happening");
+          el.classList.add("finished");
+          cd.textContent = `Ended on ${formatISO(end)}`;
+          st.innerHTML = "✅ Finished";
+        } else {
+          el.classList.remove("upcoming", "finished");
+          el.classList.add("happening");
+          const diff = end.getTime() - now.getTime();
+          const d = Math.floor(diff / 86400000);
+          const h = Math.floor((diff % 86400000) / 3600000);
+          const m = Math.floor((diff % 3600000) / 60000);
+          const s = Math.floor((diff % 60000) / 1000);
+          cd.textContent = `${d}d ${h}h ${m}m ${s}s remaining`;
+          st.innerHTML = "🔴 Happening now";
+        }
+      }
+
       function renderAll() {
         clearRendered();
         sortEvents();
@@ -794,10 +930,31 @@
         if (!grid) return;
         const q = (byId("searchBox").value || "").toLowerCase();
         const month = byId("monthFilter").value || "";
+        let currentGroup = ""; // group by month
         EVENTS.forEach((ev, idx) => {
           if (q && !ev.name.toLowerCase().includes(q)) return;
           if (month && ev.start.slice(5, 7) !== month) return;
           const start = parseStart(ev.start);
+          const mm = `${start.getFullYear()}-${pad(start.getMonth() + 1)}`;
+          if (mm !== currentGroup) {
+            currentGroup = mm;
+            const heading = document.createElement("div");
+            heading.className = "month-heading";
+            heading.textContent = `${start.toLocaleString("en", {
+              month: "long",
+            })} ${start.getFullYear()}`;
+            heading.dataset.mm = pad(start.getMonth() + 1);
+            heading.addEventListener("click", () => {
+              // clicking the heading focuses (filters) the month
+              const mf = byId("monthFilter");
+              if (mf) {
+                mf.value = heading.dataset.mm;
+                highlightMonthButton(heading.dataset.mm);
+                renderAll();
+              }
+            });
+            grid.appendChild(heading);
+          }
           const end = parseEnd(ev.end, start);
           const id = slugify(ev.name, idx);
           const img = NATURE_IMAGES[idx % NATURE_IMAGES.length];
@@ -805,8 +962,7 @@
           card.className = "card";
           card.setAttribute("data-id", id);
           card.setAttribute("data-idx", idx);
-          const mm = pad(start.getMonth() + 1);
-          const monthColor = MONTH_COLORS[mm] || "#ccc";
+          const monthColor = MONTH_COLORS[pad(start.getMonth() + 1)] || "#ccc";
           card.innerHTML = `<div class="month-strip" style="background:${monthColor}"></div><button class="pin-btn" title="Pin event" aria-label="Pin event" data-idx="${idx}">📌</button><div class="big-letter" aria-hidden="true">${
             ev.name[0] || "E"
           }</div><div class="card-content"><div class="title" id="title-wrap-${id}"><span class="fill" id="title-fill-${id}">${
@@ -866,43 +1022,57 @@
         applyMode();
       }
 
-      function updateOne(item, now) {
-        const { id, start, end, el } = item;
-        const cd = byId("cd-" + id);
-        const st = byId("st-" + id);
-        if (!cd || !st) return;
-        if (now.getTime() < start.getTime()) {
-          el.classList.remove("happening", "finished");
-          el.classList.add("upcoming");
-          const diff = start.getTime() - now.getTime();
-          const d = Math.floor(diff / 86400000);
-          const h = Math.floor((diff % 86400000) / 3600000);
-          const m = Math.floor((diff % 3600000) / 60000);
-          const s = Math.floor((diff % 60000) / 1000);
-          cd.textContent = `${d}d ${h}h ${m}m ${s}s left`;
-          st.innerHTML = "⏳ Coming soon";
-        } else if (now.getTime() > end.getTime()) {
-          el.classList.remove("upcoming", "happening");
-          el.classList.add("finished");
-          cd.textContent = `Ended on ${formatISO(end)}`;
-          st.innerHTML = "✅ Finished";
-        } else {
-          el.classList.remove("upcoming", "finished");
-          el.classList.add("happening");
-          const diff = end.getTime() - now.getTime();
-          const d = Math.floor(diff / 86400000);
-          const h = Math.floor((diff % 86400000) / 3600000);
-          const m = Math.floor((diff % 3600000) / 60000);
-          const s = Math.floor((diff % 60000) / 1000);
-          cd.textContent = `${d}d ${h}h ${m}m ${s}s remaining`;
-          st.innerHTML = "🔴 Happening now";
-        }
+      /* ---------- month buttons & helpers ---------- */
+      function generateMonthButtons() {
+        const container = byId("monthButtons");
+        if (!container) return;
+        container.innerHTML = "";
+        const months = new Map();
+        EVENTS.forEach((ev) => {
+          const s = parseStart(ev.start);
+          const key = `${s.getFullYear()}-${pad(s.getMonth() + 1)}`;
+          if (!months.has(key))
+            months.set(key, {
+              label: `${s.toLocaleString("en", {
+                month: "short",
+              })} ${s.getFullYear()}`,
+              month: pad(s.getMonth() + 1),
+            });
+        }); // create buttons in chronological order
+        Array.from(months.entries())
+          .sort()
+          .forEach(([key, val]) => {
+            const btn = document.createElement("button");
+            btn.className = "month-btn";
+            btn.textContent = val.label;
+            btn.dataset.month = val.month;
+            btn.addEventListener("click", () => {
+              const mf = byId("monthFilter");
+              if (!mf) return; // toggle
+              if (mf.value === val.month) {
+                mf.value = "";
+                btn.classList.remove("active");
+              } else {
+                mf.value = val.month;
+                highlightMonthButton(val.month);
+              }
+              renderAll();
+            });
+            container.appendChild(btn);
+          });
+      }
+      function highlightMonthButton(month) {
+        const btns = Array.from(document.querySelectorAll(".month-btn"));
+        btns.forEach((b) => {
+          if (b.dataset.month === month) b.classList.add("active");
+          else b.classList.remove("active");
+        });
       }
 
-      /* ---------- pinned column rendering ---------- */
+      /* ---------- pinned column rendering + reorder ---------- */
       function renderPinnedRow() {
         const container = pinnedContainer || byId("pinnedColumn");
-        if (!container) return; // remove old chips
+        if (!container) return;
         Array.from(container.querySelectorAll(".pinned-chip")).forEach((n) =>
           n.remove()
         );
@@ -934,20 +1104,28 @@
           if (pinnedSet.has(u.idx)) continue;
           finalPins.push(u);
         }
-        finalPins.forEach((o) => {
+        finalPins.forEach((o, pos) => {
           const id = "pin_" + slugify(o.ev.name + "-" + o.idx, o.idx);
           const chip = document.createElement("button");
           chip.className = "pinned-chip";
           chip.setAttribute("tabindex", "0");
           chip.dataset.eventIndex = String(o.idx);
           chip.id = id;
-          chip.innerHTML = `<div class="pinned-title">${
+          chip.setAttribute("draggable", "true");
+          chip.innerHTML = `<div class="pinned-row-top"><div style="min-width:0"><div class="pinned-title">${
             o.ev.name
           }</div><div class="pinned-sub">${
             o.ev.end
               ? formatISO(o.start) + " → " + formatISO(parseStart(o.ev.end))
               : formatISO(o.start)
-          }</div><div class="pinned-count" id="count-${id}">—</div>`;
+          }</div></div><div style="text-align:right"><div class="pinned-count" id="count-${id}">—</div></div></div><div class="pinned-progress"><i style="width:0%"></i></div>`;
+          chip.addEventListener("dragstart", (e) => {
+            e.dataTransfer.setData("text/plain", String(o.idx));
+            chip.classList.add("dragging");
+          });
+          chip.addEventListener("dragend", (e) => {
+            chip.classList.remove("dragging");
+          });
           chip.addEventListener("click", () => {
             const idx = Number(chip.dataset.eventIndex);
             const t = items.find((it) => it.idx === idx);
@@ -960,6 +1138,21 @@
                 t.el.style.boxShadow = "";
                 t.el.style.transform = "";
               }, 1200);
+            }
+          });
+          chip.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            const dragging = container.querySelector(".dragging");
+            if (!dragging || dragging === chip) return;
+            const draggingIdx = Number(dragging.dataset.eventIndex);
+            const targetIdx = Number(chip.dataset.eventIndex);
+            const pins = getPinned();
+            const from = pins.indexOf(draggingIdx);
+            const to = pins.indexOf(targetIdx);
+            if (from > -1 && to > -1 && from !== to) {
+              pins.splice(from, 1);
+              pins.splice(to, 0, draggingIdx);
+              setPinned(pins);
             }
           });
           container.appendChild(chip);
@@ -987,7 +1180,8 @@
           if (!ev) return;
           const start = parseStart(ev.start);
           const end = parseEnd(ev.end, start);
-          let txt = "";
+          let txt = "",
+            percent = 0;
           if (now.getTime() < start.getTime()) {
             const diff = start.getTime() - now.getTime();
             const d = Math.floor(diff / 86400000);
@@ -995,6 +1189,7 @@
             const m = Math.floor((diff % 3600000) / 60000);
             const s = Math.floor((diff % 60000) / 1000);
             txt = `${d}d ${h}h ${m}m ${s}s left`;
+            percent = 0;
           } else if (now.getTime() > end.getTime()) {
             const diff = now.getTime() - end.getTime();
             const d = Math.floor(diff / 86400000);
@@ -1002,8 +1197,16 @@
             const m = Math.floor((diff % 3600000) / 60000);
             const s = Math.floor((diff % 60000) / 1000);
             txt = `Ended ${d}d ${h}h ${m}m ${s}s ago`;
+            percent = 100;
           } else {
-            const diff = end.getTime() - now.getTime();
+            const total = end.getTime() - start.getTime();
+            const remaining = end.getTime() - now.getTime();
+            const passed = total - remaining;
+            percent = Math.max(
+              0,
+              Math.min(100, Math.round((passed / total) * 100))
+            );
+            const diff = remaining;
             const d = Math.floor(diff / 86400000);
             const h = Math.floor((diff % 86400000) / 3600000);
             const m = Math.floor((diff % 3600000) / 60000);
@@ -1011,7 +1214,9 @@
             txt = `${d}d ${h}h ${m}m ${s}s remaining`;
           }
           const countEl = chip.querySelector(`#count-${chip.id}`);
+          const prog = chip.querySelector(".pinned-progress i");
           if (countEl) countEl.textContent = txt;
+          if (prog) prog.style.width = percent + "%";
         });
       }
 
@@ -1039,7 +1244,6 @@
         }
         return false;
       }
-
       function applyMode() {
         const stage = byId("stage");
         const grid = byId("eventsGrid");
@@ -1083,7 +1287,6 @@
           });
         }
       }
-
       function enableDrag(el, idx) {
         let dragging = false,
           startX = 0,
@@ -1175,7 +1378,8 @@
           searchBox = byId("searchBox"),
           monthFilter = byId("monthFilter"),
           pinCollapseBtn = byId("pinCollapseBtn"),
-          pinnedToggle = byId("pinnedToggleBtn");
+          pinnedToggle = byId("pinnedToggleBtn"),
+          clearPins = byId("clearPins");
         if (gridBtn && museumBtn) {
           gridBtn.addEventListener("click", () => {
             mode = "grid";
@@ -1200,7 +1404,10 @@
         });
         if (searchBox) searchBox.addEventListener("input", () => renderAll());
         if (monthFilter)
-          monthFilter.addEventListener("change", () => renderAll());
+          monthFilter.addEventListener("change", () => {
+            highlightMonthButton(monthFilter.value);
+            renderAll();
+          });
         if (pinCollapseBtn) {
           pinCollapseBtn.addEventListener("click", () => {
             const panel = byId("pinnedColumn");
@@ -1222,22 +1429,138 @@
             pinnedToggle.classList.toggle("collapsed");
           });
         }
+        if (clearPins) {
+          clearPins.addEventListener("click", () => {
+            setPinned([]);
+          });
+        }
       }
 
-      /* ---------- hero setup & init ---------- */
-      function setHeroImage(url) {
+      /* ---------- color sampling (tries local first) ---------- */
+      async function trySetAccentFromHero() {
+        // try local image first to avoid CORS issues
+        // helper to sample and apply
+        function sampleAndApply(imgEl) {
+          try {
+            const w = Math.min(imgEl.naturalWidth || 300, 160);
+            const h = Math.min(imgEl.naturalHeight || 200, 120);
+            const canvas = document.createElement("canvas");
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(imgEl, 0, 0, w, h);
+            const data = ctx.getImageData(0, 0, w, h).data;
+            let r = 0,
+              g = 0,
+              b = 0,
+              count = 0;
+            for (let i = 0; i < data.length; i += 4) {
+              r += data[i];
+              g += data[i + 1];
+              b += data[i + 2];
+              count++;
+            }
+            r = Math.round(r / count);
+            g = Math.round(g / count);
+            b = Math.round(b / count);
+            const rgb = `rgb(${r},${g},${b})`;
+            document.documentElement.style.setProperty("--accent", rgb); // compute readable accent-text
+            const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+            const accentText = luminance > 0.6 ? "#072238" : "#ffffff";
+            document.documentElement.style.setProperty(
+              "--accent-text",
+              accentText
+            );
+            return true;
+          } catch (err) {
+            console.warn("color sampling failed", err);
+            return false;
+          }
+        }
+
+        // attempt to load local hero
+        try {
+          const localImg = new Image();
+          localImg.crossOrigin = "anonymous";
+          const localLoaded = await new Promise((resolve) => {
+            localImg.onload = () => resolve(true);
+            localImg.onerror = () => resolve(false);
+            localImg.src = LOCAL_HERO;
+          });
+          if (localLoaded) {
+            const ok = sampleAndApply(localImg);
+            if (ok) {
+              setHeroSrc(LOCAL_HERO);
+              return;
+            }
+          }
+        } catch (e) {
+          /* fallthrough */
+        }
+        // fallback: try sampling the in-page hero (may be tainted by CORS)
+        try {
+          const imgEl = byId("heroImg");
+          if (imgEl && imgEl.complete) {
+            const ok = sampleAndApply(imgEl);
+            if (ok) {
+              setHeroSrc(imgEl.src);
+              return;
+            }
+          }
+        } catch (e) {
+          /* fallthrough */
+        }
+        // final fallback: pick color from next upcoming event month
+        const n = findNextUpcoming();
+        if (n) {
+          const m = parseStart(n.start).getMonth() + 1;
+          const mm = pad(m);
+          const col = MONTH_COLORS[mm] || "var(--accent)";
+          document.documentElement.style.setProperty("--accent", col);
+          document.documentElement.style.setProperty(
+            "--accent-text",
+            "#072238"
+          );
+        }
+      }
+
+      function setHeroSrc(src) {
         const img = byId("heroImg");
-        if (img) img.src = url;
+        if (img && img.src !== src) {
+          img.src = src;
+        }
       }
 
+      /* ---------- boot & init ---------- */
       function init() {
-        setHeroImage(HERO_IMAGE);
-        wireUI();
+        // set drive image as fallback if local doesn't exist (we will attempt sampling inside trySetAccentFromHero)
+        // test local first asynchronously; meanwhile set hero to drive so something shows
+        const img = byId("heroImg");
+        if (img) img.src = DRIVE_HERO;
+        wireUI(); // collapse pinned panel by default
+        const panel = byId("pinnedColumn");
+        const pinnedToggle = byId("pinnedToggleBtn");
+        if (panel) {
+          panel.classList.add("collapsed");
+          if (pinnedToggle) pinnedToggle.classList.add("collapsed");
+        }
+        generateMonthButtons(); // colors
+        trySetAccentFromHero().then(() => {
+          // ensure buttons pick up accent color after sampling
+          const monthBtns = document.querySelectorAll(".month-btn");
+          monthBtns.forEach((b) => {
+            /* noop, CSS var updated */
+          });
+          document
+            .querySelectorAll(".btn.primary")
+            .forEach((b) => b.classList.add("primary"));
+        });
         renderAll();
       }
+
       document.addEventListener("DOMContentLoaded", init);
 
-      // debug
+      // expose for debugging
       window.__SE_DEBUG = { EVENTS, renderAll, items };
     </script>
   </body>
