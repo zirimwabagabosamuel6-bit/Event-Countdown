@@ -1,0 +1,820 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>School Events Countdown</title>
+<style>
+/* ---------- Reset & base ---------- */
+* { box-sizing: border-box; margin:0; padding:0; }
+:root{
+  --accent:#ffd24a;
+  --muted:#e8f1ff;
+  --card-radius:14px;
+  --ui-bg: rgba(255,255,255,0.95);
+  --ui-text: #072238;
+  --ui-border: rgba(7,18,43,0.08);
+}
+html,body{height:100%}
+body{
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  color:var(--muted);
+  padding: 24px;
+  min-height:100vh;
+  overflow-x:hidden;
+  background-image:
+    linear-gradient(180deg, rgba(3,8,18,0.32), rgba(3,8,18,0.28)),
+    url('https://images.unsplash.com/photo-1503264116251-35a269479413?w=2000&q=80&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+@keyframes overlayShift { 0%{filter:brightness(1)}50%{filter:brightness(.99)}100%{filter:brightness(1)}}
+body { animation: overlayShift 30s linear infinite; }
+
+/* canvas behind (stars) */
+#stars{ position:fixed; inset:0; z-index:-1; pointer-events:none; }
+
+/* header */
+header{ display:flex; gap:16px; align-items:flex-start; justify-content:space-between; max-width:1200px; margin:0 auto 12px; }
+.left{ display:flex; flex-direction:column; gap:10px; }
+h1{
+  font-size:1.4rem;
+  color:#fff;
+  letter-spacing:0.4px;
+  margin:0;
+  font-weight:800;
+  text-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+.hint{
+  font-size:0.95rem;
+  color: rgba(255,255,255,0.92);
+  max-width:760px;
+  line-height:1.25;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.35);
+}
+
+/* controls container */
+.controls{ display:flex; gap:12px; align-items:center; margin-top:6px; flex-wrap:wrap; }
+input[type="search"], select {
+  padding:10px 14px;
+  border-radius:10px;
+  font-size:14px;
+  transition: box-shadow 0.15s, transform 0.12s;
+  border:1px solid var(--ui-border);
+  background: var(--ui-bg);
+  color: var(--ui-text);
+  box-shadow: 0 6px 18px rgba(2,8,23,0.06);
+  -webkit-appearance: none;
+  appearance: none;
+}
+input[type="search"]::placeholder { color: #6b7b8d; }
+input[type="search"]:focus, select:focus { outline: none; box-shadow: 0 10px 30px rgba(7,18,43,0.08); transform: translateY(-1px); }
+
+/* custom select arrow (SVG data URL) */
+select {
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.95)),
+    url("data:image/svg+xml,%3Csvg width='14' height='9' viewBox='0 0 14 9' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 9L0 0h14L7 9z' fill='%23072B3A' fill-opacity='0.65'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 40px;
+}
+
+/* buttons */
+.btn{ padding:8px 12px; border-radius:10px; cursor:pointer; border:none; background: rgba(255,255,255,0.06); color:var(--muted); font-weight:700; }
+.btn.primary{ background: linear-gradient(90deg,var(--accent), #ffecb5); color:#072238; box-shadow: 0 8px 24px rgba(2,8,23,0.12); }
+
+/* next-up */
+.next-up{ max-width:1100px; margin:12px auto; padding:12px 16px; border-left:6px solid var(--accent); border-radius:10px; background: rgba(255,255,255,0.9); color:#072238; box-shadow: 0 8px 30px rgba(2,8,23,0.12); display:flex; justify-content:space-between; align-items:center; }
+.next-up .detail{ color:#16344f; opacity:0.95; font-size:0.95rem }
+
+/* pinned row */
+.pinned-row {
+  max-width:1200px;
+  margin: 10px auto;
+  display:flex;
+  gap:10px;
+  padding:10px;
+  overflow-x:auto;
+  align-items:center;
+  z-index:3;
+  transition: transform .12s;
+}
+.pinned-row.drop-target { box-shadow: 0 18px 40px rgba(255,190,60,0.12); transform: translateY(-4px); }
+
+/* pinned chips */
+.pinned-chip {
+  flex:0 0 auto;
+  background: rgba(255,255,255,0.95);
+  color:#072238;
+  border-radius:12px;
+  padding:10px 14px;
+  min-width:170px;
+  box-shadow: 0 8px 20px rgba(2,8,23,0.08);
+  position:relative;
+  cursor:pointer;
+  transition: transform .12s, box-shadow .12s;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.pinned-chip:hover, .pinned-chip:focus-within { transform: translateY(-6px); box-shadow:0 18px 36px rgba(2,8,23,0.12); }
+.pinned-title { font-weight:800; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pinned-sub { font-size:12px; color:#2a3b57; }
+.pinned-count { font-weight:800; font-size:13px; color: #ffb84d; }
+.pinned-chip .hover-overlay {
+  position:absolute; left:50%; transform:translateX(-50%); bottom: calc(100% + 10px);
+  background: rgba(7,18,43,0.97); color:#fff; padding:10px 12px; border-radius:10px; font-size:13px;
+  box-shadow: 0 12px 30px rgba(2,8,23,0.35); white-space:nowrap; display:none;
+}
+.pinned-chip:hover .hover-overlay,
+.pinned-chip:focus-within .hover-overlay,
+.pinned-chip[data-open="true"] .hover-overlay { display:block; }
+
+/* layout and grid */
+.wrap{ max-width:1200px; margin:20px auto 120px; padding: 0 12px; }
+.grid{ display:grid; grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); gap:20px; position:relative; }
+
+/* card */
+.card{
+  position:relative; overflow:hidden;
+  border-radius:var(--card-radius);
+  padding:18px 18px 22px;
+  background: linear-gradient(180deg, #ffffff, #fafafa);
+  color:#072238; box-shadow: 0 10px 30px rgba(2,8,23,0.08);
+  transition: transform .18s ease, box-shadow .18s ease;
+  min-height:150px; user-select:none; touch-action:none;
+  border-left: 6px solid transparent;
+}
+.card:hover{ transform: translateY(-6px); box-shadow: 0 18px 42px rgba(2,8,23,0.12); }
+
+/* month color strip width */
+.card .month-strip { position:absolute; left:0; top:0; bottom:0; width:6px; border-top-left-radius:14px; border-bottom-left-radius:14px; }
+
+/* pin icon */
+.card .pin-btn {
+  position:absolute; left:12px; top:12px; width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+  background: rgba(7,18,43,0.04); border: none; cursor:pointer;
+}
+.card .pin-btn.active { background: linear-gradient(90deg,#ffd24a,#ffecb5); color:#072238; box-shadow: 0 8px 20px rgba(255,180,60,0.12); }
+
+/* big floating letter */
+.card .big-letter{
+  position:absolute; right:-12px; top:-18px; font-weight:800; font-size:96px;
+  color: rgba(7,18,43,0.06); pointer-events:none; transition: transform 0.18s ease;
+  animation: floatLetter 6s ease-in-out infinite;
+}
+@keyframes floatLetter { 0%{transform:translateY(0)}50%{transform:translateY(6px)}100%{transform:translateY(0)} }
+
+/* title: contains both image-fill span and fallback span */
+.title{ position:relative; display:inline-block; margin-bottom:6px; }
+.title .fill {
+  display:inline-block;
+  -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-fill-color:transparent;
+  background-size: cover; background-position:center;
+  transition: opacity .22s ease;
+  opacity:0;
+  font-weight:800; font-size:18px; line-height:1.05; letter-spacing:-0.4px;
+}
+.title .fallback {
+  display:inline-block; color:#072238; font-weight:800; font-size:18px; line-height:1.05; letter-spacing:-0.4px;
+}
+
+/* meta / countdown */
+.meta{ font-size:13px; color:#27506b; margin-top:6px; margin-bottom:8px; padding-left:8px; } /* left padding to avoid month strip */
+.countdown{ font-weight:800; font-size:15px; color:var(--accent); margin-bottom:6px; padding-left:8px; }
+.status{ font-size:13px; color:#16344f; font-weight:600; padding-left:8px; }
+.tag{ display:inline-block; padding:6px 8px; border-radius:999px; font-size:12px; font-weight:700; background: rgba(7,18,43,0.04); color:#072238; margin-top:8px; }
+
+/* museum mode */
+.museum .grid { position:relative; min-height:520px; }
+.museum .card{ width:260px; position:absolute; box-shadow: 0 22px 60px rgba(2,8,23,0.18); cursor: grab; }
+.card.tilt{ transform-style:preserve-3d; will-change: transform; }
+
+/* present mode (compact, hide controls) */
+.present-mode header, .present-mode .controls, .present-mode .hint, .present-mode .next-up { display:none !important; }
+.present-mode body { padding:0; }
+.present-mode .wrap{ margin-top: 18px; }
+.present-controls {
+  position:fixed; right:18px; top:18px; z-index:999; display:flex; gap:8px;
+}
+.present-mode .pinned-row { transform: translateY(0); position: fixed; top: 18px; left: 18px; right: 18px; padding: 8px; background: rgba(255,255,255,0.92); border-radius: 12px; box-shadow: 0 20px 60px rgba(2,8,23,0.18); }
+
+/* responsive */
+@media (max-width:560px){ header{align-items:flex-start;} .card .big-letter{ font-size:64px; right:-8px; top:-12px;} .card{ min-height:140px; padding:14px; } .controls{ width:100%; } .controls > *{ flex:1 1 auto; } .pinned-chip{ min-width:140px; } .present-controls{ display:none; } }
+</style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+
+<header>
+  <div class="left">
+    <h1>School Events Countdown</h1>
+    <div class="hint">2025–26 interactive schedule — live countdowns, drag-to-organize, and nature image title cutouts for a calm aesthetic.</div>
+
+    <div class="controls" role="region" aria-label="Search and filters">
+      <input id="searchBox" type="search" placeholder="Search events..." aria-label="Search events" />
+      <select id="monthFilter" aria-label="Filter by month">
+        <option value="">All Months</option>
+        <option value="01">January</option><option value="02">February</option><option value="03">March</option>
+        <option value="04">April</option><option value="05">May</option><option value="06">June</option>
+        <option value="07">July</option><option value="08">August</option><option value="09">September</option>
+        <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+      </select>
+
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button id="gridBtn" class="btn primary" title="Grid view (default)">Grid</button>
+        <button id="museumBtn" class="btn" title="Museum (draggable) view">Museum</button>
+        <button id="presentBtn" class="btn" title="Present mode">Present</button>
+      </div>
+    </div>
+
+  </div>
+</header>
+
+<!-- Next up banner (original) -->
+<section id="nextUp" class="next-up" aria-live="polite" style="display:none">
+  <div>
+    <div style="font-weight:700; color:#0b4b6f">Next Up</div>
+    <div class="detail"><strong id="nextUpName">—</strong> <span id="nextUpDetail"></span></div>
+  </div>
+  <div style="text-align:right">
+    <div style="font-size:12px;color:#0b2547">Tip</div>
+    <div style="font-size:12px;color:#07284f">Try Museum view to drag and save card layout or drag cards up to pin them.</div>
+  </div>
+</section>
+
+<!-- PINNED ROW -->
+<div id="pinnedRow" class="pinned-row" aria-label="Top events" ></div>
+
+<!-- Present-mode small controls (exit) -->
+<div class="present-controls" style="display:none">
+  <button id="presentExit" class="btn">Exit</button>
+</div>
+
+<main class="wrap">
+  <div id="stage">
+    <div id="eventsGrid" class="grid" aria-live="polite"></div>
+  </div>
+</main>
+
+<script>
+/* ---------- nature images ---------- */
+const NATURE_IMAGES = [
+  'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1600&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1600&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1503264116251-35a269479413?w=1600&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1470770903676-69b98201ea1c?w=1600&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1600&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1600&q=80&auto=format&fit=crop'
+];
+
+/* ---------- events ---------- */
+const EVENTS = [
+  { name: "Summer Holiday", start: "2025-08-01", end: "2025-08-09" },
+  { name: "School Opening (Arrival & Dorm Move-in)", start: "2025-08-10", end: "2025-08-11" },
+  { name: "First Semester Registration", start: "2025-08-11" },
+  { name: "Orientation", start: "2025-08-12" },
+  { name: "Faculty Family", start: "2025-09-07" },
+  { name: "Picture Day", start: "2025-09-09" },
+  { name: "Open Weekend", start: "2025-09-12", end: "2025-09-14" },
+  { name: "Week of Prayer", start: "2025-09-15", end: "2025-09-20" },
+  { name: "Camping Trip", start: "2025-09-21", end: "2025-09-23" },
+  { name: "Online Parent-Teacher Conferences", start: "2025-09-30" },
+  { name: "Midterm", start: "2025-10-03" },
+  { name: "Midterm Break", start: "2025-10-09", end: "2025-10-20" },
+  { name: "Music Sabbath", start: "2025-10-25" },
+  { name: "Weekend of Spiritual Emphasis", start: "2025-11-07", end: "2025-11-08" },
+  { name: "MAP Testing", start: "2025-11-24", end: "2025-11-27" },
+  { name: "Faculty Family", start: "2025-11-14" },
+  { name: "Finals Review Week", start: "2025-12-01", end: "2025-12-05" },
+  { name: "Final Exams 1st Sem", start: "2025-12-08", end: "2025-12-10" },
+  { name: "Christmas Break", start: "2025-12-10", end: "2026-01-05" },
+  { name: "School Opening (2nd Sem)", start: "2026-01-05" },
+  { name: "Senior Government Day", start: "2026-01-20", end: "2026-01-21" },
+  { name: "Faculty Family", start: "2026-01-30" },
+  { name: "Junior Vespers", start: "2026-02-06" },
+  { name: "NHS Applications Deadline", start: "2026-02-10" },
+  { name: "Weekend of Spiritual Emphasis", start: "2026-02-13", end: "2026-02-14" },
+  { name: "ACT", start: "2026-02-13" },
+  { name: "NHS Induction", start: "2026-02-17" },
+  { name: "Mt. Kenya Trip", start: "2026-02-20", end: "2026-02-24" },
+  { name: "Senior Dedication", start: "2026-02-27" },
+  { name: "Sophomore Vespers", start: "2026-03-06" },
+  { name: "Student-Led Week of Prayer", start: "2026-03-09", end: "2026-03-14" },
+  { name: "Track and Field", start: "2026-03-19", end: "2026-03-20" },
+  { name: "Chorale Sacred Concert", start: "2026-03-21" },
+  { name: "Senior Class Trip", start: "2026-03-23", end: "2026-03-26" },
+  { name: "Midterm Break", start: "2026-03-26", end: "2026-04-06" },
+  { name: "Ethiopia Mission Trip", start: "2026-03-26", end: "2026-04-05" },
+  { name: "ACT", start: "2026-04-10" },
+  { name: "Freshmen Vespers", start: "2026-04-17" },
+  { name: "Faculty Family", start: "2026-04-19" },
+  { name: "Week of Prayer", start: "2026-04-20", end: "2026-04-25" },
+  { name: "Long Weekend", start: "2026-04-30", end: "2026-05-03" },
+  { name: "ASB Spirit Week", start: "2026-05-04", end: "2026-05-09" },
+  { name: "Class Surveys", start: "2026-05-11", end: "2026-05-13" },
+  { name: "ASB Elections", start: "2026-05-12" },
+  { name: "Spring Concert", start: "2026-05-16" },
+  { name: "MAP Testing", start: "2026-05-18", end: "2026-05-21" },
+  { name: "Dorm Parties", start: "2026-05-23" },
+  { name: "Dorm Outings", start: "2026-05-24" },
+  { name: "Finals Review Week", start: "2026-05-25", end: "2026-05-29" },
+  { name: "Zamani Night", start: "2026-05-30" },
+  { name: "Elementary Graduation", start: "2026-05-31" },
+  { name: "Final Exams 2nd Sem", start: "2026-06-02", end: "2026-06-04" },
+  { name: "GRADDDDD!!!!", start: "2026-06-05", end: "2026-06-07" }
+];
+
+/* ---------- helpers ---------- */
+function pad(n){ return n < 10 ? '0' + n : String(n); }
+function formatISO(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function slugify(name, idx){
+  return String(name).toLowerCase()
+    .replace(/[’'"]/g,'')
+    .replace(/[:\/\\(),.!?#\u2013\u2014]/g,'')
+    .replace(/\s+/g,'-')
+    .replace(/[^a-z0-9\-]/g,'') + '-' + idx;
+}
+function parseStart(s){ return s.includes('T') ? new Date(s) : new Date(s + 'T00:00:00'); }
+function parseEnd(e, start){ if(!e){ const d=new Date(start); d.setHours(23,59,59,999); return d; } return e.includes('T') ? new Date(e) : new Date(e + 'T23:59:59.999'); }
+
+/* month colors (12 distinct pleasant hues) */
+const MONTH_COLORS = {
+  '01': '#e74c3c', // Jan - red
+  '02': '#ff8a65', // Feb - warm
+  '03': '#f6c85f', // Mar - yellow
+  '04': '#8dd3c7', // Apr - teal
+  '05': '#66a3ff', // May - blue
+  '06': '#9b59b6', // Jun - purple
+  '07': '#f06292', // Jul - pink
+  '08': '#ffb84d', // Aug - amber
+  '09': '#6ab04c', // Sep - green
+  '10': '#4a90e2', // Oct - azure
+  '11': '#34495e', // Nov - slate
+  '12': '#7bdbdb'  // Dec - mint
+};
+
+/* ---------- star field ---------- */
+(function initStars(){
+  const canvas = document.getElementById('stars');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+  window.addEventListener('resize', resize); resize();
+  const stars = Array.from({length:100}, () => ({
+    x: Math.random()*canvas.width, y: Math.random()*canvas.height, r: Math.random()*1.4+0.2, dy: (Math.random()*0.6)+0.02, alpha: 0.35+Math.random()*0.6
+  }));
+  function twinkle(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(const s of stars){
+      ctx.globalAlpha = s.alpha * (0.7 + Math.sin(Date.now()/1000 + s.x)*0.3);
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fillStyle = '#ffffff'; ctx.fill();
+      s.y += s.dy;
+      if(s.y > canvas.height + 10){ s.y = -10; s.x = Math.random()*canvas.width; }
+    }
+    requestAnimationFrame(twinkle);
+  }
+  twinkle();
+})();
+
+/* ---------- state & persistence ---------- */
+let items = [];
+let tickHandle = null;
+let mode = 'grid';
+const STORAGE_KEY = 'school_events_positions_v1';
+const PINNED_KEY = 'school_events_pinned_v1';
+const PIN_LIMIT = 6;
+const pinnedContainer = document.getElementById('pinnedRow');
+
+/* pinned utilities */
+function getPinned(){ try{ return JSON.parse(localStorage.getItem(PINNED_KEY) || '[]') }catch(e){ return []; } }
+function setPinned(arr){ localStorage.setItem(PINNED_KEY, JSON.stringify(arr)); renderPinnedRow(); }
+function isPinned(idx){ return getPinned().includes(idx); }
+function togglePin(idx){
+  const pins = getPinned();
+  const pos = pins.indexOf(idx);
+  if(pos === -1){
+    pins.unshift(idx); // newest pinned first
+    // cap length
+    while(pins.length > 30) pins.pop();
+  } else pins.splice(pos,1);
+  setPinned(pins);
+}
+
+/* ---------- main rendering ---------- */
+function sortEvents(){ EVENTS.sort((a,b) => parseStart(a.start) - parseStart(b.start)); }
+function findNextUpcoming(){ const now = Date.now(); return EVENTS.find(ev => parseEnd(ev.end, parseStart(ev.start)).getTime() >= now) || null; }
+function renderNextUp(){
+  const next = findNextUpcoming(); const banner = document.getElementById('nextUp');
+  if(!next){ banner.style.display = 'none'; return; }
+  banner.style.display = 'flex';
+  document.getElementById('nextUpName').textContent = next.name;
+  document.getElementById('nextUpDetail').textContent = next.end ? `From ${formatISO(parseStart(next.start))} → ${formatISO(parseStart(next.end))}` : `On ${formatISO(parseStart(next.start))}`;
+}
+
+function clearTick(){ if(tickHandle){ clearInterval(tickHandle); tickHandle = null; } }
+function clearRendered(){ clearTick(); items = []; const grid = document.getElementById('eventsGrid'); grid.innerHTML = ''; document.getElementById('stage').classList.remove('museum'); }
+
+/* update one item */
+function updateOne(item, now){
+  const { id, start, end, el } = item;
+  const cd = document.getElementById('cd-' + id);
+  const st = document.getElementById('st-' + id);
+  if(!cd || !st) return;
+
+  if(now.getTime() < start.getTime()){
+    el.classList.remove('happening','finished'); el.classList.add('upcoming');
+    const diff = start.getTime() - now.getTime();
+    const d = Math.floor(diff/86400000);
+    const h = Math.floor((diff%86400000)/3600000);
+    const m = Math.floor((diff%3600000)/60000);
+    const s = Math.floor((diff%60000)/1000);
+    cd.textContent = `${d}d ${h}h ${m}m ${s}s left`;
+    st.textContent = 'Coming soon!';
+  } else if(now.getTime() > end.getTime()){
+    el.classList.remove('upcoming','happening'); el.classList.add('finished');
+    cd.textContent = `Ended on ${formatISO(end)}`;
+    st.textContent = 'Event finished.';
+  } else {
+    el.classList.remove('upcoming','finished'); el.classList.add('happening');
+    const diff = end.getTime() - now.getTime();
+    const d = Math.floor(diff/86400000);
+    const h = Math.floor((diff%86400000)/3600000);
+    const m = Math.floor((diff%3600000)/60000);
+    const s = Math.floor((diff%60000)/1000);
+    cd.textContent = `${d}d ${h}h ${m}m ${s}s remaining`;
+    st.textContent = 'Happening now!';
+  }
+}
+
+/* render events and cards */
+function renderAll(){
+  clearRendered();
+  sortEvents();
+  renderNextUp();
+  const grid = document.getElementById('eventsGrid');
+  const q = (document.getElementById('searchBox').value || '').toLowerCase();
+  const month = (document.getElementById('monthFilter').value || '');
+
+  EVENTS.forEach((ev, idx) => {
+    if(q && !ev.name.toLowerCase().includes(q)) return;
+    if(month && ev.start.slice(5,7) !== month) return;
+
+    const start = parseStart(ev.start);
+    const end = parseEnd(ev.end, start);
+    const id = slugify(ev.name, idx);
+    const imgUrl = NATURE_IMAGES[idx % NATURE_IMAGES.length];
+
+    const card = document.createElement('article');
+    card.className = 'card';
+    card.setAttribute('data-id', id);
+    const bigLetter = (ev.name && ev.name[0]) ? ev.name[0].toUpperCase() : 'E';
+
+    // month color strip
+    const mm = pad(start.getMonth()+1);
+    const monthColor = MONTH_COLORS[mm] || '#ccc';
+
+    card.innerHTML = `
+      <div class="month-strip" style="background:${monthColor}"></div>
+      <button class="pin-btn" title="Pin event" aria-label="Pin event" data-idx="${idx}">📌</button>
+      <div class="big-letter" aria-hidden="true">${bigLetter}</div>
+      <div class="title" id="title-wrap-${id}">
+        <span class="fill" id="title-fill-${id}">${ev.name}</span>
+        <span class="fallback" id="title-fallback-${id}">${ev.name}</span>
+      </div>
+      <div class="meta">${ ev.end ? `${formatISO(start)} → ${formatISO(parseStart(ev.end))}` : formatISO(start) }</div>
+      <div class="countdown" id="cd-${id}" aria-live="polite">—</div>
+      <div class="status" id="st-${id}">—</div>
+      <div class="tag" aria-hidden="true">${bigLetter}</div>
+    `;
+    grid.appendChild(card);
+    items.push({ id, name: ev.name, start, end, el: card, imgUrl, idx });
+
+    // pin button wiring (click toggles pin)
+    const pinBtn = card.querySelector('.pin-btn');
+    if(pinBtn){
+      function refreshPinVisual(){
+        if(isPinned(idx)) pinBtn.classList.add('active'); else pinBtn.classList.remove('active');
+      }
+      pinBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        togglePin(idx);
+        refreshPinVisual();
+        renderPinnedRow(); // update pinned chips
+      });
+      refreshPinVisual();
+    }
+
+    /* preload image then reveal fill */
+    (function preloadAndApply(id, imgUrl){
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const fill = document.getElementById('title-fill-' + id);
+        const fallback = document.getElementById('title-fallback-' + id);
+        if(fill){
+          fill.style.backgroundImage = `url('${imgUrl}')`;
+          fill.style.backgroundSize = 'cover';
+          fill.style.backgroundPosition = 'center';
+          fill.style.opacity = '1';
+          if(fallback) fallback.style.opacity = '0';
+        }
+      };
+      img.onerror = ()=>{ /* fallback remains visible */ };
+      img.src = imgUrl;
+    })(id, imgUrl);
+  });
+
+  // single tick for all updates (reused for pinned chips)
+  tickHandle = setInterval(()=> {
+    const now = new Date();
+    items.forEach(i => updateOne(i, now));
+    updatePinnedCounts(now);
+  }, 1000);
+
+  // initial update
+  items.forEach(i => updateOne(i, new Date()));
+  renderPinnedRow(); // generate pinned chips based on current filter & saved pins
+  updatePinnedCounts(new Date());
+  applyMode();
+}
+
+/* ---------- pinned row rendering & updates ---------- */
+function renderPinnedRow(){
+  if(!pinnedContainer) return;
+  pinnedContainer.innerHTML = '';
+  const now = new Date();
+  // pinned indices (from storage) prioritized; then next upcoming fill up to PIN_LIMIT
+  const pinnedIndices = getPinned();
+  const pinnedSet = new Set(pinnedIndices);
+
+  // map all events to start/end
+  const mapped = EVENTS.map((ev, idx) => ({ ev, idx, start: parseStart(ev.start), end: parseEnd(ev.end, parseStart(ev.start)) }));
+  // upcoming candidates sorted
+  const upcoming = mapped.filter(o => o.end.getTime() >= now.getTime()).sort((a,b) => a.start - b.start);
+
+  // build final pinned list: first user pins, then fill with upcoming until PIN_LIMIT
+  const finalPins = [];
+  for(const p of pinnedIndices){ if(finalPins.length >= PIN_LIMIT) break; if(EVENTS[p]) finalPins.push({ ev: EVENTS[p], idx: p, start: parseStart(EVENTS[p].start), end: parseEnd(EVENTS[p].end, parseStart(EVENTS[p].start)) }); }
+  for(const u of upcoming){
+    if(finalPins.length >= PIN_LIMIT) break;
+    if(pinnedSet.has(u.idx)) continue;
+    finalPins.push(u);
+  }
+
+  // create chips
+  finalPins.forEach(o => {
+    const id = 'pin_' + slugify(o.ev.name + '-' + o.idx, o.idx);
+    const chip = document.createElement('button');
+    chip.className = 'pinned-chip';
+    chip.setAttribute('tabindex','0');
+    chip.dataset.eventIndex = o.idx;
+    chip.id = id;
+    chip.innerHTML = `
+      <div class="pinned-title">${o.ev.name}</div>
+      <div class="pinned-sub">${ o.ev.end ? formatISO(o.start) + ' → ' + formatISO(parseStart(o.ev.end)) : formatISO(o.start) }</div>
+      <div class="pinned-count" id="count-${id}">—</div>
+      <div class="hover-overlay" id="overlay-${id}">—</div>
+    `;
+    // click => scroll to event card and highlight
+    chip.addEventListener('click', (ev) => {
+      const idx = Number(chip.dataset.eventIndex);
+      const targetItem = items.find(it => it.idx === idx);
+      if(targetItem && targetItem.el){
+        targetItem.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetItem.el.style.transition = 'box-shadow .18s, transform .18s';
+        targetItem.el.style.boxShadow = '0 20px 60px rgba(255,180,60,0.32)';
+        targetItem.el.style.transform = 'translateY(-8px)';
+        setTimeout(()=>{ targetItem.el.style.boxShadow=''; targetItem.el.style.transform=''; }, 1200);
+      }
+    });
+    // close overlay with escape
+    chip.addEventListener('keydown', e => { if(e.key === 'Escape') chip.dataset.open = 'false'; });
+
+    pinnedContainer.appendChild(chip);
+  });
+
+  // if pinnedContainer is empty show placeholder
+  if(finalPins.length === 0){
+    const placeholder = document.createElement('div');
+    placeholder.style.opacity = '.7';
+    placeholder.style.color = '#fff';
+    placeholder.style.fontSize = '14px';
+    placeholder.textContent = 'No pinned events — pin by clicking the 📌 on a card or dragging a card up here.';
+    pinnedContainer.appendChild(placeholder);
+  }
+}
+
+/* update pinned chips' countdowns */
+function updatePinnedCounts(now){
+  if(!now) now = new Date();
+  const pins = pinnedContainer ? Array.from(pinnedContainer.children) : [];
+  pins.forEach(chip => {
+    if(!chip.dataset.eventIndex) return;
+    const idx = Number(chip.dataset.eventIndex);
+    const ev = EVENTS[idx];
+    if(!ev) return;
+    const start = parseStart(ev.start);
+    const end = parseEnd(ev.end, start);
+
+    // compute remaining or finished
+    const r = (function(){
+      if(now.getTime() < start.getTime()){
+        const diff = start.getTime() - now.getTime();
+        const d = Math.floor(diff/86400000);
+        const h = Math.floor((diff%86400000)/3600000);
+        const m = Math.floor((diff%3600000)/60000);
+        const s = Math.floor((diff%60000)/1000);
+        return { status:'upcoming', text: `${d}d ${h}h ${m}m ${s}s left` };
+      } else if(now.getTime() > end.getTime()){
+        const diff = now.getTime() - end.getTime();
+        const d = Math.floor(diff/86400000);
+        const h = Math.floor((diff%86400000)/3600000);
+        const m = Math.floor((diff%3600000)/60000);
+        const s = Math.floor((diff%60000)/1000);
+        return { status:'finished', text: `Ended ${d}d ${h}h ${m}m ${s}s ago` };
+      } else {
+        const diff = end.getTime() - now.getTime();
+        const d = Math.floor(diff/86400000);
+        const h = Math.floor((diff%86400000)/3600000);
+        const m = Math.floor((diff%3600000)/60000);
+        const s = Math.floor((diff%60000)/1000);
+        return { status:'happening', text: `${d}d ${h}h ${m}m ${s}s remaining` };
+      }
+    })();
+
+    const countEl = chip.querySelector('#count-' + chip.id);
+    const overlay = chip.querySelector('#overlay-' + chip.id);
+    if(countEl) countEl.textContent = (r.status === 'finished' ? 'Finished' : r.text);
+    if(overlay) overlay.textContent = (r.status === 'finished' ? 'Finished on ' + formatISO(end) : r.text);
+  });
+}
+
+/* ---------- drag-to-pin detection (called from enableDrag on pointerup) ---------- */
+function checkDropToPinned(el, idx){
+  const rect = el.getBoundingClientRect();
+  const pinRect = pinnedContainer.getBoundingClientRect();
+  // Consider drop in pinned area if card's top is above pinned bottom + small offset OR overlaps vertically
+  const overlap = !(rect.right < pinRect.left || rect.left > pinRect.right || rect.bottom < pinRect.top || rect.top > pinRect.bottom);
+  const nearTop = rect.top < (pinRect.bottom + 40) && rect.top < window.innerHeight * 0.35;
+  if(overlap || nearTop){
+    // toggle pin
+    togglePin(idx);
+    renderPinnedRow();
+    // visual feedback
+    pinnedContainer.classList.add('drop-target');
+    setTimeout(()=> pinnedContainer.classList.remove('drop-target'), 600);
+    // reflect pin button on card
+    const pinBtn = el.querySelector('.pin-btn');
+    if(pinBtn) pinBtn.classList.toggle('active', isPinned(idx));
+    return true;
+  }
+  return false;
+}
+
+/* ---------- Museum drag & tilt (with snap and drop-to-pin) ---------- */
+function applyMode(){
+  const stage = document.getElementById('stage');
+  const grid = document.getElementById('eventsGrid');
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+
+  if(mode === 'museum'){
+    stage.classList.add('museum');
+    const rect = grid.getBoundingClientRect();
+    items.forEach((it, idx) => {
+      const el = it.el;
+      el.style.position = 'absolute';
+      const savedPos = saved[it.id] || {};
+      const left = (savedPos.x ?? (20 + (idx % 4) * 280));
+      const top  = (savedPos.y ?? (20 + Math.floor(idx/4) * 220));
+      el.style.left = left + 'px';
+      el.style.top = top + 'px';
+      el.style.width = '260px';
+      el.style.zIndex = (50 + idx);
+      enableDrag(el, it.idx);
+      el.addEventListener('pointermove', cardPointerTilt);
+      el.addEventListener('pointerleave', cardResetTilt);
+    });
+  } else {
+    stage.classList.remove('museum');
+    items.forEach(it => {
+      const el = it.el;
+      el.style.position = '';
+      el.style.left = '';
+      el.style.top = '';
+      el.style.width = '';
+      el.style.zIndex = '';
+      disableDrag(el);
+      el.removeEventListener('pointermove', cardPointerTilt);
+      el.removeEventListener('pointerleave', cardResetTilt);
+      el.style.transform = '';
+    });
+  }
+}
+
+function enableDrag(el, idx){
+  let dragging = false, startX=0, startY=0, origX=0, origY=0, pointerId=null;
+  el.style.touchAction = 'none';
+  function down(e){
+    dragging = true;
+    pointerId = e.pointerId;
+    el.setPointerCapture(pointerId);
+    startX = e.clientX; startY = e.clientY;
+    origX = parseFloat(el.style.left || '0'); origY = parseFloat(el.style.top || '0');
+    el.style.transition = 'none'; el.style.cursor = 'grabbing';
+    el.style.zIndex = 9999;
+  }
+  function move(e){
+    if(!dragging) return;
+    const dx = e.clientX - startX; const dy = e.clientY - startY;
+    // snap-to-grid 10px
+    const GRID = 10;
+    const x = Math.round((origX + dx) / GRID) * GRID;
+    const y = Math.round((origY + dy) / GRID) * GRID;
+    el.style.left = x + 'px';
+    el.style.top  = y + 'px';
+  }
+  function up(e){
+    if(!dragging) return;
+    dragging = false;
+    el.releasePointerCapture(pointerId);
+    el.style.cursor = 'grab';
+    el.style.transition = '';
+    el.style.zIndex = '';
+    // check drop-to-pin (top row)
+    const pinned = checkDropToPinned(el, idx);
+    // if pinned, keep position but also persist card position
+    savePosition(el.getAttribute('data-id'), parseFloat(el.style.left||'0'), parseFloat(el.style.top||'0'));
+    // if pinned and we want to auto-reset card to grid we could do so; here we leave position (persisted)
+  }
+  el.addEventListener('pointerdown', down);
+  el.addEventListener('pointermove', move);
+  el.addEventListener('pointerup', up);
+  el.__dragHandlers = { down, move, up };
+}
+function disableDrag(el){
+  const h = el.__dragHandlers;
+  if(!h) return;
+  el.removeEventListener('pointerdown', h.down);
+  el.removeEventListener('pointermove', h.move);
+  el.removeEventListener('pointerup', h.up);
+  delete el.__dragHandlers;
+}
+function savePosition(id,x,y){
+  const store = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  store[id] = { x, y, savedAt: Date.now() };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+}
+function cardPointerTilt(e){
+  const rect = this.getBoundingClientRect();
+  const cx = rect.left + rect.width/2;
+  const cy = rect.top + rect.height/2;
+  const dx = e.clientX - cx;
+  const dy = e.clientY - cy;
+  const rx = (dy / rect.height) * -6;
+  const ry = (dx / rect.width) * 8;
+  this.style.transform = `perspective(800px) rotateX(${rx}deg) rotateY(${ry}deg) translateZ(8px)`;
+}
+function cardResetTilt(){ this.style.transform = ''; }
+
+/* ---------- present mode ---------- */
+const presentBtn = document.getElementById('presentBtn');
+const presentExit = document.getElementById('presentExit');
+presentBtn.addEventListener('click', enterPresentMode);
+presentExit.addEventListener('click', exitPresentMode);
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && document.body.classList.contains('present-mode')) exitPresentMode(); });
+
+function enterPresentMode(){
+  document.body.classList.add('present-mode');
+  // show present small controls
+  document.querySelector('.present-controls').style.display = 'flex';
+  // hide header and controls handled by CSS .present-mode rules
+  // request fullscreen for nicer presentation (optional)
+  try{
+    document.documentElement.requestFullscreen?.();
+  }catch(e){}
+}
+function exitPresentMode(){
+  document.body.classList.remove('present-mode');
+  document.querySelector('.present-controls').style.display = 'none';
+  try{
+    document.exitFullscreen?.();
+  }catch(e){}
+}
+
+/* ---------- UI wiring ---------- */
+document.getElementById('gridBtn').addEventListener('click', () => { mode='grid'; applyMode(); document.getElementById('gridBtn').classList.add('primary'); document.getElementById('museumBtn').classList.remove('primary'); });
+document.getElementById('museumBtn').addEventListener('click', () => { mode='museum'; applyMode(); document.getElementById('museumBtn').classList.add('primary'); document.getElementById('gridBtn').classList.remove('primary'); });
+document.getElementById('searchBox').addEventListener('input', () => { renderAll(); });
+document.getElementById('monthFilter').addEventListener('change', () => { renderAll(); });
+
+/* ---------- initial render ---------- */
+renderAll();
+</script>
+</body>
+</html>
