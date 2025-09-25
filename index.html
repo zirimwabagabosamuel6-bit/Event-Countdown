@@ -1,12 +1,4 @@
 <!DOCTYPE html>
-<!--
-  Maxwell Events — single-file HTML
-  Updated: museum → gallery, hidden pinned panel when empty, month visibility in museum,
-  swipe/pin gestures, month buttons, accent sampling, year progress, accessible lightbox,
-  improved UX and polish.
-
-  Drop into your repo as index.html. The hero uses the WP image you provided.
--->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -15,11 +7,12 @@
     <style>
       :root {
         --accent: #ffd24a;
-        --accent-text: #072238;
-        --muted: #0b3b4f;
-        --card-radius: 14px;
+        --accent-2: #ffb84d;
         --bg: #07131a;
-        --panel-width: 320px;
+        --card-radius: 14px;
+        --panel-width: 340px;
+        --text-dark: #072238;
+        --muted: #9fbfd4;
       }
       * {
         box-sizing: border-box;
@@ -32,37 +25,97 @@
       }
       body {
         font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-        background: var(--bg);
-        color: var(--muted);
-        padding: 18px;
+        background: linear-gradient(180deg, #07131a, #041018);
+        color: #eaf6ff;
+        padding: 20px;
         -webkit-font-smoothing: antialiased;
       }
 
-      /* HERO */
-      .hero {
-        position: relative;
+      /* Page grid (main + optional right pinned panel) */
+      .page {
         max-width: 1200px;
-        margin: 8px auto 18px;
-        height: 360px;
-        border-radius: 14px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr var(--panel-width);
+        gap: 20px;
+        align-items: start;
+        transition: all 0.2s ease;
+      }
+      .page.pinned-hidden {
+        grid-template-columns: 1fr;
+      }
+
+      header {
+        grid-column: 1/-1;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .left {
+        max-width: 820px;
+      }
+      h1 {
+        font-size: 1.5rem;
+        color: #fff;
+        font-weight: 900;
+      }
+      .subtitle {
+        color: var(--muted);
+        margin-top: 6px;
+        font-weight: 600;
+      }
+
+      .controls {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+      input[type="search"],
+      select {
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: #fff;
+        color: var(--text-dark);
+      }
+      .btn {
+        padding: 8px 12px;
+        border-radius: 10px;
+        border: none;
+        background: rgba(255, 255, 255, 0.06);
+        color: inherit;
+        cursor: pointer;
+        font-weight: 800;
+      }
+      .btn.primary {
+        background: linear-gradient(90deg, var(--accent), var(--accent-2));
+        color: var(--text-dark);
+      }
+
+      /* Hero */
+      .hero {
+        grid-column: 1/-1;
+        position: relative;
+        border-radius: var(--card-radius);
         overflow: hidden;
-        box-shadow: 0 12px 40px rgba(2, 8, 23, 0.28);
+        height: 300px;
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.5);
       }
       .hero img {
-        position: absolute;
-        inset: 0;
         width: 100%;
         height: 100%;
         object-fit: cover;
-        object-position: center center;
-        display: block;
+        object-position: center top;
         transition: transform 0.6s ease;
+        display: block;
       }
-      @media (min-width: 1000px) {
+      @media (max-width: 999px) {
         .hero img {
-          object-position: center top;
-          transform-origin: center top;
-          transform: scale(1.03);
+          object-position: center center;
         }
       }
       .hero::after {
@@ -72,182 +125,20 @@
         background: linear-gradient(
           to bottom,
           rgba(0, 0, 0, 0) 36%,
-          rgba(0, 0, 0, 0.82) 100%
+          rgba(0, 0, 0, 0.86) 100%
         );
         pointer-events: none;
       }
-      .hero .hero-header {
-        position: relative;
+      .hero .overlay {
+        position: absolute;
+        left: 20px;
+        bottom: 20px;
         z-index: 2;
-        display: flex;
-        align-items: flex-end;
-        justify-content: space-between;
-        padding: 22px;
         color: #fff;
       }
-      .hero h1 {
-        font-size: 1.6rem;
-        margin: 0;
-        font-weight: 900;
-        letter-spacing: 0.4px;
-        text-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-        -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.18);
-      }
-      .hero .hint {
-        font-size: 0.95rem;
-        opacity: 0.95;
-        max-width: 720px;
-        line-height: 1.2;
-      }
 
-      /* controls & month buttons */
-      .controls {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        flex-wrap: wrap;
-        margin-top: 10px;
-      }
-      input[type="search"],
-      select {
-        padding: 10px 12px;
-        border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        background: rgba(255, 255, 255, 0.96);
-        color: #072238;
-      }
-      .btn {
-        padding: 8px 12px;
-        border-radius: 10px;
-        border: none;
-        background: rgba(255, 255, 255, 0.06);
-        cursor: pointer;
-        font-weight: 700;
-      }
-      .btn.primary {
-        background: linear-gradient(90deg, var(--accent), #ffecb5);
-        color: var(--accent-text);
-      }
-      .month-buttons {
-        display: flex;
-        gap: 6px;
-        flex-wrap: wrap;
-      }
-      .month-btn {
-        padding: 6px 10px;
-        border-radius: 999px;
-        border: none;
-        background: rgba(255, 255, 255, 0.06);
-        color: #fff;
-        cursor: pointer;
-        font-weight: 700;
-      }
-      .month-btn.active {
-        background: linear-gradient(90deg, var(--accent), #ffecb5);
-        color: var(--accent-text);
-      }
-
-      /* pinned panel (hidden when empty) */
-      .pinned-column {
-        position: fixed;
-        right: 18px;
-        top: 110px;
-        width: var(--panel-width);
-        max-height: calc(100vh - 140px);
-        overflow: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        padding: 12px;
-        z-index: 999;
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 20px 60px rgba(2, 8, 23, 0.18);
-        transform: translateX(0);
-        transition: transform 0.35s, opacity 0.35s;
-      }
-      .pinned-column.hidden {
-        transform: translateX(20px);
-        opacity: 0;
-        pointer-events: none;
-      }
-      .pinned-column .panel-top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-      }
-      .clear-btn {
-        background: #ffecb5;
-        border: none;
-        padding: 6px 8px;
-        border-radius: 8px;
-        cursor: pointer;
-        font-weight: 700;
-      }
-      .pinned-chip {
-        background: #fff;
-        padding: 10px;
-        border-radius: 10px;
-        min-width: 200px;
-        border: 1px solid rgba(2, 8, 23, 0.04);
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-      .pinned-row-top {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      .pinned-title {
-        font-weight: 800;
-        color: #072238;
-        font-size: 14px;
-      }
-      .pinned-sub {
-        font-size: 12px;
-        color: #2a3b57;
-      }
-      .pinned-count {
-        font-weight: 800;
-        color: var(--accent);
-      }
-      .pinned-progress {
-        height: 6px;
-        background: rgba(2, 8, 23, 0.06);
-        border-radius: 6px;
-        overflow: hidden;
-      }
-      .pinned-progress > i {
-        display: block;
-        height: 100%;
-        background: linear-gradient(90deg, var(--accent), #ffb84d);
-        width: 0%;
-      }
-      #pinnedToggleBtn {
-        position: fixed;
-        right: 18px;
-        top: 60%;
-        transform: translateY(-50%);
-        z-index: 1000;
-        width: 52px;
-        height: 52px;
-        border-radius: 999px;
-        border: none;
-        background: linear-gradient(180deg, var(--accent), #ffecb5);
-        box-shadow: 0 10px 30px rgba(2, 8, 23, 0.16);
-        cursor: pointer;
-        font-weight: 900;
-      }
-      #pinnedToggleBtn.hidden {
-        display: none;
-      }
-
-      /* main */
+      /* Main */
       .wrap {
-        max-width: 1200px;
-        margin: 18px auto 120px;
         padding: 0 12px;
       }
       .top-row {
@@ -257,17 +148,6 @@
         gap: 16px;
         margin-bottom: 8px;
       }
-      #pageTitle {
-        font-size: 1.4rem;
-        color: #fff;
-        margin: 0;
-      }
-      #subtitle {
-        color: rgba(255, 255, 255, 0.92);
-        margin-top: 6px;
-      }
-
-      /* year progress */
       .year-progress {
         height: 8px;
         background: rgba(255, 255, 255, 0.06);
@@ -279,10 +159,10 @@
         display: block;
         height: 100%;
         width: 0%;
-        background: linear-gradient(90deg, var(--accent), #ffb84d);
+        background: linear-gradient(90deg, var(--accent), var(--accent-2));
       }
 
-      /* grid + month headings */
+      /* Grid */
       .grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -293,36 +173,28 @@
         padding: 8px 0;
         font-weight: 900;
         color: #fff;
-        opacity: 0.95;
         border-bottom: 1px solid rgba(255, 255, 255, 0.04);
         cursor: pointer;
       }
 
-      /* cards consistent */
+      /* Card */
       .card {
         position: relative;
         border-radius: 12px;
-        background: linear-gradient(180deg, #ffffff, #fafafa);
+        background: linear-gradient(180deg, #ffffff, #fafcff);
+        color: var(--text-dark);
         padding: 16px;
         box-shadow: 0 10px 30px rgba(2, 8, 23, 0.08);
         display: flex;
         flex-direction: column;
         min-height: 170px;
-        transition: transform 0.18s, box-shadow 0.18s;
+        transition: transform 0.22s, box-shadow 0.22s, filter 0.22s,
+          opacity 0.22s;
+        overflow: hidden;
       }
-      .pin-btn {
-        position: absolute;
-        right: 12px;
-        top: 12px;
-        width: 36px;
-        height: 36px;
-        border-radius: 8px;
-        border: none;
-        background: rgba(7, 18, 43, 0.04);
-        cursor: pointer;
-      }
-      .pin-btn.active {
-        background: linear-gradient(90deg, #ffd24a, #ffecb5);
+      .card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 26px 60px rgba(2, 8, 23, 0.12);
       }
       .month-strip {
         position: absolute;
@@ -333,214 +205,396 @@
         border-top-left-radius: 12px;
         border-bottom-left-radius: 12px;
       }
-      .card-content {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        flex: 1;
+      .pin-btn {
+        position: absolute;
+        right: 12px;
+        top: 12px;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        border: none;
+        background: rgba(7, 18, 43, 0.04);
+        cursor: pointer;
+        font-weight: 900;
       }
+      .pin-btn.active {
+        background: linear-gradient(90deg, var(--accent), var(--accent-2));
+        color: var(--text-dark);
+        box-shadow: 0 12px 36px rgba(255, 180, 60, 0.12);
+      }
+
       .title {
-        min-height: 44px;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
       }
-      .fill {
-        display: inline-block;
-        background-clip: text;
-        color: transparent;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 800;
+      .title .text {
+        font-weight: 900;
         font-size: 18px;
-      }
-      .fallback {
-        font-weight: 800;
-        font-size: 18px;
-        color: #072238;
+        color: var(--text-dark);
+        letter-spacing: -0.2px;
       }
       .meta {
         font-size: 13px;
         color: #27506b;
         min-height: 18px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
       .countdown {
         font-weight: 800;
-        font-size: 15px;
+        font-size: 14px;
         color: var(--accent);
         min-height: 22px;
       }
       .status {
         font-size: 13px;
         color: #16344f;
-        font-weight: 600;
+        font-weight: 700;
         min-height: 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
       .date-badge {
         align-self: flex-start;
         padding: 6px 8px;
-        border-radius: 9px;
+        border-radius: 8px;
         background: rgba(7, 18, 43, 0.04);
         font-weight: 800;
       }
       .big-letter {
         position: absolute;
-        right: -12px;
-        top: -18px;
-        font-weight: 800;
-        font-size: 64px;
-        color: rgba(7, 18, 43, 0.06);
+        right: -6px;
+        top: -14px;
+        font-size: 84px;
+        font-weight: 900;
+        color: rgba(7, 18, 43, 0.05);
         pointer-events: none;
       }
 
       .card.finished {
-        opacity: 0.68;
-        filter: grayscale(40%);
+        opacity: 0.72;
+        filter: grayscale(0.45);
       }
       .card.happening {
-        box-shadow: 0 16px 40px rgba(255, 90, 70, 0.1);
-        animation: glow 2.6s infinite;
-      }
-      @keyframes glow {
-        0% {
-          transform: translateY(0);
-        }
-        50% {
-          transform: translateY(-3px);
-        }
-        100% {
-          transform: translateY(0);
-        }
+        box-shadow: 0 26px 80px rgba(255, 75, 75, 0.08);
+        border: 1px solid rgba(255, 120, 80, 0.03);
       }
 
-      /* museum gallery */
-      .gallery-wrap {
-        max-width: 1200px;
-        margin: 18px auto 18px;
-        padding: 0 12px;
-      }
-      .gallery-month {
-        margin-bottom: 18px;
-      }
-      .gallery-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 10px;
-      }
-      .gallery-thumb {
-        position: relative;
-        height: 120px;
-        border-radius: 10px;
+      /* Present mode (fullscreen, big centered card view) */
+      body.present-mode {
+        background: #000;
         overflow: hidden;
-        cursor: pointer;
-        background: #ddd;
       }
-      .gallery-thumb img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
+      body.present-mode header,
+      body.present-mode .controls,
+      body.present-mode .wrap > .top-row,
+      body.present-mode .hero {
+        display: none !important;
       }
-      .gallery-caption {
-        position: absolute;
-        left: 8px;
-        bottom: 8px;
-        padding: 4px 8px;
-        background: rgba(0, 0, 0, 0.45);
-        color: #fff;
-        border-radius: 6px;
-        font-size: 12px;
+      body.present-mode .grid {
+        display: flex;
+        gap: 24px;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        padding: 40px;
+      }
+      body.present-mode .card {
+        width: 820px;
+        height: 520px;
+        min-height: 0;
+        border-radius: 18px;
+        font-size: 20px;
+        display: flex;
+        align-items: flex-start;
+        padding: 28px;
+        box-shadow: 0 40px 120px rgba(2, 8, 23, 0.6);
+      }
+      #presentExit {
+        position: fixed;
+        right: 18px;
+        top: 18px;
+        z-index: 2000;
+        display: none;
       }
 
-      /* lightbox */
-      .lightbox {
+      /* Present slide overlay (images/captions) */
+      .present-slide {
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.92);
         display: none;
         align-items: center;
         justify-content: center;
         z-index: 2000;
+        background: linear-gradient(
+          180deg,
+          rgba(0, 0, 0, 0.85),
+          rgba(0, 0, 0, 0.95)
+        );
       }
-      .lightbox.open {
+      .present-slide.open {
         display: flex;
       }
-      .lightbox img {
-        max-width: 92%;
-        max-height: 82%;
+      .present-slide .slide-inner {
+        max-width: 1400px;
+        width: 100%;
+        max-height: 90vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        gap: 12px;
+      }
+      .present-slide img {
+        max-width: 100%;
+        max-height: 90vh;
         object-fit: contain;
-        border-radius: 8px;
+        border-radius: 12px;
+        box-shadow: 0 40px 150px rgba(0, 0, 0, 0.6);
       }
-      .lightbox .caption {
+      .present-slide .slide-caption {
+        position: absolute;
+        left: 40px;
+        bottom: 40px;
         color: #fff;
-        margin-top: 12px;
-        font-weight: 700;
+        background: rgba(0, 0, 0, 0.35);
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-weight: 800;
       }
-      .lightbox .controls {
+      .present-slide .controls {
         position: absolute;
         inset: 0;
         display: flex;
         align-items: center;
         justify-content: space-between;
         padding: 24px;
+        pointer-events: none;
       }
-      .lightbox button {
+      .present-slide button {
+        pointer-events: auto;
         background: rgba(255, 255, 255, 0.06);
         border: none;
         color: #fff;
-        padding: 10px;
-        border-radius: 10px;
+        padding: 10px 12px;
+        border-radius: 8px;
         cursor: pointer;
+        font-weight: 800;
       }
 
-      /* responsive */
+      /* Gallery - square cubicles */
+      .gallery-wrap {
+        margin-top: 18px;
+      }
+      .gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 12px;
+      }
+      .cubicle {
+        position: relative;
+        padding-top: 100%;
+        border-radius: 12px;
+        overflow: hidden;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.02),
+          rgba(255, 255, 255, 0.01)
+        );
+        box-shadow: 0 10px 36px rgba(2, 8, 23, 0.12);
+        cursor: pointer;
+        transition: transform 0.28s, box-shadow 0.28s;
+        display: block;
+        border: none;
+        text-align: left;
+        color: inherit;
+      }
+      .cubicle:hover {
+        transform: translateY(-6px) scale(1.01);
+        box-shadow: 0 28px 80px rgba(2, 8, 23, 0.18);
+      }
+      .cubicle img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .cubicle .caption {
+        position: absolute;
+        left: 8px;
+        bottom: 8px;
+        background: rgba(0, 0, 0, 0.45);
+        color: #fff;
+        padding: 6px 8px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 12px;
+      }
+
+      /* Pinned panel */
+      .pinned-column {
+        position: sticky;
+        top: 22px;
+        height: calc(100vh - 44px);
+        padding: 12px;
+        background: #fff;
+        color: var(--text-dark);
+        border-radius: 12px;
+        box-shadow: 0 26px 80px rgba(2, 8, 23, 0.12);
+        overflow: auto;
+      }
+      .pinned-column.hidden {
+        display: none;
+      }
+      .pinned-chip {
+        background: #fff;
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0 12px 36px rgba(2, 8, 23, 0.06);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .pin-empty {
+        color: #6b7b8d;
+        text-align: center;
+        padding: 26px 12px;
+        font-size: 14px;
+      }
+
+      /* pinned toggle floating button (when panel hidden but pins exist) */
+      #pinnedToggleBtn {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        z-index: 1500;
+        width: 56px;
+        height: 56px;
+        border-radius: 999px;
+        border: none;
+        background: linear-gradient(180deg, var(--accent), var(--accent-2));
+        box-shadow: 0 10px 36px rgba(2, 8, 23, 0.16);
+        cursor: pointer;
+        font-size: 20px;
+        display: none;
+      }
+
+      /* Lightbox */
+      .lightbox {
+        position: fixed;
+        inset: 0;
+        background: rgba(1, 4, 8, 0.88);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1200;
+        padding: 20px;
+      }
+      .lightbox.open {
+        display: flex;
+      }
+      .lb-inner {
+        max-width: 1100px;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+      .lb-inner img {
+        max-width: 100%;
+        max-height: 80vh;
+        object-fit: contain;
+        border-radius: 10px;
+      }
+      .lb-caption {
+        color: #fff;
+        font-weight: 700;
+      }
+      .lb-controls {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px;
+        pointer-events: none;
+      }
+      .lb-controls button {
+        pointer-events: auto;
+        background: rgba(255, 255, 255, 0.06);
+        border: none;
+        color: #fff;
+        padding: 10px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 800;
+      }
+
+      /* Responsive tweaks */
       @media (max-width: 900px) {
-        .pinned-column {
-          right: 12px;
-          left: 12px;
-          bottom: 18px;
-          top: auto;
-          display: flex;
-          flex-direction: row;
-          max-height: 120px;
-          padding: 8px;
-          overflow: auto;
+        .page {
+          grid-template-columns: 1fr;
         }
-        #pinnedToggleBtn {
-          display: none;
+        .pinned-column {
+          position: fixed;
+          right: 12px;
+          bottom: 12px;
+          width: 320px;
+          height: auto;
+          z-index: 1100;
+          transform: translateY(12px);
         }
         .hero {
-          height: 260px;
+          height: 220px;
         }
         .big-letter {
           font-size: 48px;
         }
+        #pinnedToggleBtn {
+          right: 12px;
+          bottom: 12px;
+        }
       }
 
-      /* focus */
+      /* small animations */
+      .fade-in {
+        animation: fadeIn 0.36s ease both;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
       :focus {
         outline: 3px solid rgba(255, 255, 255, 0.06);
-        outline-offset: 3px;
+        outline-offset: 4px;
       }
     </style>
   </head>
   <body>
-    <!-- HERO -->
-    <section class="hero" aria-label="Hero">
-      <img
-        id="heroImg"
-        alt="Maxwell banner"
-        src="https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/04/VideoCover-1.jpeg?resize=767%2C500&ssl=1"
-        crossorigin="anonymous"
-      />
-      <div class="hero-header" role="presentation">
-        <div>
-          <h1>Maxwell Events Countdown</h1>
-          <div class="hint" id="heroSubtitle">2025-2026 schedule</div>
+    <div class="page pinned-hidden" id="root">
+      <header>
+        <div class="left">
+          <h1>
+            Maxwell Events Countdown —
+            <span style="font-weight: 900">2025–2026</span>
+          </h1>
+          <div class="subtitle">2025–2026 schedule</div>
 
-          <div
-            class="controls"
-            role="region"
-            aria-label="Search and filters"
-            style="margin-top: 12px"
-          >
+          <div class="controls" role="region" aria-label="Search and controls">
             <input
               id="searchBox"
               type="search"
@@ -548,7 +602,7 @@
               aria-label="Search events"
             />
             <select id="monthFilter" aria-label="Filter by month">
-              <option value="">All Months</option>
+              <option value="">All months</option>
               <option value="01">January</option>
               <option value="02">February</option>
               <option value="03">March</option>
@@ -562,144 +616,206 @@
               <option value="11">November</option>
               <option value="12">December</option>
             </select>
-            <div
-              id="monthButtons"
-              class="month-buttons"
-              aria-hidden="false"
-            ></div>
-            <div style="display: flex; gap: 8px; align-items: center">
-              <button id="gridBtn" class="btn primary" title="Grid view">
-                Grid
-              </button>
-              <button id="museumBtn" class="btn" title="Gallery (Museum)">
-                Museum
-              </button>
-              <button id="presentBtn" class="btn" title="Present mode">
-                Present
-              </button>
+
+            <button id="gridBtn" class="btn primary" title="Grid view">
+              Grid
+            </button>
+            <button id="museumBtn" class="btn" title="Museum gallery view">
+              Museum
+            </button>
+            <button
+              id="presentBtn"
+              class="btn"
+              title="Present (fullscreen) view"
+            >
+              Present
+            </button>
+          </div>
+        </div>
+
+        <div style="text-align: right; color: var(--muted); font-weight: 700">
+          Maxwell • 2025–26
+        </div>
+      </header>
+
+      <div class="hero fade-in" id="hero">
+        <img
+          id="heroImg"
+          alt="Maxwell banner"
+          src="https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/04/VideoCover-1.jpeg?resize=767%2C500&ssl=1"
+          crossorigin="anonymous"
+        />
+        <div class="overlay">
+          <div style="font-weight: 900; font-size: 18px">
+            School Events Countdown
+          </div>
+          <div style="color: var(--muted); margin-top: 4px">
+            Interactive schedule • gallery • pinned events
+          </div>
+        </div>
+      </div>
+
+      <main class="wrap">
+        <div class="top-row">
+          <div>
+            <h1 id="pageTitle" style="color: #fff">School Events Countdown</h1>
+            <div id="subtitle">2025-2026 schedule</div>
+
+            <div class="year-progress" aria-hidden="true">
+              <i id="yearProgressBar" style="width: 0%"></i>
             </div>
           </div>
-        </div>
-        <div style="text-align: right; color: #fff; font-weight: 700">
-          Maxwell • 2025–26
-        </div>
-      </div>
-    </section>
 
-    <!-- ambient -->
-    <canvas
-      id="stars"
-      aria-hidden="true"
-      style="position: fixed; inset: 0; z-index: -1; pointer-events: none"
-    ></canvas>
-
-    <!-- next up -->
-    <section
-      id="nextUp"
-      style="
-        display: none;
-        max-width: 1200px;
-        margin: 12px auto;
-        padding: 12px 16px;
-        border-left: 6px solid var(--accent);
-        border-radius: 10px;
-        background: rgba(255, 255, 255, 0.95);
-        color: #072238;
-        box-shadow: 0 8px 30px rgba(2, 8, 23, 0.12);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      "
-    >
-      <div>
-        <div style="font-weight: 700; color: #0b4b6f">Next Up</div>
-        <div class="detail">
-          <strong id="nextUpName">—</strong> <span id="nextUpDetail"></span>
-        </div>
-      </div>
-      <div style="text-align: right">
-        <div style="font-size: 12px; color: #0b2547">Tip</div>
-        <div style="font-size: 12px; color: #07284f">
-          Pin events using the 📌 on cards or drag into the panel; in Museum
-          click images to open fullscreen.
-        </div>
-      </div>
-    </section>
-
-    <!-- pinned panel (hidden when empty) -->
-    <aside
-      id="pinnedColumn"
-      class="pinned-column hidden"
-      aria-label="Pinned events"
-    >
-      <div class="panel-top">
-        <strong style="font-size: 14px; color: #072238">Pinned</strong>
-        <div>
-          <button id="exportPins" class="btn" title="Export pinned">
-            Export
-          </button>
-          <button id="clearPins" class="clear-btn" title="Clear pins">
-            Clear
-          </button>
-          <button
-            id="pinCollapseBtn"
-            class="btn"
-            aria-pressed="false"
-            title="Collapse panel"
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+              align-items: flex-end;
+              color: #fff;
+              font-weight: 700;
+            "
           >
-            Hide
-          </button>
-        </div>
-      </div>
-      <!-- chips injected here -->
-    </aside>
-
-    <button id="pinnedToggleBtn" class="hidden" title="Open pinned panel">
-      📌
-    </button>
-
-    <main class="wrap">
-      <div class="top-row">
-        <div>
-          <h1 id="pageTitle">School Events Countdown</h1>
-          <div id="subtitle">2025-2026 schedule</div>
-
-          <!-- year progress (computed) -->
-          <div class="year-progress" aria-hidden="true">
-            <i id="yearProgressBar" style="width: 0%"></i>
+            Maxwell • 2025–26
           </div>
         </div>
-        <div
+
+        <section
+          id="nextUp"
           style="
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            align-items: flex-end;
-            color: #fff;
-            font-weight: 700;
+            display: none;
+            margin-bottom: 12px;
+            padding: 12px;
+            border-left: 6px solid var(--accent);
+            background: #fff;
+            color: var(--text-dark);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(2, 8, 23, 0.08);
           "
         >
-          Maxwell • 2025–26
-        </div>
-      </div>
+          <div style="font-weight: 800; color: #0b4b6f">Next Up</div>
+          <div style="margin-top: 6px">
+            <strong id="nextUpName">—</strong> <span id="nextUpDetail"></span>
+          </div>
+        </section>
 
-      <!-- Gallery (Museum mode) -->
-      <section
-        id="gallerySection"
-        class="gallery-wrap"
-        style="display: none"
-        aria-hidden="true"
+        <section id="stage">
+          <div id="eventsGrid" class="grid" aria-live="polite"></div>
+        </section>
+
+        <section
+          id="galleryControls"
+          style="margin-top: 18px; display: flex; gap: 8px; align-items: center"
+        >
+          <div style="font-weight: 900; color: #fff">Gallery:</div>
+          <button class="btn" id="galleryByMonthBtn">By Month</button>
+          <button class="btn" id="galleryCampusBtn">Campus</button>
+          <button class="btn" id="galleryAllBtn">All</button>
+        </section>
+
+        <section
+          id="gallerySection"
+          class="gallery-wrap"
+          style="display: none; margin-top: 12px"
+        >
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 10px;
+            "
+          >
+            <div style="font-weight: 900; color: #fff">Museum Gallery</div>
+            <div style="color: var(--muted); font-size: 13px">
+              Square cubicles • click to open
+            </div>
+          </div>
+          <div id="gallery" class="gallery" aria-live="polite"></div>
+        </section>
+      </main>
+
+      <aside
+        id="pinnedColumn"
+        class="pinned-column hidden"
+        aria-label="Pinned events"
       >
-        <!-- month groups injected here when museum active -->
-      </section>
+        <div
+          class="panel-top"
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          "
+        >
+          <strong style="font-size: 14px; color: var(--text-dark)"
+            >Pinned</strong
+          >
+          <div style="display: flex; gap: 6px">
+            <button id="exportPins" class="btn" title="Export pinned">
+              Export
+            </button>
+            <button id="clearPins" class="btn" title="Clear pins">Clear</button>
+            <button id="pinCollapseBtn" class="btn" title="Collapse panel">
+              Hide
+            </button>
+          </div>
+        </div>
 
-      <!-- Event grid -->
-      <section id="stage">
-        <div id="eventsGrid" class="grid" aria-live="polite"></div>
-      </section>
-    </main>
+        <div id="pinsList" style="margin-top: 10px"></div>
+        <div id="noPins" class="pin-empty" style="display: none">
+          No pinned events — pin using the 📌 on a card
+        </div>
+      </aside>
+    </div>
 
-    <!-- Lightbox / fullscreen -->
+    <button id="pinnedToggleBtn" title="Open pinned events">📌</button>
+    <button id="presentExit" class="btn" style="display: none">
+      Exit Present
+    </button>
+
+    <!-- Present slide area (fullscreen slideshow) -->
+    <div id="presentSlide" class="present-slide" aria-hidden="true">
+      <div class="slide-inner">
+        <button
+          id="psPrev"
+          class="btn"
+          style="
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+          "
+        >
+          ◀
+        </button>
+        <div
+          id="psContent"
+          style="
+            max-width: 1100px;
+            max-height: 90vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          "
+        ></div>
+        <button
+          id="psNext"
+          class="btn"
+          style="
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+          "
+        >
+          ▶
+        </button>
+        <div id="psCaption" class="slide-caption"></div>
+      </div>
+    </div>
+
+    <!-- Lightbox -->
     <div
       id="lightbox"
       class="lightbox"
@@ -707,13 +823,13 @@
       role="dialog"
       aria-modal="true"
     >
-      <div class="controls" aria-hidden="false">
+      <div class="lb-controls">
         <button id="lbPrev" aria-label="Previous">◀</button>
         <button id="lbNext" aria-label="Next">▶</button>
       </div>
-      <div style="text-align: center; max-width: 95%">
+      <div class="lb-inner" style="text-align: center; max-width: 95%">
         <img id="lbImage" alt="" />
-        <div class="caption" id="lbCaption"></div>
+        <div class="lb-caption" id="lbCaption"></div>
         <div style="margin-top: 12px">
           <button id="lbClose" class="btn">Close</button>
         </div>
@@ -721,10 +837,13 @@
     </div>
 
     <script>
-      /* ---------------- data ---------------- */
+      /* =========================
+   Data & assets
+   ========================= */
       const HERO =
         "https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/04/VideoCover-1.jpeg?resize=767%2C500&ssl=1";
 
+      /* Events list (kept complete) */
       const EVENTS = [
         { name: "Summer Holiday", start: "2025-08-01", end: "2025-08-09" },
         {
@@ -819,7 +938,7 @@
         12: "#7bdbdb",
       };
 
-      /* Sample museum/gallery photos (month ties so month filters still work in museum) */
+      /* museum photos (monthly) */
       const MUSEUM_PHOTOS = [
         {
           src: HERO,
@@ -859,6 +978,46 @@
         },
       ];
 
+      /* CAMPUS photos - replaced first 4 with the URLs you gave */
+      const CAMPUS_PHOTOS = [
+        {
+          src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmV27Af6dGvJoR-LVUGmkCauwQepWKLwi7Zw&s",
+          caption: "Campus 1",
+        },
+        {
+          src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTHDr-_KeMgIf8tN3PHxytKFN7lbUhaLuPpkQ&s",
+          caption: "Campus 2",
+        },
+        {
+          src: "https://static.wixstatic.com/media/b62f56_ce88667acf42430fbea4c12175730dd3.jpg/v1/fill/w_960,h_640,al_c,q_85,enc_avif,quality_auto/b62f56_ce88667acf42430fbea4c12175730dd3.jpg",
+          caption: "Campus 3",
+        },
+        {
+          src: "https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/03/EsoPheb.jpeg?fit=1400%2C1400&ssl=1",
+          caption: "Campus 4",
+        },
+        {
+          src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQwjR3VnDRD6LdSrblZYVliJaRRigcs-tRg1A&s",
+          caption: "Campus 5",
+        },
+        {
+          src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_UAdf79fDLKoBvHdkMag3M7D2yQ_LqeaMfEHAc2SL3tjaM2YgYv7lnp03azSa0QtDdfs&usqp=CAU",
+          caption: "Campus 6",
+        },
+        {
+          src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRSf7j4BoCP9Y4wsnOAPCmjaGtQ--w7biBxRWvnQXHA2_Jo0WCWdGmEeX5rB87zfhaWHQo&usqp=CAU",
+          caption: "Campus 7",
+        },
+        {
+          src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQF4CttDiXRUIEdVk0US158Ob3-siokVF2RSppthCTBNSNtkbNshzNTVMTK0UxNVIqfpVc&usqp=CAU",
+          caption: "Campus 8",
+        },
+        {
+          src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTLWlAao-P3ibqUPD9n0AmP5nHL0BzwrYsPMRD7yNfh0To0pjm4gfLZkDMCY2OoesrqEXo&usqp=CAU",
+          caption: "Campus 9",
+        },
+      ];
+
       /* ---------------- helpers ---------------- */
       const $ = (id) => document.getElementById(id);
       const pad = (n) => (n < 10 ? "0" + n : String(n));
@@ -874,35 +1033,14 @@
       };
       const formatISO = (d) =>
         `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-      const shortMonth = (d) => d.toLocaleString("en", { month: "short" });
-      const formatDateBadge = (start, end) => {
-        const s = parseStart(start);
-        const e = end ? parseStart(end) : null;
-        if (!e) return `${shortMonth(s)} ${s.getDate()}`;
-        if (
-          s.getFullYear() === e.getFullYear() &&
-          s.getMonth() === e.getMonth()
-        )
-          return `${shortMonth(s)} ${s.getDate()}–${e.getDate()}`;
-        return `${shortMonth(s)} ${s.getDate()} – ${shortMonth(
-          e
-        )} ${e.getDate()}`;
-      };
-      function slugify(name, idx) {
-        return (
-          String(name)
-            .toLowerCase()
-            .replace(/[’'"]/g, "")
-            .replace(/[:\/\\(),.!?#\u2013\u2014]/g, "")
-            .replace(/\s+/g, "-")
-            .replace(/[^a-z0-9\-]/g, "") +
-          "-" +
-          idx
+      const escapeHtml = (s) =>
+        String(s || "").replace(
+          /[&<>"]/g,
+          (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])
         );
-      }
       function eventIcon(name) {
-        const n = name.toLowerCase();
-        if (/exam|final|midterm|test|act|map/.test(n)) return "📝";
+        const n = (name || "").toLowerCase();
+        if (/exam|final|test|act|map/.test(n)) return "📝";
         if (
           /break|holiday|christmas|spring|long weekend|summer|vacation/.test(n)
         )
@@ -912,50 +1050,58 @@
         if (/sports|track|field/.test(n)) return "🏅";
         return "📅";
       }
+      function formatDateBadge(start, end) {
+        const s = parseStart(start);
+        const e = end ? parseStart(end) : null;
+        if (!e)
+          return `${s.toLocaleString("en", { month: "short" })} ${s.getDate()}`;
+        if (
+          s.getFullYear() === e.getFullYear() &&
+          s.getMonth() === e.getMonth()
+        )
+          return `${s.toLocaleString("en", {
+            month: "short",
+          })} ${s.getDate()}–${e.getDate()}`;
+        return `${s.toLocaleString("en", {
+          month: "short",
+        })} ${s.getDate()} – ${e.toLocaleString("en", {
+          month: "short",
+        })} ${e.getDate()}`;
+      }
 
-      /* ---------------- state ---------------- */
-      let items = [];
-      let tickHandle = null;
-      let mode = "grid";
-      const STORAGE_KEY = "maxwell_positions_v2";
-      const PINNED_KEY = "maxwell_pinned_v2";
-      const PIN_LIMIT = 8;
-
+      /* ---------------- pinned storage ---------------- */
+      const PIN_KEY = "maxwell_pinned_v4";
       function getPinned() {
         try {
-          return JSON.parse(localStorage.getItem(PINNED_KEY) || "[]");
+          return JSON.parse(localStorage.getItem(PIN_KEY) || "[]");
         } catch (e) {
           return [];
         }
       }
-      function setPinned(arr) {
-        localStorage.setItem(PINNED_KEY, JSON.stringify(arr));
+      function savePinned(arr) {
+        localStorage.setItem(PIN_KEY, JSON.stringify(arr));
         renderPinnedPanel();
+      }
+      function togglePin(i) {
+        const pins = getPinned();
+        const p = pins.indexOf(i);
+        if (p === -1) pins.unshift(i);
+        else pins.splice(p, 1);
+        savePinned(pins);
       }
       function isPinned(i) {
         return getPinned().includes(i);
       }
-      function togglePin(i) {
-        const arr = getPinned();
-        const p = arr.indexOf(i);
-        if (p === -1) {
-          arr.unshift(i);
-          while (arr.length > 50) arr.pop();
-        } else arr.splice(p, 1);
-        setPinned(arr);
-      }
-      function savePos(id, x, y) {
-        try {
-          const s = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-          s[id] = { x, y, at: Date.now() };
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-        } catch (e) {}
-      }
 
       /* ---------------- starfield ---------------- */
-      (function () {
-        const c = $("stars");
-        if (!c) return;
+      (function initStars() {
+        const c = document.createElement("canvas");
+        c.id = "starsCanvas";
+        c.style.position = "fixed";
+        c.style.inset = "0";
+        c.style.zIndex = "-1";
+        c.style.pointerEvents = "none";
+        document.body.appendChild(c);
         const ctx = c.getContext("2d");
         function r() {
           c.width = innerWidth;
@@ -968,13 +1114,13 @@
           y: Math.random() * c.height,
           r: Math.random() * 1.6 + 0.2,
           dy: Math.random() * 0.5 + 0.02,
-          alpha: 0.2 + Math.random() * 0.6,
+          a: 0.2 + Math.random() * 0.6,
         }));
         function tick() {
           ctx.clearRect(0, 0, c.width, c.height);
           for (const s of stars) {
             ctx.globalAlpha =
-              s.alpha * (0.7 + Math.sin(Date.now() / 1000 + s.x) * 0.3);
+              s.a * (0.7 + Math.sin(Date.now() / 1000 + s.x) * 0.3);
             ctx.beginPath();
             ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
             ctx.fillStyle = "#ffffff";
@@ -990,7 +1136,11 @@
         tick();
       })();
 
-      /* ---------------- rendering events ---------------- */
+      /* ---------------- rendering grid ---------------- */
+      let items = [],
+        tickHandle = null,
+        mode = "grid",
+        galleryFilter = "byMonth";
       function sortEvents() {
         EVENTS.sort((a, b) => parseStart(a.start) - parseStart(b.start));
       }
@@ -1004,13 +1154,13 @@
       }
       function renderNextUp() {
         const n = findNext();
-        const b = $("nextUp");
-        if (!b) return;
+        const el = $("nextUp");
+        if (!el) return;
         if (!n) {
-          b.style.display = "none";
+          el.style.display = "none";
           return;
         }
-        b.style.display = "flex";
+        el.style.display = "";
         $("nextUpName").textContent = n.name;
         $("nextUpDetail").textContent = n.end
           ? `From ${formatISO(parseStart(n.start))} → ${formatISO(
@@ -1019,47 +1169,46 @@
           : `On ${formatISO(parseStart(n.start))}`;
       }
 
-      /* update single card countdown/status */
-      function updateOne(item, now) {
-        const { id, start, end, el: card } = item;
-        const cd = document.getElementById("cd-" + id);
-        const st = document.getElementById("st-" + id);
-        if (!cd || !st) return;
-        if (now.getTime() < start.getTime()) {
-          card.classList.remove("happening", "finished");
-          card.classList.add("upcoming");
-          const diff = start.getTime() - now.getTime();
-          const d = Math.floor(diff / 86400000);
-          const h = Math.floor((diff % 86400000) / 3600000);
-          const m = Math.floor((diff % 3600000) / 60000);
-          const s = Math.floor((diff % 60000) / 1000);
-          cd.textContent = `${d}d ${h}h ${m}m ${s}s left`;
-          st.innerHTML = "⏳ Coming soon";
-        } else if (now.getTime() > end.getTime()) {
-          card.classList.remove("upcoming", "happening");
-          card.classList.add("finished");
-          cd.textContent = `Ended on ${formatISO(end)}`;
-          st.innerHTML = "✅ Finished";
-        } else {
-          card.classList.remove("upcoming", "finished");
-          card.classList.add("happening");
-          const diff = end.getTime() - now.getTime();
-          const d = Math.floor(diff / 86400000);
-          const h = Math.floor((diff % 86400000) / 3600000);
-          const m = Math.floor((diff % 3600000) / 60000);
-          const s = Math.floor((diff % 60000) / 1000);
-          cd.textContent = `${d}d ${h}h ${m}m ${s}s remaining`;
-          st.innerHTML = "🔴 Happening now";
-        }
+      /* update countdown/status for items array */
+      function updateAllCountdowns(now) {
+        if (!now) now = new Date();
+        items.forEach((item) => {
+          const { start, end, el } = item;
+          const cd = el.querySelector(".countdown");
+          const st = el.querySelector(".status");
+          if (now.getTime() < start.getTime()) {
+            el.classList.remove("happening", "finished");
+            el.classList.add("upcoming");
+            const diff = start.getTime() - now.getTime();
+            const d = Math.floor(diff / 86400000);
+            const h = Math.floor((diff % 86400000) / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            if (cd) cd.textContent = `${d}d ${h}h ${m}m ${s}s left`;
+            if (st) st.textContent = "⏳ Coming soon";
+          } else if (now.getTime() > end.getTime()) {
+            el.classList.remove("upcoming", "happening");
+            el.classList.add("finished");
+            if (cd) cd.textContent = `Ended on ${formatISO(end)}`;
+            if (st) st.textContent = "✅ Finished";
+          } else {
+            el.classList.remove("upcoming", "finished");
+            el.classList.add("happening");
+            const diff = end.getTime() - now.getTime();
+            const d = Math.floor(diff / 86400000);
+            const h = Math.floor((diff % 86400000) / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            if (cd) cd.textContent = `${d}d ${h}h ${m}m ${s}s remaining`;
+            if (st) st.textContent = "🔴 Happening now";
+          }
+        });
+        updatePinnedCounts(now);
       }
 
-      /* render grid grouped by month */
+      /* render all events (grouped by month) */
       function renderAll() {
-        // clear
-        if (tickHandle) {
-          clearInterval(tickHandle);
-          tickHandle = null;
-        }
+        if (tickHandle) clearInterval(tickHandle);
         items = [];
         const grid = $("eventsGrid");
         if (!grid) return;
@@ -1067,12 +1216,12 @@
         sortEvents();
         renderNextUp();
         const q = ($("searchBox").value || "").toLowerCase();
-        const monthVal = $("monthFilter").value || "";
-
+        const monthFilter = $("monthFilter").value || "";
         let currentGroup = "";
+
         EVENTS.forEach((ev, idx) => {
           if (q && !ev.name.toLowerCase().includes(q)) return;
-          if (monthVal && ev.start.slice(5, 7) !== monthVal) return;
+          if (monthFilter && ev.start.slice(5, 7) !== monthFilter) return;
 
           const start = parseStart(ev.start);
           const mmKey = `${start.getFullYear()}-${pad(start.getMonth() + 1)}`;
@@ -1086,7 +1235,6 @@
             heading.dataset.mm = pad(start.getMonth() + 1);
             heading.addEventListener("click", () => {
               $("monthFilter").value = heading.dataset.mm;
-              highlightMonthButton(heading.dataset.mm);
               renderAll();
             });
             grid.appendChild(heading);
@@ -1094,59 +1242,30 @@
 
           const startDate = parseStart(ev.start);
           const endDate = parseEnd(ev.end, startDate);
-          const id = slugify(ev.name, idx);
+          const id = idx;
           const monthColor =
             MONTH_COLORS[pad(startDate.getMonth() + 1)] || "#ccc";
 
           const card = document.createElement("article");
-          card.className = "card";
-          card.setAttribute("data-id", id);
-          card.setAttribute("data-idx", idx);
+          card.className = "card fade-in";
+          card.dataset.idx = String(id);
           card.innerHTML = `
       <div class="month-strip" style="background:${monthColor}"></div>
-      <button class="pin-btn" title="Pin event" aria-label="Pin event" data-idx="${idx}">📌</button>
-      <div class="big-letter">${
+      <button class="pin-btn" aria-label="Pin event">📌</button>
+      <div class="big-letter" aria-hidden="true">${
         ev.name && ev.name[0] ? ev.name[0].toUpperCase() : "E"
       }</div>
-      <div class="card-content">
-        <div class="title" id="title-wrap-${id}">
-          <span class="fill" id="title-fill-${id}">${ev.name}</span>
-          <span class="fallback" id="title-fallback-${id}">${ev.name}</span>
-        </div>
-        <div class="meta">${eventIcon(ev.name)} ${
+      <div class="title"><div class="text">${escapeHtml(ev.name)}</div></div>
+      <div class="meta">${eventIcon(ev.name)} ${
             ev.end
               ? `${formatISO(startDate)} → ${formatISO(parseStart(ev.end))}`
               : formatISO(startDate)
           }</div>
-        <div class="countdown" id="cd-${id}">—</div>
-        <div class="status" id="st-${id}">—</div>
-        <div class="date-badge" id="db-${id}">${formatDateBadge(
-            ev.start,
-            ev.end
-          )}</div>
-      </div>
+      <div class="countdown">—</div>
+      <div class="status">—</div>
+      <div class="date-badge">${formatDateBadge(ev.start, ev.end)}</div>
     `;
           grid.appendChild(card);
-
-          // preload title texture using hero for aesthetic
-          const imgUrl = HERO;
-          (function preload(iid, url) {
-            const im = new Image();
-            im.crossOrigin = "anonymous";
-            im.onload = () => {
-              const f = document.getElementById("title-fill-" + iid);
-              const fb = document.getElementById("title-fallback-" + iid);
-              if (f) {
-                f.style.backgroundImage = `url('${url}')`;
-                f.style.backgroundSize = "cover";
-                f.style.backgroundPosition = "center";
-                f.style.opacity = "1";
-                if (fb) fb.style.opacity = "0";
-              }
-            };
-            im.onerror = () => {};
-            im.src = url;
-          })(id, imgUrl);
 
           items.push({
             id,
@@ -1157,460 +1276,676 @@
             idx,
           });
 
-          // pin button
+          // pin button wiring
           const pb = card.querySelector(".pin-btn");
-          if (pb) {
-            const refresh = () => pb.classList.toggle("active", isPinned(idx));
-            pb.addEventListener("click", (e) => {
-              e.stopPropagation();
-              togglePin(idx);
-              refresh();
-            });
-            refresh();
-          }
+          const refreshPin = () => pb.classList.toggle("active", isPinned(id));
+          pb.addEventListener("click", (e) => {
+            e.stopPropagation();
+            togglePin(id);
+            refreshPin();
+          });
+          refreshPin();
 
-          // keyboard focus scroll highlight
+          enableSwipeToPin(card, id, pb);
+
           card.tabIndex = 0;
           card.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-              card.click();
-            }
+            if (e.key === "Enter") card.click();
           });
-
-          // add swipe-to-pin on touch devices
-          addSwipeToPin(card, idx);
+          card.addEventListener("click", () => {
+            card.style.boxShadow = "0 28px 88px rgba(255,180,60,0.14)";
+            setTimeout(() => (card.style.boxShadow = ""), 900);
+          });
         });
 
-        // tick
-        tickHandle = setInterval(() => {
-          const now = new Date();
-          items.forEach((i) => updateOne(i, now));
-          updatePinnedCounts(now);
-        }, 1000);
-        items.forEach((i) => updateOne(i, new Date()));
-
-        // show/hide pinned panel depending on pins
+        tickHandle = setInterval(() => updateAllCountdowns(new Date()), 1000);
+        updateAllCountdowns(new Date());
         renderPinnedPanel();
-
-        // ensure the gallery (if visible) updates month groups too
-        if (mode === "museum") renderGallery();
         updateYearProgress();
+        if (mode === "museum") renderGallery();
         applyMode();
       }
 
       /* ---------------- pinned panel ---------------- */
       function renderPinnedPanel() {
-        const container = $("pinnedColumn");
+        const container = $("pinnedColumn"),
+          list = $("pinsList"),
+          noPins = $("noPins"),
+          pinnedToggle = $("pinnedToggleBtn");
         if (!container) return;
-        // keep panel-top
-        const header = container.querySelector(".panel-top");
-        container.innerHTML = "";
-        if (header) container.appendChild(header);
-
-        const now = new Date();
-        const pinnedIndices = getPinned();
-        const pinnedSet = new Set(pinnedIndices);
-
-        const mapped = EVENTS.map((ev, i) => ({
-          ev,
-          i,
-          start: parseStart(ev.start),
-          end: parseEnd(ev.end, parseStart(ev.start)),
-        }));
-        const upcoming = mapped
-          .filter((o) => o.end.getTime() >= now.getTime())
-          .sort((a, b) => a.start - b.start);
-
-        const finalPins = [];
-        for (const p of pinnedIndices) {
-          if (finalPins.length >= PIN_LIMIT) break;
-          if (EVENTS[p])
-            finalPins.push({
-              ev: EVENTS[p],
-              idx: p,
-              start: parseStart(EVENTS[p].start),
-              end: parseEnd(EVENTS[p].end, parseStart(EVENTS[p].start)),
-            });
-        }
-        for (const u of upcoming) {
-          if (finalPins.length >= PIN_LIMIT) break;
-          if (pinnedSet.has(u.idx)) continue;
-          finalPins.push(u);
-        }
-
-        // hide panel entirely if no pins
-        if (finalPins.length === 0) {
+        const pins = getPinned();
+        list.innerHTML = "";
+        if (!pins || pins.length === 0) {
           container.classList.add("hidden");
-          $("pinnedToggleBtn").classList.add("hidden");
-          // keep header but hidden is applied
+          document.querySelector(".page").classList.add("pinned-hidden");
+          noPins.style.display = "block";
+          pinnedToggle.style.display = "none";
           return;
-        } else {
-          container.classList.remove("hidden");
-          $("pinnedToggleBtn").classList.remove("hidden");
         }
+        container.classList.remove("hidden");
+        document.querySelector(".page").classList.remove("pinned-hidden");
+        noPins.style.display = "none";
+        pinnedToggle.style.display = container.classList.contains("hidden")
+          ? "block"
+          : "none";
 
-        finalPins.forEach((o, pos) => {
-          const id = "pin_" + slugify(o.ev.name + "-" + o.idx, o.idx);
-          const chip = document.createElement("button");
-          chip.className = "pinned-chip";
-          chip.tabIndex = 0;
-          chip.dataset.eventIndex = String(o.idx);
-          chip.id = id;
-          chip.setAttribute("draggable", "true");
-          chip.innerHTML = `
-      <div class="pinned-row-top">
-        <div style="min-width:0">
-          <div class="pinned-title">${o.ev.name}</div>
-          <div class="pinned-sub">${
-            o.ev.end
-              ? formatISO(o.start) + " → " + formatISO(parseStart(o.ev.end))
-              : formatISO(o.start)
-          }</div>
-        </div>
-        <div style="text-align:right"><div class="pinned-count" id="count-${id}">—</div></div>
-      </div>
-      <div class="pinned-progress"><i style="width:0%"></i></div>
-    `;
-          chip.addEventListener("click", () => {
-            const idx = Number(chip.dataset.eventIndex);
-            const target = items.find((it) => it.idx === idx);
-            if (target && target.el) {
-              target.el.scrollIntoView({ behavior: "smooth", block: "center" });
-              target.el.style.boxShadow = "0 20px 60px rgba(255,180,60,0.32)";
-              target.el.style.transform = "translateY(-8px)";
-              setTimeout(() => {
-                target.el.style.boxShadow = "";
-                target.el.style.transform = "";
-              }, 1200);
-            }
-          });
-
-          // reorder inside panel
-          chip.addEventListener("dragstart", (e) => {
-            e.dataTransfer.setData("text/plain", String(o.idx));
-            chip.classList.add("dragging");
-          });
-          chip.addEventListener("dragend", (e) => {
-            chip.classList.remove("dragging");
-          });
-          chip.addEventListener("dragover", (e) => {
-            e.preventDefault();
-            const dragging = container.querySelector(".dragging");
-            if (!dragging || dragging === chip) return;
-            const draggingIdx = Number(dragging.dataset.eventIndex);
-            const targetIdx = Number(chip.dataset.eventIndex);
-            const pins = getPinned();
-            const from = pins.indexOf(draggingIdx);
-            const to = pins.indexOf(targetIdx);
-            if (from > -1 && to > -1 && from !== to) {
-              pins.splice(from, 1);
-              pins.splice(to, 0, draggingIdx);
-              setPinned(pins);
-            }
-          });
-
-          container.appendChild(chip);
-        });
-      }
-
-      /* update pinned counts and progress bars */
-      function updatePinnedCounts(now) {
-        if (!now) now = new Date();
-        const container = $("pinnedColumn");
-        if (!container) return;
-        const chips = Array.from(container.querySelectorAll(".pinned-chip"));
-        chips.forEach((chip) => {
-          const idx = Number(chip.dataset.eventIndex);
-          const ev = EVENTS[idx];
+        pins.forEach((i) => {
+          const ev = EVENTS[i];
           if (!ev) return;
           const start = parseStart(ev.start);
+          const chip = document.createElement("div");
+          chip.className = "pinned-chip";
+          chip.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="min-width:0">
+          <div style="font-weight:800">${escapeHtml(ev.name)}</div>
+          <div style="font-size:12px;color:#516c7f">${formatISO(start)}</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn view">View</button>
+          <button class="btn unpin">Unpin</button>
+        </div>
+      </div>
+      <div style="margin-top:6px;display:flex;justify-content:space-between;align-items:center">
+        <div class="mini" style="color:var(--accent)">—</div>
+        <div style="width:40%"><div style="height:6px;background:rgba(2,8,23,0.06);border-radius:6px;overflow:hidden"><i style="display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-2));"></i></div></div>
+      </div>
+    `;
+          chip.querySelector(".view").addEventListener("click", () => {
+            const el = document.querySelector(`.card[data-idx="${i}"]`);
+            if (el) {
+              el.scrollIntoView({ behavior: "smooth", block: "center" });
+              el.style.boxShadow = "0 28px 88px rgba(255,180,60,0.18)";
+              setTimeout(() => (el.style.boxShadow = ""), 1200);
+            }
+          });
+          chip.querySelector(".unpin").addEventListener("click", () => {
+            togglePin(i);
+          });
+          list.appendChild(chip);
+        });
+
+        updatePinnedCounts(new Date());
+      }
+
+      /* update pinned chips mini counts/progress and pinnedToggle visibility */
+      function updatePinnedCounts(now) {
+        if (!now) now = new Date();
+        const chips = Array.from(document.querySelectorAll(".pinned-chip"));
+        chips.forEach((chip) => {
+          const title = chip.querySelector("div > div > div").textContent;
+          const pinned = getPinned();
+          const idx = pinned.find((i) => EVENTS[i] && EVENTS[i].name === title);
+          if (idx == null) return;
+          const ev = EVENTS[idx];
+          const start = parseStart(ev.start);
           const end = parseEnd(ev.end, start);
-          let txt = "",
-            percent = 0;
+          const mini = chip.querySelector(".mini");
+          const bar = chip.querySelector("i");
           if (now.getTime() < start.getTime()) {
             const diff = start.getTime() - now.getTime();
             const d = Math.floor(diff / 86400000);
             const h = Math.floor((diff % 86400000) / 3600000);
-            const m = Math.floor((diff % 3600000) / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
-            txt = `${d}d ${h}h ${m}m ${s}s left`;
-            percent = 0;
+            mini.textContent = `${d}d ${h}h`;
+            if (bar) bar.style.width = "0%";
           } else if (now.getTime() > end.getTime()) {
-            const diff = now.getTime() - end.getTime();
-            const d = Math.floor(diff / 86400000);
-            const h = Math.floor((diff % 86400000) / 3600000);
-            const m = Math.floor((diff % 3600000) / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
-            txt = `Ended ${d}d ${h}h ${m}m ${s}s ago`;
-            percent = 100;
+            mini.textContent = "Finished";
+            if (bar) bar.style.width = "100%";
           } else {
             const total = end.getTime() - start.getTime();
-            const remaining = end.getTime() - now.getTime();
-            const passed = total - remaining;
-            percent = Math.max(
+            const passed = total - (end.getTime() - now.getTime());
+            const pct = Math.max(
               0,
               Math.min(100, Math.round((passed / total) * 100))
             );
-            const diff = remaining;
-            const d = Math.floor(diff / 86400000);
-            const h = Math.floor((diff % 86400000) / 3600000);
-            const m = Math.floor((diff % 3600000) / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
-            txt = `${d}d ${h}h ${m}m ${s}s remaining`;
+            mini.textContent = `${Math.floor(
+              (end.getTime() - now.getTime()) / 86400000
+            )}d left`;
+            if (bar) bar.style.width = pct + "%";
           }
-          const countEl = chip.querySelector(`#count-${chip.id}`);
-          const prog = chip.querySelector(".pinned-progress i");
-          if (countEl) countEl.textContent = txt;
-          if (prog) prog.style.width = percent + "%";
         });
+
+        const pinnedToggle = $("pinnedToggleBtn");
+        const panel = $("pinnedColumn");
+        if (
+          getPinned().length > 0 &&
+          panel &&
+          panel.classList.contains("hidden")
+        )
+          pinnedToggle.style.display = "block";
+        else pinnedToggle.style.display = "none";
       }
 
-      /* ---------------- swipe-to-pin (mobile) ---------------- */
-      function addSwipeToPin(card, idx) {
-        let pointerDown = false,
-          startX = 0,
-          startY = 0,
+      /* ----------------- touch swipe to pin ----------------- */
+      function enableSwipeToPin(card, idx, pinBtn) {
+        let down = false,
+          sx = 0,
+          sy = 0,
           moved = false;
-        function down(e) {
-          pointerDown = true;
-          startX = e.clientX;
-          startY = e.clientY;
+        function onDown(e) {
+          down = true;
+          sx = e.clientX;
+          sy = e.clientY;
           moved = false;
+          card.style.transition = "none";
         }
-        function move(e) {
-          if (!pointerDown) return;
-          const dx = e.clientX - startX;
-          const dy = e.clientY - startY;
+        function onMove(e) {
+          if (!down) return;
+          const dx = e.clientX - sx;
+          const dy = e.clientY - sy;
           if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) moved = true;
-          if (moved) {
+          if (moved)
             card.style.transform = `translateX(${Math.min(
-              Math.max(dx, -60),
-              60
+              Math.max(dx, -80),
+              80
             )}px)`;
-          }
         }
-        function up(e) {
-          if (!pointerDown) return;
-          pointerDown = false;
+        function onUp(e) {
+          if (!down) return;
+          down = false;
+          card.style.transition = "transform .18s";
           if (moved) {
-            const dx = e.clientX - startX;
+            const dx = e.clientX - sx;
             if (dx > 60) {
-              // swipe right => pin
               togglePin(idx);
-              renderPinnedPanel();
-              const pb = card.querySelector(".pin-btn");
-              if (pb) pb.classList.add("active");
-              card.style.transform = "";
+              if (pinBtn) pinBtn.classList.add("active");
             } else if (dx < -60) {
-              // swipe left => unpin
               togglePin(idx);
-              renderPinnedPanel();
-              const pb = card.querySelector(".pin-btn");
-              if (pb) pb.classList.remove("active");
-              card.style.transform = "";
-            } else {
-              card.style.transform = "";
+              if (pinBtn) pinBtn.classList.remove("active");
             }
+            setTimeout(() => (card.style.transform = ""), 200);
+          } else {
+            card.style.transform = "";
           }
+          moved = false;
         }
-        card.addEventListener("pointerdown", down);
-        card.addEventListener("pointermove", move);
-        card.addEventListener("pointerup", up);
-        card.addEventListener("pointercancel", up);
+        card.addEventListener("pointerdown", onDown);
+        card.addEventListener("pointermove", onMove);
+        card.addEventListener("pointerup", onUp);
+        card.addEventListener("pointercancel", onUp);
       }
 
-      /* ---------------- gallery (museum) ---------------- */
+      /* ---------------- Gallery rendering ---------------- */
       function renderGallery() {
-        const wrap = $("gallerySection");
-        if (!wrap) return;
-        wrap.innerHTML = ""; // build month groups based on MUSEUM_PHOTOS and current filter
-        const monthFilter = $("monthFilter").value || "";
-        const months = new Map();
-        MUSEUM_PHOTOS.forEach((photo) => {
-          const m = photo.month;
-          const key = `${photo.year}-${m}`;
-          if (!months.has(key))
-            months.set(key, { month: m, year: photo.year, photos: [] });
-          months.get(key).photos.push(photo);
-        });
-        // order months chronologically
-        Array.from(months.entries())
-          .sort()
-          .forEach(([key, group]) => {
-            if (monthFilter && group.month !== monthFilter) return;
-            const section = document.createElement("div");
-            section.className = "gallery-month";
-            const heading = document.createElement("div");
-            heading.className = "month-heading";
-            heading.textContent = `${new Date(
-              group.year + "-" + group.month + "-01"
-            ).toLocaleString("en", { month: "long", year: "numeric" })}`;
-            heading.addEventListener("click", () => {
-              $("monthFilter").value = group.month;
-              highlightMonthButton(group.month);
-              renderGallery();
-            });
-            section.appendChild(heading);
-            const grid = document.createElement("div");
-            grid.className = "gallery-grid";
-            group.photos.forEach((p, i) => {
-              const t = document.createElement("div");
-              t.className = "gallery-thumb";
-              t.tabIndex = 0;
-              t.innerHTML = `<img src="${p.src}" alt="${p.caption}"><div class="gallery-caption">${p.caption}</div>`;
-              t.addEventListener("click", () => openLightbox(group.photos, i));
-              t.addEventListener("keydown", (e) => {
-                if (e.key === "Enter") openLightbox(group.photos, i);
-              });
-              grid.appendChild(t);
-            });
-            section.appendChild(grid);
-            wrap.appendChild(section);
+        const container = $("gallery");
+        if (!container) return;
+        container.innerHTML = "";
+        if (galleryFilter === "campus") {
+          CAMPUS_PHOTOS.forEach((p, i) => {
+            const btn = document.createElement("button");
+            btn.className = "cubicle";
+            btn.innerHTML = `<img src="${p.src}" alt="${escapeHtml(
+              p.caption
+            )}"><div class="caption">${escapeHtml(p.caption)}</div>`;
+            btn.addEventListener("click", () => openLightbox(CAMPUS_PHOTOS, i));
+            container.appendChild(btn);
           });
+          return;
+        }
+        const photos =
+          galleryFilter === "all"
+            ? [...MUSEUM_PHOTOS, ...CAMPUS_PHOTOS]
+            : [...MUSEUM_PHOTOS];
+        if (galleryFilter === "byMonth") {
+          const months = new Map();
+          photos.forEach((p) => {
+            const key = p.month
+              ? `${p.year}-${p.month}`
+              : `zz-${Math.random()}`;
+            if (!months.has(key))
+              months.set(key, {
+                month: p.month || "",
+                year: p.year || "",
+                photos: [],
+              });
+            months.get(key).photos.push(p);
+          });
+          Array.from(months.entries())
+            .sort()
+            .forEach(([k, group]) => {
+              if (group.month) {
+                const heading = document.createElement("div");
+                heading.className = "month-heading";
+                heading.textContent = `${new Date(
+                  group.year + "-" + group.month + "-01"
+                ).toLocaleString("en", { month: "long", year: "numeric" })}`;
+                heading.addEventListener("click", () => {
+                  $("monthFilter").value = group.month;
+                  renderAll();
+                });
+                container.appendChild(heading);
+              }
+              group.photos.forEach((p, i) => {
+                const btn = document.createElement("button");
+                btn.className = "cubicle";
+                btn.innerHTML = `<img src="${p.src}" alt="${escapeHtml(
+                  p.caption
+                )}"><div class="caption">${escapeHtml(p.caption)}</div>`;
+                btn.addEventListener("click", () =>
+                  openLightbox(group.photos, i)
+                );
+                container.appendChild(btn);
+              });
+            });
+        } else {
+          photos.forEach((p, i) => {
+            const btn = document.createElement("button");
+            btn.className = "cubicle";
+            btn.innerHTML = `<img src="${p.src}" alt="${escapeHtml(
+              p.caption
+            )}"><div class="caption">${escapeHtml(p.caption)}</div>`;
+            btn.addEventListener("click", () => openLightbox(photos, i));
+            container.appendChild(btn);
+          });
+        }
       }
 
-      /* ---------------- lightbox ---------------- */
+      /* ---------------- Lightbox ---------------- */
       let lbPhotos = [],
         lbIndex = 0;
       function openLightbox(photos, idx) {
         lbPhotos = photos;
         lbIndex = idx;
-        const light = $("lightbox");
-        const img = $("lbImage");
-        const cap = $("lbCaption");
-        img.src = photos[idx].src;
-        img.alt = photos[idx].caption;
-        cap.textContent = photos[idx].caption;
-        light.classList.add("open");
-        light.setAttribute("aria-hidden", "false");
+        $("lbImage").src = photos[idx].src;
+        $("lbImage").alt = photos[idx].caption || "";
+        $("lbCaption").textContent = photos[idx].caption || "";
+        $("lightbox").classList.add("open");
+        $("lightbox").setAttribute("aria-hidden", "false");
       }
       function closeLightbox() {
-        const light = $("lightbox");
-        light.classList.remove("open");
-        light.setAttribute("aria-hidden", "true");
+        $("lightbox").classList.remove("open");
+        $("lightbox").setAttribute("aria-hidden", "true");
+        $("lbImage").src = "";
       }
       function lbNext() {
         if (!lbPhotos.length) return;
         lbIndex = (lbIndex + 1) % lbPhotos.length;
         $("lbImage").src = lbPhotos[lbIndex].src;
-        $("lbCaption").textContent = lbPhotos[lbIndex].caption;
+        $("lbCaption").textContent = lbPhotos[lbIndex].caption || "";
       }
       function lbPrev() {
         if (!lbPhotos.length) return;
         lbIndex = (lbIndex - 1 + lbPhotos.length) % lbPhotos.length;
         $("lbImage").src = lbPhotos[lbIndex].src;
-        $("lbCaption").textContent = lbPhotos[lbIndex].caption;
+        $("lbCaption").textContent = lbPhotos[lbIndex].caption || "";
       }
-
-      /* keyboard & touch for lightbox */
+      $("lbNext").addEventListener("click", lbNext);
+      $("lbPrev").addEventListener("click", lbPrev);
+      $("lbClose").addEventListener("click", closeLightbox);
       document.addEventListener("keydown", (e) => {
-        const light = $("lightbox");
-        if (light.classList.contains("open")) {
+        if ($("lightbox").classList.contains("open")) {
+          if (e.key === "Escape") closeLightbox();
           if (e.key === "ArrowRight") lbNext();
           if (e.key === "ArrowLeft") lbPrev();
-          if (e.key === "Escape") closeLightbox();
         }
       });
-      (function addLightboxControls() {
-        $("lbClose").addEventListener("click", closeLightbox);
-        $("lbNext").addEventListener("click", lbNext);
-        $("lbPrev").addEventListener("click", lbPrev);
-        // touch swipe
-        let sx = 0,
-          sy = 0;
-        const img = $("lbImage");
-        const wrap = $("lightbox");
-        wrap.addEventListener(
-          "touchstart",
-          (e) => {
-            const t = e.touches[0];
-            sx = t.clientX;
-            sy = t.clientY;
-          },
-          { passive: true }
-        );
-        wrap.addEventListener(
-          "touchend",
-          (e) => {
-            const t = e.changedTouches[0];
-            const dx = t.clientX - sx;
-            const dy = t.clientY - sy;
-            if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
-              if (dx < 0) lbNext();
-              else lbPrev();
-            }
-          },
-          { passive: true }
-        );
-      })();
+      $("lightbox").addEventListener("click", (e) => {
+        if (e.target === $("lightbox")) closeLightbox();
+      });
 
-      /* ---------------- museum toggle & modes ---------------- */
+      /* ---------------- Present slideshow (auto-play) ---------------- */
+      let slideshowTimer = null,
+        slideshowIndex = 0,
+        slideshowArray = [],
+        slideshowMode = "gallery"; // 'gallery' or 'pinned'
+      const SLIDE_DELAY = 3500;
+
+      function buildSlideshowArray() {
+        if (mode === "museum") {
+          if (galleryFilter === "campus") return CAMPUS_PHOTOS.slice();
+          if (galleryFilter === "all")
+            return [...MUSEUM_PHOTOS, ...CAMPUS_PHOTOS];
+          // byMonth
+          return MUSEUM_PHOTOS.slice();
+        } else {
+          // grid mode: build array from pinned events if any
+          const pins = getPinned();
+          if (pins.length === 0) {
+            // fallback to museum images
+            return MUSEUM_PHOTOS.slice();
+          }
+          // create pseudo-photo objects representing pinned events
+          return pins.map((i) => ({ title: EVENTS[i].name, idx: i }));
+        }
+      }
+
+      function showSlide(idx) {
+        const container = $("psContent");
+        const caption = $("psCaption");
+        container.innerHTML = "";
+        caption.textContent = "";
+        const item = slideshowArray[idx];
+        if (!item) return;
+        // if image-like object (has src) show img; else show a big event card for pinned events
+        if (item.src) {
+          const img = document.createElement("img");
+          img.src = item.src;
+          img.alt = item.caption || "";
+          container.appendChild(img);
+          caption.textContent = item.caption || "";
+        } else if (item.title) {
+          // pinned event pseudo-slide
+          const ev = EVENTS[item.idx];
+          const big = document.createElement("div");
+          big.style.width = "820px";
+          big.style.height = "480px";
+          big.style.borderRadius = "12px";
+          big.style.background = "linear-gradient(180deg,#fff,#f6f9ff)";
+          big.style.color = "var(--text-dark)";
+          big.style.display = "flex";
+          big.style.flexDirection = "column";
+          big.style.justifyContent = "center";
+          big.style.alignItems = "flex-start";
+          big.style.padding = "40px";
+          big.style.boxShadow = "0 40px 140px rgba(0,0,0,0.6)";
+          const title = document.createElement("div");
+          title.style.fontSize = "36px";
+          title.style.fontWeight = "900";
+          title.style.marginBottom = "12px";
+          title.textContent = ev.name;
+          const date = document.createElement("div");
+          date.style.fontSize = "18px";
+          date.style.fontWeight = "700";
+          date.style.marginBottom = "8px";
+          const s = parseStart(ev.start);
+          const e = ev.end ? parseStart(ev.end) : null;
+          date.textContent = e
+            ? `${formatISO(s)} → ${formatISO(e)}`
+            : `${formatISO(s)}`;
+          const status = document.createElement("div");
+          status.style.fontSize = "16px";
+          status.style.fontWeight = "800";
+          // compute live status
+          const now = new Date();
+          const end = parseEnd(ev.end, s);
+          if (now.getTime() < s.getTime())
+            status.textContent = "⏳ Coming soon";
+          else if (now.getTime() > end.getTime())
+            status.textContent = "✅ Finished";
+          else status.textContent = "🔴 Happening now";
+          big.appendChild(title);
+          big.appendChild(date);
+          big.appendChild(status);
+          container.appendChild(big);
+          caption.textContent = ev.name;
+        } else {
+          // fallback show hero image
+          const img = document.createElement("img");
+          img.src = HERO;
+          container.appendChild(img);
+        }
+      }
+
+      function startSlideshow(source = "gallery") {
+        // build array based on current mode and galleryFilter or pinned
+        slideshowMode = source;
+        if (source === "pinned") {
+          const pins = getPinned();
+          if (!pins || pins.length === 0) {
+            // fallback to gallery
+            slideshowArray = buildSlideshowArray();
+          } else {
+            slideshowArray = pins.map((i) => ({
+              title: EVENTS[i].name,
+              idx: i,
+            }));
+          }
+        } else {
+          slideshowArray = buildSlideshowArray();
+        }
+        if (slideshowArray.length === 0) return;
+        slideshowIndex = 0;
+        showSlide(slideshowIndex);
+        $("presentSlide").classList.add("open");
+        $("presentSlide").setAttribute("aria-hidden", "false");
+        // auto advance
+        stopSlideshow();
+        slideshowTimer = setInterval(() => {
+          slideshowIndex = (slideshowIndex + 1) % slideshowArray.length;
+          showSlide(slideshowIndex);
+        }, SLIDE_DELAY);
+      }
+
+      function stopSlideshow() {
+        if (slideshowTimer) {
+          clearInterval(slideshowTimer);
+          slideshowTimer = null;
+        }
+        $("presentSlide").classList.remove("open");
+        $("presentSlide").setAttribute("aria-hidden", "true");
+      }
+
+      /* present enter/exit */
+      function enterPresent() {
+        // if already present, do nothing
+        if (document.body.classList.contains("present-mode")) return;
+        document.body.classList.add("present-mode");
+        $("presentExit").style.display = "";
+        // choose slideshow source: if in museum, show gallery; if in grid and there are pins, use pinned
+        const source =
+          mode === "museum"
+            ? "gallery"
+            : getPinned().length
+            ? "pinned"
+            : "gallery";
+        startSlideshow(source);
+      }
+
+      function exitPresent() {
+        document.body.classList.remove("present-mode");
+        $("presentExit").style.display = "none";
+        stopSlideshow();
+      }
+
+      /* slideshow controls */
+      $("psNext").addEventListener("click", () => {
+        if (slideshowArray.length === 0) return;
+        slideshowIndex = (slideshowIndex + 1) % slideshowArray.length;
+        showSlide(slideshowIndex);
+        resetSlideshowTimer();
+      });
+      $("psPrev").addEventListener("click", () => {
+        if (slideshowArray.length === 0) return;
+        slideshowIndex =
+          (slideshowIndex - 1 + slideshowArray.length) % slideshowArray.length;
+        showSlide(slideshowIndex);
+        resetSlideshowTimer();
+      });
+      function resetSlideshowTimer() {
+        if (slideshowTimer) {
+          clearInterval(slideshowTimer);
+          slideshowTimer = setInterval(() => {
+            slideshowIndex = (slideshowIndex + 1) % slideshowArray.length;
+            showSlide(slideshowIndex);
+          }, SLIDE_DELAY);
+        }
+      }
+
+      /* pause on hover */
+      $("presentSlide").addEventListener("mouseenter", () => {
+        if (slideshowTimer) clearInterval(slideshowTimer);
+      });
+      $("presentSlide").addEventListener("mouseleave", () => {
+        if (slideshowArray.length)
+          slideshowTimer = setInterval(() => {
+            slideshowIndex = (slideshowIndex + 1) % slideshowArray.length;
+            showSlide(slideshowIndex);
+          }, SLIDE_DELAY);
+      });
+
+      /* keyboard for slideshow */
+      document.addEventListener("keydown", (e) => {
+        if (document.body.classList.contains("present-mode")) {
+          if (e.key === "ArrowRight") {
+            slideshowIndex = (slideshowIndex + 1) % slideshowArray.length;
+            showSlide(slideshowIndex);
+            resetSlideshowTimer();
+          }
+          if (e.key === "ArrowLeft") {
+            slideshowIndex =
+              (slideshowIndex - 1 + slideshowArray.length) %
+              slideshowArray.length;
+            showSlide(slideshowIndex);
+            resetSlideshowTimer();
+          }
+          if (e.key === "Escape") exitPresent();
+        }
+      });
+
+      /* ---------------- modes & UI wiring ---------------- */
       function applyMode() {
-        const gallery = $("gallerySection"),
-          grid = $("eventsGrid"),
+        // style buttons
+        $("gridBtn").classList.toggle("primary", mode === "grid");
+        $("museumBtn").classList.toggle("primary", mode === "museum");
+        // show/hide gallery area
+        const gallerySection = $("gallerySection"),
           stage = $("stage");
         if (mode === "museum") {
-          gallery.style.display = "";
-          gallery.setAttribute("aria-hidden", "false");
+          gallerySection.style.display = "";
           stage.style.display = "none";
           renderGallery();
         } else {
-          gallery.style.display = "none";
-          gallery.setAttribute("aria-hidden", "true");
+          gallerySection.style.display = "none";
           stage.style.display = "";
+          stopSlideshow();
         }
       }
 
-      /* ---------------- month buttons ---------------- */
-      function generateMonthButtons() {
-        const container = $("monthButtons");
-        if (!container) return;
-        const months = new Map();
-        EVENTS.forEach((ev) => {
-          const s = parseStart(ev.start);
-          const key = `${s.getFullYear()}-${pad(s.getMonth() + 1)}`;
-          if (!months.has(key))
-            months.set(key, {
-              label: `${s.toLocaleString("en", {
-                month: "short",
-              })} ${s.getFullYear()}`,
-              month: pad(s.getMonth() + 1),
-            });
+      /* gallery mode buttons */
+      $("galleryByMonthBtn").addEventListener("click", () => {
+        galleryFilter = "byMonth";
+        if (mode !== "museum") mode = "museum";
+        applyMode();
+        renderGallery();
+      });
+      $("galleryCampusBtn").addEventListener("click", () => {
+        galleryFilter = "campus";
+        if (mode !== "museum") mode = "museum";
+        applyMode();
+        renderGallery();
+      });
+      $("galleryAllBtn").addEventListener("click", () => {
+        galleryFilter = "all";
+        if (mode !== "museum") mode = "museum";
+        applyMode();
+        renderGallery();
+      });
+
+      /* present button & exit */
+      $("presentBtn").addEventListener("click", () => {
+        enterPresent();
+      });
+      $("presentExit").addEventListener("click", () => {
+        exitPresent();
+      });
+
+      /* other UI wiring */
+      function wireUI() {
+        $("heroImg").src = HERO;
+        $("heroImg").crossOrigin = "anonymous";
+        $("gridBtn").addEventListener("click", () => {
+          mode = "grid";
+          applyMode();
         });
-        container.innerHTML = "";
-        Array.from(months.entries())
-          .sort()
-          .forEach(([k, val]) => {
-            const btn = document.createElement("button");
-            btn.className = "month-btn";
-            btn.textContent = val.label;
-            btn.dataset.month = val.month;
-            btn.addEventListener("click", () => {
-              const mf = $("monthFilter");
-              if (!mf) return;
-              if (mf.value === val.month) {
-                mf.value = "";
-                btn.classList.remove("active");
-              } else {
-                mf.value = val.month;
-                highlightMonthButton(val.month);
-              }
-              // update both grid and gallery
-              renderAll();
-            });
-            container.appendChild(btn);
+        $("museumBtn").addEventListener("click", () => {
+          mode = "museum";
+          applyMode();
+        });
+        $("searchBox").addEventListener("input", () => renderAll());
+        $("monthFilter").addEventListener("change", () => {
+          renderAll();
+        });
+
+        $("clearPins").addEventListener("click", () => savePinned([]));
+        $("exportPins").addEventListener("click", () => {
+          const pins = getPinned();
+          const rows = [["name", "start", "end"]];
+          pins.forEach((i) => {
+            if (EVENTS[i])
+              rows.push([
+                EVENTS[i].name || "",
+                EVENTS[i].start || "",
+                EVENTS[i].end || "",
+              ]);
           });
-      }
-      function highlightMonthButton(month) {
-        const btns = Array.from(document.querySelectorAll(".month-btn"));
-        btns.forEach((b) =>
-          b.classList.toggle("active", b.dataset.month === month)
-        );
+          const csv = rows
+            .map((r) =>
+              r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")
+            )
+            .join("\n");
+          const blob = new Blob([csv], { type: "text/csv" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "pinned.csv";
+          a.click();
+          URL.revokeObjectURL(url);
+        });
+        $("pinCollapseBtn").addEventListener("click", () => {
+          const p = $("pinnedColumn");
+          if (!p) return;
+          p.classList.toggle("hidden");
+          document
+            .querySelector(".page")
+            .classList.toggle("pinned-hidden", p.classList.contains("hidden"));
+          updatePinnedCounts(new Date());
+        });
+
+        $("pinnedToggleBtn").addEventListener("click", () => {
+          const p = $("pinnedColumn");
+          if (!p) return;
+          p.classList.remove("hidden");
+          document.querySelector(".page").classList.remove("pinned-hidden");
+          $("pinnedToggleBtn").style.display = "none";
+        });
+        // show pinned toggle when appropriate handled in updatePinnedCounts
+
+        // lightbox controls already wired earlier
+        $("lbNext").addEventListener("click", () => lbNext());
+        $("lbPrev").addEventListener("click", () => lbPrev());
+
+        // keyboard shortcuts
+        document.addEventListener("keydown", (e) => {
+          if (e.key.toLowerCase() === "p" && !e.ctrlKey && !e.metaKey) {
+            const p = $("pinnedColumn");
+            if (!p) return;
+            if (getPinned().length === 0) return;
+            if (p.classList.contains("hidden")) {
+              p.classList.remove("hidden");
+              document.querySelector(".page").classList.remove("pinned-hidden");
+            } else {
+              p.classList.add("hidden");
+              document.querySelector(".page").classList.add("pinned-hidden");
+            }
+            updatePinnedCounts(new Date());
+          }
+          if (e.key === "Escape") {
+            if (document.body.classList.contains("present-mode")) exitPresent();
+          }
+        });
+
+        // clicking outside pinned hides it (desktop)
+        document.addEventListener("click", (ev) => {
+          const p = $("pinnedColumn");
+          if (!p) return;
+          if (p.classList.contains("hidden")) return;
+          if (window.innerWidth <= 900) return;
+          const target = ev.target;
+          const toggleBtn = $("pinnedToggleBtn");
+          if (
+            !p.contains(target) &&
+            target !== toggleBtn &&
+            !target.closest(".pin-btn")
+          ) {
+            p.classList.add("hidden");
+            document.querySelector(".page").classList.add("pinned-hidden");
+            updatePinnedCounts(new Date());
+          }
+        });
       }
 
-      /* ---------------- year progress ---------------- */
+      /* ---------------- small helpers ---------------- */
       function updateYearProgress() {
-        // progress between first event start and last event end
         if (EVENTS.length === 0) return;
         const start = parseStart(EVENTS[0].start);
         const last = EVENTS[EVENTS.length - 1];
@@ -1625,7 +1960,7 @@
         $("yearProgressBar").style.width = pct + "%";
       }
 
-      /* ---------------- color sampling (try hero) ---------------- */
+      /* accent sampling (optional) */
       async function sampleAccent() {
         const img = $("heroImg");
         if (!img) return;
@@ -1646,137 +1981,51 @@
           let r = 0,
             g = 0,
             b = 0,
-            count = 0;
+            c = 0;
           for (let i = 0; i < data.length; i += 4) {
             const a = data[i + 3];
             if (a < 80) continue;
             r += data[i];
             g += data[i + 1];
             b += data[i + 2];
-            count++;
+            c++;
           }
-          if (count === 0) throw new Error("no pixels");
-          r = Math.round(r / count);
-          g = Math.round(g / count);
-          b = Math.round(b / count);
-          const rgb = `rgb(${r},${g},${b})`;
-          document.documentElement.style.setProperty("--accent", rgb);
-          const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-          const accentText = lum > 0.6 ? "#072238" : "#ffffff";
+          if (c === 0) throw new Error("no pixels");
+          r = Math.round(r / c);
+          g = Math.round(g / c);
+          b = Math.round(b / c);
           document.documentElement.style.setProperty(
-            "--accent-text",
-            accentText
+            "--accent",
+            `rgb(${r},${g},${b})`
           );
-        } catch (e) {
-          // fallback: use month color for next upcoming event
-          const next = findNext();
-          if (next) {
-            const m = pad(parseStart(next.start).getMonth() + 1);
-            const col = MONTH_COLORS[m] || "#ffd24a";
-            document.documentElement.style.setProperty("--accent", col);
-            document.documentElement.style.setProperty(
-              "--accent-text",
-              "#072238"
-            );
-          }
-        }
-      }
-
-      /* ---------------- UI wiring ---------------- */
-      function wireUI() {
-        $("heroImg").src = HERO;
-        $("heroImg").crossOrigin = "anonymous";
-
-        $("gridBtn").addEventListener("click", () => {
-          mode = "grid";
-          applyMode();
-          $("gridBtn").classList.add("primary");
-          $("museumBtn").classList.remove("primary");
-        });
-        $("museumBtn").addEventListener("click", () => {
-          mode = "museum";
-          applyMode();
-          $("museumBtn").classList.add("primary");
-          $("gridBtn").classList.remove("primary");
-        });
-        $("presentBtn").addEventListener("click", () => {
-          document.documentElement.requestFullscreen?.();
-        });
-
-        $("searchBox").addEventListener("input", () => renderAll());
-        $("monthFilter").addEventListener("change", () => {
-          highlightMonthButton($("monthFilter").value);
-          renderAll();
-        });
-
-        // pinned panel toggles
-        $("pinnedToggleBtn").addEventListener("click", () => {
-          const p = $("pinnedColumn");
-          if (!p) return;
-          p.classList.toggle("hidden");
-        });
-        $("pinCollapseBtn").addEventListener("click", () => {
-          const p = $("pinnedColumn");
-          if (!p) return;
-          p.classList.toggle("hidden");
-        });
-        $("clearPins").addEventListener("click", () => setPinned([]));
-        $("exportPins").addEventListener("click", () => {
-          const pins = getPinned();
-          const rows = [["name", "start", "end"]];
-          for (const i of pins) {
-            if (EVENTS[i])
-              rows.push([
-                EVENTS[i].name,
-                EVENTS[i].start || "",
-                EVENTS[i].end || "",
-              ]);
-          }
-          const csv = rows
-            .map((r) =>
-              r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")
-            )
-            .join("\n");
-          const blob = new Blob([csv], { type: "text/csv" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "pinned-events.csv";
-          a.click();
-          URL.revokeObjectURL(url);
-        });
-
-        // lightbox controls already wired earlier
+        } catch (e) {}
       }
 
       /* ---------------- bootstrap ---------------- */
-      async function init() {
+      function init() {
         wireUI();
-        generateMonthButtons();
-        // default: hide pinned until someone pins
-        renderPinnedPanel();
-        await sampleAccent();
+        sampleAccent();
         renderAll();
-
-        // keyboard quick toggle for pinned (p)
-        document.addEventListener("keydown", (e) => {
-          if (e.key.toLowerCase() === "p" && !e.metaKey && !e.ctrlKey) {
-            const p = $("pinnedColumn");
-            if (p) p.classList.toggle("hidden");
-          }
-        });
-
-        // clicking outside pinned closes (desktop)
-        document.addEventListener("click", (ev) => {
-          const p = $("pinnedColumn");
-          if (!p) return;
-          if (p.classList.contains("hidden")) return;
-          if (window.innerWidth <= 900) return;
-          const target = ev.target;
-          if (!p.contains(target) && !$("pinnedToggleBtn").contains(target))
-            p.classList.add("hidden");
-        });
+        updatePinnedCounts(new Date());
       }
+
+      /* quick utilities for slideshow source selection in present mode (exposed via keyboard) */
+      document.addEventListener("keydown", (e) => {
+        if (document.body.classList.contains("present-mode")) {
+          if (e.key === "g") {
+            // switch to gallery slides (g)
+            startSlideshow("gallery");
+          }
+          if (e.key === "i") {
+            // switch to pinned slides (i)
+            startSlideshow("pinned");
+          }
+        }
+      });
+
+      /* hook presentSlide next/prev to also reset timer */
+      $("psNext").addEventListener("click", () => resetSlideshowTimer());
+      $("psPrev").addEventListener("click", () => resetSlideshowTimer());
 
       document.addEventListener("DOMContentLoaded", init);
     </script>
