@@ -1,1567 +1,908 @@
-<!DOCTYPE html>
+<!doctype html>
 <!--
-  Maxwell Events — single-file page
-  Improvements in this version:
-    1) Pinned panel collapsed by default on load
-    2) Automatically generated month filter buttons (click a month button to filter; click month heading to focus that month)
-    3) Accent color extraction attempt from a LOCAL hero image (/images/hero.jpg) first, then from the in-page image if CORS allows; fallback is to use the next-up month color. To enable reliable color extraction on GitHub Pages, drop your hero file at /images/hero.jpg in the repo.
-    4) Export-ready: the page will prefer a local /images/hero.jpg if present; otherwise it falls back to the Drive URL you provided.
-    5) Desktop cropping improved: the hero shows the top part of the image for large screens (object-position: top) and centers on small screens.
-
-  Notes:
-    • If the Drive image is not publicly shared, it may fail to load. For best results host the hero at /images/hero.jpg in your repository and the color-sampling will work.
-    • Color sampling may still be blocked by cross-origin restrictions. The script handles that and uses sensible fallbacks.
+  Maxwell Events — single-file HTML
+  Updated: uses provided WP hero image and applies visual + UX improvements.
+  Paste this file into your repo (e.g., index.html) and open it in a browser.
 -->
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Maxwell Events — 2025–2026</title>
-    <style>
-      /* ---------- Reset & base ---------- */
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
-      :root {
-        --accent: #ffd24a; /* will be overridden by sampling when possible */
-        --accent-text: #072238;
-        --muted: #0b3b4f;
-        --card-radius: 14px;
-        --ui-bg: rgba(255, 255, 255, 0.98);
-        --ui-text: #072238;
-        --page-bg: #07131a;
-        --hero-fg: #fff;
-        --chip-bg: #ffffff;
-        --panel-width: 300px;
-      }
-      html,
-      body {
-        height: 100%;
-      }
-      body {
-        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto,
-          "Helvetica Neue", Arial;
-        background: var(--page-bg);
-        color: var(--muted);
-        padding: 20px;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-      }
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Maxwell Events — 2025–2026</title>
+<style>
+  /* ---------- Reset & base ---------- */
+  :root{
+    --accent: #ffd24a;       /* may be replaced by sampled color */
+    --accent-text: #072238;
+    --muted: #0b3b4f;
+    --card-radius: 14px;
+    --ui-bg: rgba(255,255,255,0.98);
+    --ui-text: #072238;
+    --page-bg: #07131a;
+    --hero-fg: #fff;
+    --panel-width: 320px;
+    --max-grid-col: 4;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background:var(--page-bg);
+    color:var(--muted);
+    padding:20px;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+  }
 
-      /* ---------- hero ---------- */
-      .hero {
-        position: relative;
-        max-width: 1200px;
-        margin: 12px auto 18px;
-        height: 340px;
-        border-radius: 14px;
-        overflow: hidden;
-      }
-      .hero img {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        object-position: center center;
-        display: block;
-        transition: transform 0.45s;
-      }
-      /* Desktop: focus on top part of the image */
-      @media (min-width: 900px) {
-        .hero img {
-          object-position: center top;
-        }
-      }
-      .hero::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(
-          to bottom,
-          rgba(0, 0, 0, 0) 42%,
-          rgba(0, 0, 0, 0.78) 100%
-        );
-        pointer-events: none;
-      }
-      .hero .hero-header {
-        position: relative;
-        z-index: 2;
-        display: flex;
-        align-items: flex-end;
-        justify-content: space-between;
-        padding: 22px;
-        color: var(--hero-fg);
-      }
-      .hero h1 {
-        font-size: 1.6rem;
-        margin: 0;
-        font-weight: 900;
-        letter-spacing: 0.4px;
-        text-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-        -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.18);
-      }
-      .hero .hint {
-        font-size: 0.95rem;
-        opacity: 0.95;
-        max-width: 720px;
-        line-height: 1.2;
-      }
+  /* ---------- hero ---------- */
+  .hero{position:relative;max-width:1200px;margin:8px auto 18px;height:360px;border-radius:14px;overflow:hidden;box-shadow:0 12px 40px rgba(2,8,23,0.28)}
+  .hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center center;display:block;transition:transform .6s ease}
+  /* Desktop focuses top portion of the image for better crop */
+  @media(min-width:1000px){ .hero img{object-position:center top;transform-origin:center top;transform:scale(1.03)} }
+  .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom, rgba(0,0,0,0) 36%, rgba(0,0,0,0.82) 100%);pointer-events:none}
+  .hero .hero-header{position:relative;z-index:2;display:flex;align-items:flex-end;justify-content:space-between;padding:22px;color:var(--hero-fg)}
+  .hero h1{font-size:1.6rem;margin:0;font-weight:900;letter-spacing:0.4px;text-shadow:0 6px 20px rgba(0,0,0,0.35);-webkit-text-stroke:0.5px rgba(0,0,0,0.18)}
+  .hero .hint{font-size:0.95rem;opacity:0.95;max-width:720px;line-height:1.2}
 
-      /* controls & month buttons */
-      .controls {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-        flex-wrap: wrap;
-        margin-top: 10px;
-      }
-      input[type="search"],
-      select {
-        padding: 10px 14px;
-        border-radius: 10px;
-        border: 1px solid rgba(7, 18, 43, 0.08);
-        background: var(--ui-bg);
-        color: var(--ui-text);
-        box-shadow: 0 6px 18px rgba(2, 8, 23, 0.06);
-      }
-      input[type="search"]::placeholder {
-        color: #7b8a96;
-      }
-      .btn {
-        padding: 8px 12px;
-        border-radius: 10px;
-        border: none;
-        background: rgba(255, 255, 255, 0.06);
-        cursor: pointer;
-        font-weight: 700;
-      }
-      .btn.primary {
-        background: linear-gradient(90deg, var(--accent), #ffecb5);
-        color: var(--accent-text);
-        box-shadow: 0 8px 24px rgba(2, 8, 23, 0.12);
-      }
-      .month-buttons {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-      .month-btn {
-        padding: 6px 10px;
-        border-radius: 999px;
-        border: none;
-        background: rgba(255, 255, 255, 0.06);
-        color: #fff;
-        cursor: pointer;
-        font-weight: 700;
-      }
-      .month-btn.active {
-        background: linear-gradient(90deg, var(--accent), #ffecb5);
-        color: var(--accent-text);
-      }
+  /* controls & month buttons */
+  .controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  input[type=search],select{padding:10px 14px;border-radius:10px;border:1px solid rgba(7,18,43,0.08);background:var(--ui-bg);color:var(--ui-text);box-shadow:0 6px 18px rgba(2,8,23,0.06)}
+  input[type=search]::placeholder{color:#7b8a96}
+  .btn{padding:8px 12px;border-radius:10px;border:none;background:rgba(255,255,255,0.06);cursor:pointer;font-weight:700}
+  .btn.primary{background:linear-gradient(90deg,var(--accent),#ffecb5);color:var(--accent-text);box-shadow:0 8px 24px rgba(2,8,23,0.12)}
+  .month-buttons{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .month-btn{padding:6px 10px;border-radius:999px;border:none;background:rgba(255,255,255,0.06);color:#fff;cursor:pointer;font-weight:700}
+  .month-btn.active{background:linear-gradient(90deg,var(--accent),#ffecb5);color:var(--accent-text)}
 
-      /* pinned column */
-      .pinned-column {
-        position: fixed;
-        right: 18px;
-        top: 110px;
-        width: var(--panel-width);
-        max-height: calc(100vh - 140px);
-        overflow: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        padding: 12px;
-        z-index: 999;
-        background: var(--chip-bg);
-        border-radius: 12px;
-        box-shadow: 0 20px 60px rgba(2, 8, 23, 0.18);
-      }
-      .pinned-column.collapsed {
-        width: 64px;
-        padding: 8px;
-        align-items: center;
-      }
-      .pinned-column .panel-top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-      }
-      .collapse-btn {
-        background: none;
-        border: 0;
-        font-weight: 800;
-        cursor: pointer;
-        padding: 6px 8px;
-        border-radius: 8px;
-      }
-      .panel-actions {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-      }
-      .clear-btn {
-        background: #ffecb5;
-        border: none;
-        padding: 6px 8px;
-        border-radius: 8px;
-        cursor: pointer;
-      }
-      .pinned-chip {
-        background: #fff;
-        padding: 10px;
-        border-radius: 10px;
-        min-width: 200px;
-        border: 1px solid rgba(2, 8, 23, 0.04);
-        box-shadow: 0 8px 20px rgba(2, 8, 23, 0.06);
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-      .pinned-row-top {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      .pinned-title {
-        font-weight: 800;
-        color: #072238;
-        font-size: 14px;
-        text-align: left;
-      }
-      .pinned-sub {
-        font-size: 12px;
-        color: #2a3b57;
-      }
-      .pinned-count {
-        font-weight: 800;
-        color: #ffb84d;
-      }
-      .pinned-progress {
-        height: 6px;
-        background: rgba(2, 8, 23, 0.06);
-        border-radius: 6px;
-        overflow: hidden;
-      }
-      .pinned-progress > i {
-        display: block;
-        height: 100%;
-        background: linear-gradient(90deg, var(--accent), #ffb84d);
-        width: 0%;
-      }
-      #pinnedToggleBtn {
-        position: fixed;
-        right: 18px;
-        top: 60%;
-        transform: translateY(-50%);
-        z-index: 1000;
-        width: 48px;
-        height: 48px;
-        border-radius: 999px;
-        border: none;
-        background: linear-gradient(180deg, var(--accent), #ffecb5);
-        box-shadow: 0 10px 30px rgba(2, 8, 23, 0.16);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      #pinnedToggleBtn.collapsed {
-        right: 12px;
-      }
+  /* pinned column (right) */
+  .pinned-column{position:fixed;right:18px;top:110px;width:var(--panel-width);max-height:calc(100vh - 140px);overflow:auto;display:flex;flex-direction:column;gap:10px;padding:12px;z-index:999;background:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(2,8,23,0.18);transition:transform .28s,opacity .28s}
+  .pinned-column.collapsed{transform:translateX(100%);opacity:0;pointer-events:none}
+  .pinned-column .panel-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .panel-actions{display:flex;gap:8px;align-items:center}
+  .clear-btn{background:#ffecb5;border:none;padding:6px 8px;border-radius:8px;cursor:pointer;font-weight:700}
+  .pinned-chip{background:#fff;padding:10px;border-radius:10px;min-width:200px;border:1px solid rgba(2,8,23,0.04);box-shadow:0 8px 20px rgba(2,8,23,0.06);display:flex;flex-direction:column;gap:6px}
+  .pinned-row-top{display:flex;justify-content:space-between;align-items:center}
+  .pinned-title{font-weight:800;color:#072238;font-size:14px;text-align:left}
+  .pinned-sub{font-size:12px;color:#2a3b57}
+  .pinned-count{font-weight:800;color:#ffb84d}
+  .pinned-progress{height:6px;background:rgba(2,8,23,0.06);border-radius:6px;overflow:hidden}
+  .pinned-progress > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#ffb84d);width:0%}
 
-      /* main */
-      .wrap {
-        max-width: 1200px;
-        margin: 20px auto 120px;
-        padding: 0 12px;
-      }
-      .top-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 16px;
-        margin-bottom: 8px;
-      }
-      #pageTitle {
-        font-size: 1.4rem;
-        color: #fff;
-        margin: 0;
-        text-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-      }
-      #subtitle {
-        color: rgba(255, 255, 255, 0.92);
-        margin-top: 6px;
-      }
+  /* toggle button (visible while panel collapsed) */
+  #pinnedToggleBtn{position:fixed;right:18px;top:60%;transform:translateY(-50%);z-index:1000;width:52px;height:52px;border-radius:999px;border:none;background:linear-gradient(180deg,var(--accent),#ffecb5);box-shadow:0 10px 30px rgba(2,8,23,0.16);cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:900}
+  #pinnedToggleBtn.hidden{display:none}
 
-      /* grid + month headings */
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        gap: 20px;
-      }
-      .month-heading {
-        grid-column: 1/-1;
-        padding: 8px 0;
-        font-weight: 900;
-        color: #fff;
-        opacity: 0.95;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-        cursor: pointer;
-      }
+  /* main layout */
+  .wrap{max-width:1200px;margin:20px auto 120px;padding:0 12px}
+  .top-row{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:8px}
+  #pageTitle{font-size:1.4rem;color:#fff;margin:0;text-shadow:0 6px 20px rgba(0,0,0,0.4)}
+  #subtitle{color:rgba(255,255,255,0.92);margin-top:6px}
 
-      /* card layout */
-      .card {
-        position: relative;
-        border-radius: var(--card-radius);
-        background: linear-gradient(180deg, #ffffff, #fafafa);
-        padding: 16px;
-        box-shadow: 0 10px 30px rgba(2, 8, 23, 0.08);
-        display: flex;
-        flex-direction: column;
-        min-height: 170px;
-        transition: transform 0.18s, box-shadow 0.18s;
-      }
-      .card .pin-btn {
-        position: absolute;
-        right: 12px;
-        top: 12px;
-        width: 34px;
-        height: 34px;
-        border-radius: 8px;
-        border: none;
-        background: rgba(7, 18, 43, 0.04);
-        cursor: pointer;
-      }
-      .card .pin-btn.active {
-        background: linear-gradient(90deg, #ffd24a, #ffecb5);
-        box-shadow: 0 8px 20px rgba(255, 180, 60, 0.12);
-      }
-      .month-strip {
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        width: 6px;
-        border-top-left-radius: 14px;
-        border-bottom-left-radius: 14px;
-      }
-      .card-content {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        flex: 1;
-      }
-      .title {
-        min-height: 44px;
-      }
-      .title .fill {
-        display: inline-block;
-        background-clip: text;
-        color: transparent;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 800;
-        font-size: 18px;
-      }
-      .title .fallback {
-        font-weight: 800;
-        font-size: 18px;
-        color: #072238;
-      }
-      .meta {
-        font-size: 13px;
-        color: #27506b;
-        min-height: 18px;
-      }
-      .countdown {
-        font-weight: 800;
-        font-size: 15px;
-        color: var(--accent);
-        min-height: 22px;
-      }
-      .status {
-        font-size: 13px;
-        color: #16344f;
-        font-weight: 600;
-        min-height: 20px;
-      }
-      .date-badge {
-        align-self: flex-start;
-        padding: 6px 8px;
-        border-radius: 9px;
-        background: rgba(7, 18, 43, 0.04);
-        font-weight: 800;
-      }
-      .big-letter {
-        position: absolute;
-        right: -12px;
-        top: -18px;
-        font-weight: 800;
-        font-size: 72px;
-        color: rgba(7, 18, 43, 0.06);
-        pointer-events: none;
-      }
+  /* grid + month headings */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+  .month-heading{grid-column:1/-1;padding:8px 0;font-weight:900;color:#fff;opacity:0.95;border-bottom:1px solid rgba(255,255,255,0.04);cursor:pointer}
 
-      /* status visuals */
-      .card.finished {
-        opacity: 0.68;
-        filter: grayscale(40%);
-      }
-      .card.happening {
-        box-shadow: 0 16px 40px rgba(255, 90, 70, 0.1);
-        animation: glow 2.6s infinite;
-      }
-      @keyframes glow {
-        0% {
-          transform: translateY(0);
-        }
-        50% {
-          transform: translateY(-3px);
-        }
-        100% {
-          transform: translateY(0);
-        }
-      }
+  /* cards (consistent spacing) */
+  .card{position:relative;border-radius:var(--card-radius);background:linear-gradient(180deg,#ffffff,#fafafa);padding:16px;box-shadow:0 10px 30px rgba(2,8,23,0.08);display:flex;flex-direction:column;min-height:170px;transition:transform .18s,box-shadow .18s}
+  .card .pin-btn{position:absolute;right:12px;top:12px;width:36px;height:36px;border-radius:8px;border:none;background:rgba(7,18,43,0.04);cursor:pointer;font-size:16px}
+  .card .pin-btn.active{background:linear-gradient(90deg,#ffd24a,#ffecb5);box-shadow:0 8px 20px rgba(255,180,60,0.12)}
+  .month-strip{position:absolute;left:0;top:0;bottom:0;width:6px;border-top-left-radius:14px;border-bottom-left-radius:14px}
+  .card-content{display:flex;flex-direction:column;gap:8px;flex:1}
+  .title{min-height:44px}
+  .title .fill{display:inline-block;background-clip:text;color:transparent;-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:800;font-size:18px}
+  .title .fallback{font-weight:800;font-size:18px;color:#072238}
+  .meta{font-size:13px;color:#27506b;min-height:18px}
+  .countdown{font-weight:800;font-size:15px;color:var(--accent);min-height:22px}
+  .status{font-size:13px;color:#16344f;font-weight:600;min-height:20px}
+  .date-badge{align-self:flex-start;padding:6px 8px;border-radius:9px;background:rgba(7,18,43,0.04);font-weight:800}
+  .big-letter{position:absolute;right:-12px;top:-18px;font-weight:800;font-size:72px;color:rgba(7,18,43,0.06);pointer-events:none}
 
-      /* museum adjustments */
-      .museum .grid {
-        position: relative;
-        min-height: 520px;
-      }
-      .museum .card {
-        width: 260px;
-        position: absolute;
-        cursor: grab;
-        box-shadow: 0 22px 60px rgba(2, 8, 23, 0.18);
-      }
+  /* status visuals */
+  .card.finished{opacity:0.68;filter:grayscale(40%)}
+  .card.happening{box-shadow:0 16px 40px rgba(255,90,70,0.10);animation:glow 2.6s infinite}
+  @keyframes glow{0%{transform:translateY(0)}50%{transform:translateY(-3px)}100%{transform:translateY(0)}}
 
-      @media (max-width: 900px) {
-        .pinned-column {
-          right: 12px;
-          left: 12px;
-          bottom: 18px;
-          top: auto;
-          display: flex;
-          flex-direction: row;
-          max-height: 120px;
-          padding: 8px;
-          overflow: auto;
-        }
-        #pinnedToggleBtn {
-          display: none;
-        }
-        .hero {
-          height: 260px;
-        }
-        .big-letter {
-          font-size: 56px;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <section class="hero" id="hero" aria-label="Hero image">
-      <!-- prefer local hero at /images/hero.jpg (same-origin) for color-sampling on GitHub Pages. Falls back to Drive link if not present. -->
-      <img
-        id="heroImg"
-        alt="Maxwell banner"
-        src="https://drive.google.com/uc?export=view&id=1K8apPa465CryF-oTh2fmd-VcfQv6U-i6"
-      />
-      <div class="hero-header">
-        <div>
-          <h1>Maxwell Events Countdown</h1>
-          <div class="hint">2025-2026 schedule</div>
-          <div
-            class="controls"
-            role="region"
-            aria-label="Search and filters"
-            style="margin-top: 12px"
-          >
-            <input
-              id="searchBox"
-              type="search"
-              placeholder="Search events..."
-              aria-label="Search events"
-            />
-            <select id="monthFilter" aria-label="Filter by month">
-              <option value="">All Months</option>
-              <option value="01">January</option>
-              <option value="02">February</option>
-              <option value="03">March</option>
-              <option value="04">April</option>
-              <option value="05">May</option>
-              <option value="06">June</option>
-              <option value="07">July</option>
-              <option value="08">August</option>
-              <option value="09">September</option>
-              <option value="10">October</option>
-              <option value="11">November</option>
-              <option value="12">December</option>
-            </select>
-            <div
-              id="monthButtons"
-              class="month-buttons"
-              aria-hidden="false"
-            ></div>
-            <div style="display: flex; gap: 8px; align-items: center">
-              <button id="gridBtn" class="btn primary" title="Grid view">
-                Grid
-              </button>
-              <button id="museumBtn" class="btn" title="Museum view">
-                Museum
-              </button>
-              <button id="presentBtn" class="btn" title="Present mode">
-                Present
-              </button>
-            </div>
+  /* museum adjustments */
+  .museum .grid{position:relative;min-height:520px}
+  .museum .card{width:260px;position:absolute;cursor:grab;box-shadow:0 22px 60px rgba(2,8,23,0.18)}
+
+  /* responsive tweaks */
+  @media(max-width:900px){
+    .pinned-column{right:12px;left:12px;bottom:18px;top:auto;display:flex;flex-direction:row;max-height:120px;padding:8px;overflow:auto}
+    #pinnedToggleBtn{display:none}
+    .hero{height:260px}
+    .big-letter{font-size:56px}
+  }
+  /* small accessibility helper: focus outlines */
+  :focus{outline:3px solid rgba(255,255,255,0.08);outline-offset:3px}
+</style>
+</head>
+<body>
+
+  <!-- HERO (uses provided WP image link) -->
+  <section class="hero" aria-label="Hero">
+    <img id="heroImg" alt="Maxwell banner"
+      src="https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/04/VideoCover-1.jpeg?resize=767%2C500&ssl=1"
+      crossorigin="anonymous">
+    <div class="hero-header" role="presentation">
+      <div>
+        <h1>Maxwell Events Countdown</h1>
+        <div class="hint" id="heroSubtitle">2025-2026 schedule</div>
+
+        <div class="controls" role="region" aria-label="Search and filters" style="margin-top:12px">
+          <input id="searchBox" type="search" placeholder="Search events..." aria-label="Search events">
+          <select id="monthFilter" aria-label="Filter by month">
+            <option value="">All Months</option>
+            <option value="01">January</option><option value="02">February</option><option value="03">March</option>
+            <option value="04">April</option><option value="05">May</option><option value="06">June</option>
+            <option value="07">July</option><option value="08">August</option><option value="09">September</option>
+            <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+          </select>
+
+          <div id="monthButtons" class="month-buttons" aria-hidden="false"></div>
+
+          <div style="display:flex;gap:8px;align-items:center">
+            <button id="gridBtn" class="btn primary" title="Grid view">Grid</button>
+            <button id="museumBtn" class="btn" title="Museum view">Museum</button>
+            <button id="presentBtn" class="btn" title="Present mode">Present</button>
           </div>
         </div>
-        <div style="text-align: right; color: var(--hero-fg); font-weight: 700">
-          Maxwell • 2025–26
-        </div>
       </div>
-    </section>
 
-    <canvas
-      id="stars"
-      aria-hidden="true"
-      style="position: fixed; inset: 0; z-index: -1; pointer-events: none"
-    ></canvas>
+      <div style="text-align:right;color:var(--hero-fg);font-weight:700">Maxwell • 2025–26</div>
+    </div>
+  </section>
 
-    <section
-      id="nextUp"
-      style="
-        display: none;
-        max-width: 1200px;
-        margin: 12px auto;
-        padding: 12px 16px;
-        border-left: 6px solid var(--accent);
-        border-radius: 10px;
-        background: rgba(255, 255, 255, 0.9);
-        color: #072238;
-        box-shadow: 0 8px 30px rgba(2, 8, 23, 0.12);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      "
-    >
+  <!-- starfield canvas (ambient) -->
+  <canvas id="stars" aria-hidden="true" style="position:fixed;inset:0;z-index:-1;pointer-events:none"></canvas>
+
+  <!-- Next-up banner -->
+  <section id="nextUp" style="display:none;max-width:1200px;margin:12px auto;padding:12px 16px;border-left:6px solid var(--accent);border-radius:10px;background:rgba(255,255,255,0.95);color:#072238;box-shadow:0 8px 30px rgba(2,8,23,0.12);display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <div style="font-weight:700;color:#0b4b6f">Next Up</div>
+      <div class="detail"><strong id="nextUpName">—</strong> <span id="nextUpDetail"></span></div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:12px;color:#0b2547">Tip</div>
+      <div style="font-size:12px;color:#07284f">Pin events using the 📌 on cards or drag them into the right panel for quick access.</div>
+    </div>
+  </section>
+
+  <!-- Pinned panel (collapsed by default; toggle button always available) -->
+  <aside id="pinnedColumn" class="pinned-column collapsed" aria-label="Pinned events">
+    <div class="panel-top">
+      <strong style="font-size:14px;color:#072238">Pinned</strong>
+      <div class="panel-actions">
+        <button id="exportPins" class="btn" title="Export pinned as CSV">Export</button>
+        <button id="clearPins" class="clear-btn" title="Clear all pins">Clear</button>
+        <button id="pinCollapseBtn" class="btn" aria-pressed="true" title="Hide panel">Hide</button>
+      </div>
+    </div>
+    <!-- pinned items injected here -->
+  </aside>
+
+  <button id="pinnedToggleBtn" title="Open pinned panel">📌</button>
+
+  <main class="wrap">
+    <div class="top-row">
       <div>
-        <div style="font-weight: 700; color: #0b4b6f">Next Up</div>
-        <div class="detail">
-          <strong id="nextUpName">—</strong> <span id="nextUpDetail"></span>
-        </div>
+        <h1 id="pageTitle">School Events Countdown</h1>
+        <div id="subtitle">2025-2026 schedule</div>
       </div>
-      <div style="text-align: right">
-        <div style="font-size: 12px; color: #0b2547">Tip</div>
-        <div style="font-size: 12px; color: #07284f">
-          Pin events using the 📌 on cards or drag them into the right panel for
-          quick access.
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;color:#fff;font-weight:700">Maxwell • 2025–26</div>
+    </div>
+
+    <div id="stage">
+      <div id="eventsGrid" class="grid" aria-live="polite"></div>
+    </div>
+  </main>
+
+<script>
+/* ---------------- DATA ---------------- */
+const HERO_URL = 'https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/04/VideoCover-1.jpeg?resize=767%2C500&ssl=1';
+
+const EVENTS = [
+  { name: "Summer Holiday", start: "2025-08-01", end: "2025-08-09" },
+  { name: "School Opening (Arrival & Dorm Move-in)", start: "2025-08-10", end: "2025-08-11" },
+  { name: "First Semester Registration", start: "2025-08-11" },
+  { name: "Orientation", start: "2025-08-12" },
+  { name: "Faculty Family", start: "2025-09-07" },
+  { name: "Picture Day", start: "2025-09-09" },
+  { name: "Open Weekend", start: "2025-09-12", end: "2025-09-14" },
+  { name: "Week of Prayer", start: "2025-09-15", end: "2025-09-20" },
+  { name: "Camping Trip", start: "2025-09-21", end: "2025-09-23" },
+  { name: "Online Parent-Teacher Conferences", start: "2025-09-30" },
+  /* midterm removed per your request */
+  { name: "Midterm Break", start: "2025-10-09", end: "2025-10-20" },
+  { name: "Music Sabbath", start: "2025-10-25" },
+  { name: "Weekend of Spiritual Emphasis", start: "2025-11-07", end: "2025-11-08" },
+  { name: "MAP Testing", start: "2025-11-24", end: "2025-11-27" },
+  { name: "Faculty Family", start: "2025-11-14" },
+  { name: "Finals Review Week", start: "2025-12-01", end: "2025-12-05" },
+  { name: "Final Exams 1st Sem", start: "2025-12-08", end: "2025-12-10" },
+  { name: "Christmas Break", start: "2025-12-10", end: "2026-01-05" },
+  { name: "School Opening (2nd Sem)", start: "2026-01-05" },
+  { name: "Senior Government Day", start: "2026-01-20", end: "2026-01-21" },
+  { name: "Faculty Family", start: "2026-01-30" },
+  { name: "Junior Vespers", start: "2026-02-06" },
+  { name: "NHS Applications Deadline", start: "2026-02-10" },
+  { name: "Weekend of Spiritual Emphasis", start: "2026-02-13", end: "2026-02-14" },
+  { name: "ACT", start: "2026-02-13" },
+  { name: "NHS Induction", start: "2026-02-17" },
+  { name: "Mt. Kenya Trip", start: "2026-02-20", end: "2026-02-24" },
+  { name: "Senior Dedication", start: "2026-02-27" },
+  { name: "Sophomore Vespers", start: "2026-03-06" },
+  { name: "Student-Led Week of Prayer", start: "2026-03-09", end: "2026-03-14" },
+  { name: "Track and Field", start: "2026-03-19", end: "2026-03-20" },
+  { name: "Chorale Sacred Concert", start: "2026-03-21" },
+  { name: "Senior Class Trip", start: "2026-03-23", end: "2026-03-26" },
+  { name: "Midterm Break", start: "2026-03-26", end: "2026-04-06" },
+  { name: "Ethiopia Mission Trip", start: "2026-03-26", end: "2026-04-05" },
+  { name: "ACT", start: "2026-04-10" },
+  { name: "Freshmen Vespers", start: "2026-04-17" },
+  { name: "Faculty Family", start: "2026-04-19" },
+  { name: "Week of Prayer", start: "2026-04-20", end: "2026-04-25" },
+  { name: "Long Weekend", start: "2026-04-30", end: "2026-05-03" },
+  { name: "ASB Spirit Week", start: "2026-05-04", end: "2026-05-09" },
+  { name: "Class Surveys", start: "2026-05-11", end: "2026-05-13" },
+  { name: "ASB Elections", start: "2026-05-12" },
+  { name: "Spring Concert", start: "2026-05-16" },
+  { name: "MAP Testing", start: "2026-05-18", end: "2026-05-21" },
+  { name: "Dorm Parties", start: "2026-05-23" },
+  { name: "Dorm Outings", start: "2026-05-24" },
+  { name: "Finals Review Week", start: "2026-05-25", end: "2026-05-29" },
+  { name: "Zamani Night", start: "2026-05-30" },
+  { name: "Elementary Graduation", start: "2026-05-31" },
+  { name: "Final Exams 2nd Sem", start: "2026-06-02", end: "2026-06-04" },
+  { name: "GRADDDDD!!!!", start: "2026-06-05", end: "2026-06-07" }
+];
+
+const MONTH_COLORS = {
+  '01':'#e74c3c','02':'#ff8a65','03':'#f6c85f','04':'#8dd3c7','05':'#66a3ff','06':'#9b59b6',
+  '07':'#f06292','08':'#ffb84d','09':'#6ab04c','10':'#4a90e2','11':'#34495e','12':'#7bdbdb'
+};
+
+/* ---------------- HELPERS ---------------- */
+const el = id => document.getElementById(id);
+const pad = n => n<10? '0'+n : String(n);
+const formatISO = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const shortMonth = d => d.toLocaleString('en',{month:'short'});
+const formatDateBadge = (start, end) => {
+  const s = parseStart(start);
+  const e = end ? parseStart(end) : null;
+  if(!e) return `${shortMonth(s)} ${s.getDate()}`;
+  if(s.getFullYear()===e.getFullYear() && s.getMonth()===e.getMonth()) return `${shortMonth(s)} ${s.getDate()}–${e.getDate()}`;
+  return `${shortMonth(s)} ${s.getDate()} – ${shortMonth(e)} ${e.getDate()}`;
+};
+function slugify(name, idx){
+  return String(name).toLowerCase()
+    .replace(/[’'"]/g,'')
+    .replace(/[:\/\\(),.!?#\u2013\u2014]/g,'')
+    .replace(/\s+/g,'-')
+    .replace(/[^a-z0-9\-]/g,'') + '-' + idx;
+}
+function parseStart(s){ return s.includes('T') ? new Date(s) : new Date(s + 'T00:00:00'); }
+function parseEnd(e, start){ if(!e){ const d=new Date(start); d.setHours(23,59,59,999); return d } return e.includes('T') ? new Date(e) : new Date(e + 'T23:59:59.999'); }
+
+/* ---------------- STARFIELD (ambient) ---------------- */
+(function initStars(){
+  const canvas = el('stars');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+  window.addEventListener('resize', resize); resize();
+  const stars = Array.from({length:100}, () => ({
+    x: Math.random()*canvas.width, y: Math.random()*canvas.height, r: Math.random()*1.4+0.2,
+    dy: (Math.random()*0.6)+0.02, alpha: 0.25+Math.random()*0.65
+  }));
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(const s of stars){
+      ctx.globalAlpha = s.alpha * (0.7 + Math.sin(Date.now()/1000 + s.x)*0.3);
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fillStyle = '#ffffff'; ctx.fill();
+      s.y += s.dy;
+      if(s.y > canvas.height + 10){ s.y = -10; s.x = Math.random()*canvas.width; }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ---------------- STATE & PERSISTENCE ---------------- */
+let items = [];
+let tickHandle = null;
+let mode = 'grid';
+const STORAGE_KEY = 'maxwell_positions_v1';
+const PINNED_KEY  = 'maxwell_pinned_v1';
+const PIN_LIMIT = 8;
+const getPinned = () => { try{ return JSON.parse(localStorage.getItem(PINNED_KEY) || '[]') }catch(e){ return [] } };
+const setPinned = arr => { localStorage.setItem(PINNED_KEY, JSON.stringify(arr)); renderPinnedPanel(); };
+const isPinned = idx => getPinned().includes(idx);
+const togglePin = idx => {
+  const arr = getPinned();
+  const pos = arr.indexOf(idx);
+  if(pos === -1){ arr.unshift(idx); while(arr.length > 50) arr.pop(); }
+  else arr.splice(pos,1);
+  setPinned(arr);
+};
+const savePos = (id,x,y) => {
+  try{ const s = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'); s[id] = {x,y,at:Date.now()}; localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }catch(e){}
+};
+
+/* ---------------- RENDERING ---------------- */
+function sortEvents(){ EVENTS.sort((a,b)=> parseStart(a.start) - parseStart(b.start)); }
+function findNextUpcoming(){ const now = Date.now(); return EVENTS.find(ev => parseEnd(ev.end, parseStart(ev.start)).getTime() >= now) || null; }
+function renderNextUp(){
+  const n = findNextUpcoming(); const banner = el('nextUp');
+  if(!n){ banner.style.display = 'none'; return; }
+  banner.style.display = 'flex';
+  el('nextUpName').textContent = n.name;
+  el('nextUpDetail').textContent = n.end ? `From ${formatISO(parseStart(n.start))} → ${formatISO(parseStart(n.end))}` : `On ${formatISO(parseStart(n.start))}`;
+}
+
+function clearRendered(){ if(tickHandle){ clearInterval(tickHandle); tickHandle = null; } items = []; const grid = el('eventsGrid'); if(grid) grid.innerHTML = ''; document.getElementById('stage').classList.remove('museum'); }
+
+function updateOne(item, now){
+  const { id, start, end, el:card } = item;
+  const cd = document.getElementById('cd-' + id);
+  const st = document.getElementById('st-' + id);
+  if(!cd || !st) return;
+  if(now.getTime() < start.getTime()){
+    card.classList.remove('happening','finished'); card.classList.add('upcoming');
+    const diff = start.getTime() - now.getTime();
+    const d = Math.floor(diff/86400000);
+    const h = Math.floor((diff%86400000)/3600000);
+    const m = Math.floor((diff%3600000)/60000);
+    const s = Math.floor((diff%60000)/1000);
+    cd.textContent = `${d}d ${h}h ${m}m ${s}s left`;
+    st.innerHTML = '⏳ Coming soon';
+  } else if(now.getTime() > end.getTime()){
+    card.classList.remove('upcoming','happening'); card.classList.add('finished');
+    cd.textContent = `Ended on ${formatISO(end)}`;
+    st.innerHTML = '✅ Finished';
+  } else {
+    card.classList.remove('upcoming','finished'); card.classList.add('happening');
+    const diff = end.getTime() - now.getTime();
+    const d = Math.floor(diff/86400000);
+    const h = Math.floor((diff%86400000)/3600000);
+    const m = Math.floor((diff%3600000)/60000);
+    const s = Math.floor((diff%60000)/1000);
+    cd.textContent = `${d}d ${h}h ${m}m ${s}s remaining`;
+    st.innerHTML = '🔴 Happening now';
+  }
+}
+
+/* Render all events (grouped by month headings) */
+function renderAll(){
+  clearRendered();
+  sortEvents(); renderNextUp();
+  const grid = el('eventsGrid'); if(!grid) return;
+  const q = (el('searchBox').value || '').toLowerCase();
+  const monthFilter = (el('monthFilter').value || '');
+  let currentGroup = '';
+
+  EVENTS.forEach((ev, idx) => {
+    if(q && !ev.name.toLowerCase().includes(q)) return;
+    if(monthFilter && ev.start.slice(5,7) !== monthFilter) return;
+
+    const start = parseStart(ev.start);
+    const mm = `${start.getFullYear()}-${pad(start.getMonth()+1)}`;
+    if(mm !== currentGroup){
+      currentGroup = mm;
+      const heading = document.createElement('div');
+      heading.className = 'month-heading';
+      heading.textContent = `${start.toLocaleString('en', { month: 'long' })} ${start.getFullYear()}`;
+      heading.dataset.month = pad(start.getMonth()+1);
+      heading.addEventListener('click', () => {
+        const mf = el('monthFilter');
+        if(mf){ mf.value = heading.dataset.month; highlightMonthButton(heading.dataset.month); renderAll(); }
+      });
+      grid.appendChild(heading);
+    }
+
+    const startDate = parseStart(ev.start);
+    const endDate = parseEnd(ev.end, startDate);
+    const id = slugify(ev.name, idx);
+    const monthColor = MONTH_COLORS[pad(startDate.getMonth()+1)] || '#ccc';
+
+    const card = document.createElement('article');
+    card.className = 'card';
+    card.setAttribute('data-id', id);
+    card.setAttribute('data-idx', idx);
+    card.innerHTML = `
+      <div class="month-strip" style="background:${monthColor}"></div>
+      <button class="pin-btn" title="Pin event" aria-label="Pin event" data-idx="${idx}">📌</button>
+      <div class="big-letter" aria-hidden="true">${ev.name && ev.name[0] ? ev.name[0].toUpperCase() : 'E'}</div>
+      <div class="card-content">
+        <div class="title" id="title-wrap-${id}">
+          <span class="fill" id="title-fill-${id}">${ev.name}</span>
+          <span class="fallback" id="title-fallback-${id}">${ev.name}</span>
         </div>
+        <div class="meta">${ ev.end ? `${formatISO(startDate)} → ${formatISO(parseStart(ev.end))}` : formatISO(startDate) }</div>
+        <div class="countdown" id="cd-${id}" aria-live="polite">—</div>
+        <div class="status" id="st-${id}">—</div>
+        <div class="date-badge" id="db-${id}">${formatDateBadge(ev.start, ev.end)}</div>
       </div>
-    </section>
+    `;
+    grid.appendChild(card);
 
-    <aside id="pinnedColumn" class="pinned-column" aria-label="Pinned events">
-      <div class="panel-top">
-        <strong style="font-size: 14px; color: #072238">Pinned</strong>
-        <div class="panel-actions">
-          <button id="clearPins" class="clear-btn" title="Clear all pins">
-            Clear
-          </button>
-          <button
-            id="pinCollapseBtn"
-            class="collapse-btn"
-            aria-pressed="false"
-            title="Collapse panel"
-          >
-            ⤫
-          </button>
-        </div>
-      </div>
-    </aside>
+    // push for ticking
+    items.push({ id, name: ev.name, start: startDate, end: endDate, el: card, idx });
 
-    <button id="pinnedToggleBtn" title="Toggle pinned panel">📌</button>
+    // pin button
+    const pinBtn = card.querySelector('.pin-btn');
+    if(pinBtn){
+      const refreshPin = () => pinBtn.classList.toggle('active', isPinned(idx));
+      pinBtn.addEventListener('click', e => { e.stopPropagation(); togglePin(idx); refreshPin(); renderPinnedPanel(); });
+      refreshPin();
+    }
 
-    <main class="wrap">
-      <div class="top-row">
-        <div>
-          <h1 id="pageTitle">School Events Countdown</h1>
-          <div id="subtitle">2025-2026 schedule</div>
-        </div>
-        <div
-          style="
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            align-items: flex-end;
-            color: #fff;
-            font-weight: 700;
-          "
-        >
-          Maxwell • 2025–26
-        </div>
-      </div>
-      <div id="stage">
-        <div id="eventsGrid" class="grid" aria-live="polite"></div>
-      </div>
-    </main>
-
-    <script>
-      /* ---------------- data ---------------- */
-      const LOCAL_HERO = "/images/hero.jpg"; // place hero at this path in your repo for best results
-      const DRIVE_HERO =
-        "https://drive.google.com/uc?export=view&id=1K8apPa465CryF-oTh2fmd-VcfQv6U-i6";
-      const HERO_IMAGE = LOCAL_HERO; // we'll try local first and fall back to drive if missing
-
-      const NATURE_IMAGES = [
-        DRIVE_HERO,
-        "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1600&q=80&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1600&q=80&auto=format&fit=crop",
-      ];
-
-      const EVENTS = [
-        { name: "Summer Holiday", start: "2025-08-01", end: "2025-08-09" },
-        {
-          name: "School Opening (Arrival & Dorm Move-in)",
-          start: "2025-08-10",
-          end: "2025-08-11",
-        },
-        { name: "First Semester Registration", start: "2025-08-11" },
-        { name: "Orientation", start: "2025-08-12" },
-        { name: "Faculty Family", start: "2025-09-07" },
-        { name: "Picture Day", start: "2025-09-09" },
-        { name: "Open Weekend", start: "2025-09-12", end: "2025-09-14" },
-        { name: "Week of Prayer", start: "2025-09-15", end: "2025-09-20" },
-        { name: "Camping Trip", start: "2025-09-21", end: "2025-09-23" },
-        { name: "Online Parent-Teacher Conferences", start: "2025-09-30" },
-        { name: "Midterm Break", start: "2025-10-09", end: "2025-10-20" },
-        { name: "Music Sabbath", start: "2025-10-25" },
-        {
-          name: "Weekend of Spiritual Emphasis",
-          start: "2025-11-07",
-          end: "2025-11-08",
-        },
-        { name: "MAP Testing", start: "2025-11-24", end: "2025-11-27" },
-        { name: "Faculty Family", start: "2025-11-14" },
-        { name: "Finals Review Week", start: "2025-12-01", end: "2025-12-05" },
-        { name: "Final Exams 1st Sem", start: "2025-12-08", end: "2025-12-10" },
-        { name: "Christmas Break", start: "2025-12-10", end: "2026-01-05" },
-        { name: "School Opening (2nd Sem)", start: "2026-01-05" },
-        {
-          name: "Senior Government Day",
-          start: "2026-01-20",
-          end: "2026-01-21",
-        },
-        { name: "Faculty Family", start: "2026-01-30" },
-        { name: "Junior Vespers", start: "2026-02-06" },
-        { name: "NHS Applications Deadline", start: "2026-02-10" },
-        {
-          name: "Weekend of Spiritual Emphasis",
-          start: "2026-02-13",
-          end: "2026-02-14",
-        },
-        { name: "ACT", start: "2026-02-13" },
-        { name: "NHS Induction", start: "2026-02-17" },
-        { name: "Mt. Kenya Trip", start: "2026-02-20", end: "2026-02-24" },
-        { name: "Senior Dedication", start: "2026-02-27" },
-        { name: "Sophomore Vespers", start: "2026-03-06" },
-        {
-          name: "Student-Led Week of Prayer",
-          start: "2026-03-09",
-          end: "2026-03-14",
-        },
-        { name: "Track and Field", start: "2026-03-19", end: "2026-03-20" },
-        { name: "Chorale Sacred Concert", start: "2026-03-21" },
-        { name: "Senior Class Trip", start: "2026-03-23", end: "2026-03-26" },
-        { name: "Midterm Break", start: "2026-03-26", end: "2026-04-06" },
-        {
-          name: "Ethiopia Mission Trip",
-          start: "2026-03-26",
-          end: "2026-04-05",
-        },
-        { name: "ACT", start: "2026-04-10" },
-        { name: "Freshmen Vespers", start: "2026-04-17" },
-        { name: "Faculty Family", start: "2026-04-19" },
-        { name: "Week of Prayer", start: "2026-04-20", end: "2026-04-25" },
-        { name: "Long Weekend", start: "2026-04-30", end: "2026-05-03" },
-        { name: "ASB Spirit Week", start: "2026-05-04", end: "2026-05-09" },
-        { name: "Class Surveys", start: "2026-05-11", end: "2026-05-13" },
-        { name: "ASB Elections", start: "2026-05-12" },
-        { name: "Spring Concert", start: "2026-05-16" },
-        { name: "MAP Testing", start: "2026-05-18", end: "2026-05-21" },
-        { name: "Dorm Parties", start: "2026-05-23" },
-        { name: "Dorm Outings", start: "2026-05-24" },
-        { name: "Finals Review Week", start: "2026-05-25", end: "2026-05-29" },
-        { name: "Zamani Night", start: "2026-05-30" },
-        { name: "Elementary Graduation", start: "2026-05-31" },
-        { name: "Final Exams 2nd Sem", start: "2026-06-02", end: "2026-06-04" },
-        { name: "GRADDDDD!!!!", start: "2026-06-05", end: "2026-06-07" },
-      ];
-
-      const MONTH_COLORS = {
-        "01": "#e74c3c",
-        "02": "#ff8a65",
-        "03": "#f6c85f",
-        "04": "#8dd3c7",
-        "05": "#66a3ff",
-        "06": "#9b59b6",
-        "07": "#f06292",
-        "08": "#ffb84d",
-        "09": "#6ab04c",
-        10: "#4a90e2",
-        11: "#34495e",
-        12: "#7bdbdb",
+    // preload small image into title fill (nature-like aesthetic)
+    const imgUrl = HERO_URL; // reuse hero as a small texture for title
+    (function preload(idLocal, url){
+      const im = new Image();
+      im.crossOrigin = 'anonymous';
+      im.onload = () => {
+        const fill = document.getElementById('title-fill-' + idLocal);
+        const fallback = document.getElementById('title-fallback-' + idLocal);
+        if(fill){
+          fill.style.backgroundImage = `url('${url}')`;
+          fill.style.backgroundSize = 'cover';
+          fill.style.backgroundPosition = 'center';
+          fill.style.opacity = '1';
+          if(fallback) fallback.style.opacity = '0';
+        }
       };
+      im.onerror = ()=>{};
+      im.src = url;
+    })(id, imgUrl);
+  });
 
-      /* ---------- helpers ---------- */
-      function byId(id) {
-        return document.getElementById(id);
-      }
-      function pad(n) {
-        return n < 10 ? "0" + n : String(n);
-      }
-      function formatISO(d) {
-        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(
-          d.getDate()
-        )}`;
-      }
-      function shortMonth(d) {
-        return d.toLocaleString("en", { month: "short" });
-      }
-      function formatDateBadge(start, end) {
-        const s = parseStart(start);
-        const e = end ? parseStart(end) : null;
-        if (!e) return `${shortMonth(s)} ${s.getDate()}`;
-        if (
-          s.getFullYear() === e.getFullYear() &&
-          s.getMonth() === e.getMonth()
-        )
-          return `${shortMonth(s)} ${s.getDate()}–${e.getDate()}`;
-        return `${shortMonth(s)} ${s.getDate()} – ${shortMonth(
-          e
-        )} ${e.getDate()}`;
-      }
-      function slugify(name, idx) {
-        return (
-          String(name)
-            .toLowerCase()
-            .replace(/[’'\"]/g, "")
-            .replace(/[:\\/\\(),.!?#\u2013\u2014]/g, "")
-            .replace(/\s+/g, "-")
-            .replace(/[^a-z0-9\-]/g, "") +
-          "-" +
-          idx
-        );
-      }
-      function parseStart(s) {
-        return s.includes("T") ? new Date(s) : new Date(s + "T00:00:00");
-      }
-      function parseEnd(e, start) {
-        if (!e) {
-          const d = new Date(start);
-          d.setHours(23, 59, 59, 999);
-          return d;
-        }
-        return e.includes("T") ? new Date(e) : new Date(e + "T23:59:59.999");
-      }
+  // start ticking
+  tickHandle = setInterval(() => {
+    const now = new Date();
+    items.forEach(i => updateOne(i, now));
+    updatePinnedCounts(now);
+  }, 1000);
 
-      /* ---------- starfield ---------- */
-      (function () {
-        const c = byId("stars");
-        if (!c) return;
-        const ctx = c.getContext("2d");
-        function r() {
-          c.width = innerWidth;
-          c.height = innerHeight;
-        }
-        window.addEventListener("resize", r);
-        r();
-        const stars = Array.from({ length: 100 }, () => ({
-          x: Math.random() * c.width,
-          y: Math.random() * c.height,
-          r: Math.random() * 1.4 + 0.2,
-          dy: Math.random() * 0.6 + 0.02,
-          alpha: 0.25 + Math.random() * 0.7,
-        }));
-        function t() {
-          ctx.clearRect(0, 0, c.width, c.height);
-          for (const s of stars) {
-            ctx.globalAlpha =
-              s.alpha * (0.7 + Math.sin(Date.now() / 1000 + s.x) * 0.3);
-            ctx.beginPath();
-            ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-            ctx.fillStyle = "#ffffff";
-            ctx.fill();
-            s.y += s.dy;
-            if (s.y > c.height + 10) {
-              s.y = -10;
-              s.x = Math.random() * c.width;
-            }
-          }
-          requestAnimationFrame(t);
-        }
-        t();
-      })();
+  // initial update and pinned render
+  items.forEach(i => updateOne(i, new Date()));
+  renderPinnedPanel();
+  updatePinnedCounts(new Date());
+  applyMode();
+}
 
-      /* ---------- state & persistence ---------- */
-      let items = [];
-      let tickHandle = null;
-      let mode = "grid";
-      const STORAGE_KEY = "school_events_positions_v3";
-      const PINNED_KEY = "school_events_pinned_v3";
-      const PIN_LIMIT = 8;
-      const pinnedContainer = byId("pinnedColumn");
-      function getPinned() {
-        try {
-          return JSON.parse(localStorage.getItem(PINNED_KEY) || "[]");
-        } catch (e) {
-          return [];
-        }
-      }
-      function setPinned(arr) {
-        localStorage.setItem(PINNED_KEY, JSON.stringify(arr));
-        renderPinnedRow();
-      }
-      function isPinned(i) {
-        return getPinned().includes(i);
-      }
-      function togglePin(i) {
-        const p = getPinned();
-        const idx = p.indexOf(i);
-        if (idx === -1) {
-          p.unshift(i);
-          while (p.length > 50) p.pop();
-        } else p.splice(idx, 1);
-        setPinned(p);
-      }
-      function savePosition(id, x, y) {
-        try {
-          const s = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-          s[id] = { x, y, savedAt: Date.now() };
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-        } catch (e) {
-          console.warn(e);
-        }
-      }
+/* ---------------- PINNED PANEL ---------------- */
+function renderPinnedPanel(){
+  const container = el('pinnedColumn');
+  if(!container) return;
+  // preserve panel-top (first child)
+  const children = Array.from(container.children);
+  const top = children[0];
+  container.innerHTML = '';
+  if(top) container.appendChild(top);
 
-      /* ---------- rendering ---------- */
-      function sortEvents() {
-        EVENTS.sort((a, b) => parseStart(a.start) - parseStart(b.start));
-      }
-      function findNextUpcoming() {
-        const now = Date.now();
-        return (
-          EVENTS.find(
-            (ev) => parseEnd(ev.end, parseStart(ev.start)).getTime() >= now
-          ) || null
-        );
-      }
-      function renderNextUp() {
-        const n = findNextUpcoming();
-        const b = byId("nextUp");
-        if (!b) return;
-        if (!n) {
-          b.style.display = "none";
-          return;
-        }
-        b.style.display = "flex";
-        byId("nextUpName").textContent = n.name;
-        byId("nextUpDetail").textContent = n.end
-          ? `From ${formatISO(parseStart(n.start))} → ${formatISO(
-              parseStart(n.end)
-            )}`
-          : `On ${formatISO(parseStart(n.start))}`;
-      }
-      function clearTick() {
-        if (tickHandle) {
-          clearInterval(tickHandle);
-          tickHandle = null;
-        }
-      }
-      function clearRendered() {
-        clearTick();
-        items = [];
-        const g = byId("eventsGrid");
-        if (g) g.innerHTML = "";
-        document.getElementById("stage").classList.remove("museum");
-      }
+  const now = new Date();
+  const pinnedIndices = getPinned();
+  const pinnedSet = new Set(pinnedIndices);
 
-      function updateOne(item, now) {
-        const { id, start, end, el } = item;
-        const cd = byId("cd-" + id);
-        const st = byId("st-" + id);
-        if (!cd || !st) return;
-        if (now.getTime() < start.getTime()) {
-          el.classList.remove("happening", "finished");
-          el.classList.add("upcoming");
-          const diff = start.getTime() - now.getTime();
-          const d = Math.floor(diff / 86400000);
-          const h = Math.floor((diff % 86400000) / 3600000);
-          const m = Math.floor((diff % 3600000) / 60000);
-          const s = Math.floor((diff % 60000) / 1000);
-          cd.textContent = `${d}d ${h}h ${m}m ${s}s left`;
-          st.innerHTML = "⏳ Coming soon";
-        } else if (now.getTime() > end.getTime()) {
-          el.classList.remove("upcoming", "happening");
-          el.classList.add("finished");
-          cd.textContent = `Ended on ${formatISO(end)}`;
-          st.innerHTML = "✅ Finished";
-        } else {
-          el.classList.remove("upcoming", "finished");
-          el.classList.add("happening");
-          const diff = end.getTime() - now.getTime();
-          const d = Math.floor(diff / 86400000);
-          const h = Math.floor((diff % 86400000) / 3600000);
-          const m = Math.floor((diff % 3600000) / 60000);
-          const s = Math.floor((diff % 60000) / 1000);
-          cd.textContent = `${d}d ${h}h ${m}m ${s}s remaining`;
-          st.innerHTML = "🔴 Happening now";
-        }
-      }
+  // map events with start/end
+  const mapped = EVENTS.map((ev, i) => ({ ev, i, start: parseStart(ev.start), end: parseEnd(ev.end, parseStart(ev.start)) }));
+  // upcoming sorted
+  const upcoming = mapped.filter(o => o.end.getTime() >= now.getTime()).sort((a,b) => a.start - b.start);
 
-      function renderAll() {
-        clearRendered();
-        sortEvents();
-        renderNextUp();
-        const grid = byId("eventsGrid");
-        if (!grid) return;
-        const q = (byId("searchBox").value || "").toLowerCase();
-        const month = byId("monthFilter").value || "";
-        let currentGroup = ""; // group by month
-        EVENTS.forEach((ev, idx) => {
-          if (q && !ev.name.toLowerCase().includes(q)) return;
-          if (month && ev.start.slice(5, 7) !== month) return;
-          const start = parseStart(ev.start);
-          const mm = `${start.getFullYear()}-${pad(start.getMonth() + 1)}`;
-          if (mm !== currentGroup) {
-            currentGroup = mm;
-            const heading = document.createElement("div");
-            heading.className = "month-heading";
-            heading.textContent = `${start.toLocaleString("en", {
-              month: "long",
-            })} ${start.getFullYear()}`;
-            heading.dataset.mm = pad(start.getMonth() + 1);
-            heading.addEventListener("click", () => {
-              // clicking the heading focuses (filters) the month
-              const mf = byId("monthFilter");
-              if (mf) {
-                mf.value = heading.dataset.mm;
-                highlightMonthButton(heading.dataset.mm);
-                renderAll();
-              }
-            });
-            grid.appendChild(heading);
-          }
-          const end = parseEnd(ev.end, start);
-          const id = slugify(ev.name, idx);
-          const img = NATURE_IMAGES[idx % NATURE_IMAGES.length];
-          const card = document.createElement("article");
-          card.className = "card";
-          card.setAttribute("data-id", id);
-          card.setAttribute("data-idx", idx);
-          const monthColor = MONTH_COLORS[pad(start.getMonth() + 1)] || "#ccc";
-          card.innerHTML = `<div class="month-strip" style="background:${monthColor}"></div><button class="pin-btn" title="Pin event" aria-label="Pin event" data-idx="${idx}">📌</button><div class="big-letter" aria-hidden="true">${
-            ev.name[0] || "E"
-          }</div><div class="card-content"><div class="title" id="title-wrap-${id}"><span class="fill" id="title-fill-${id}">${
-            ev.name
-          }</span><span class="fallback" id="title-fallback-${id}">${
-            ev.name
-          }</span></div><div class="meta">${
-            ev.end
-              ? `${formatISO(start)} → ${formatISO(parseStart(ev.end))}`
-              : formatISO(start)
-          }</div><div class="countdown" id="cd-${id}">—</div><div class="status" id="st-${id}">—</div><div class="date-badge" id="db-${id}">${formatDateBadge(
-            ev.start,
-            ev.end
-          )}</div></div>`;
-          grid.appendChild(card);
-          items.push({ id, name: ev.name, start, end, el: card, img, idx });
-          const pinBtn = card.querySelector(".pin-btn");
-          if (pinBtn) {
-            function refresh() {
-              if (isPinned(idx)) pinBtn.classList.add("active");
-              else pinBtn.classList.remove("active");
-            }
-            pinBtn.addEventListener("click", (e) => {
-              e.stopPropagation();
-              togglePin(idx);
-              refresh();
-              renderPinnedRow();
-            });
-            refresh();
-          }
-          (function preloadAndApply(idLocal, url) {
-            const imgObj = new Image();
-            imgObj.crossOrigin = "anonymous";
-            imgObj.onload = () => {
-              const fill = byId("title-fill-" + idLocal);
-              const fallback = byId("title-fallback-" + idLocal);
-              if (fill) {
-                fill.style.backgroundImage = `url('${url}')`;
-                fill.style.backgroundSize = "cover";
-                fill.style.backgroundPosition = "center";
-                fill.style.opacity = "1";
-                if (fallback) fallback.style.opacity = "0";
-              }
-            };
-            imgObj.onerror = () => {};
-            imgObj.src = url;
-          })(id, img);
-        });
-        tickHandle = setInterval(() => {
-          const now = new Date();
-          items.forEach((i) => updateOne(i, now));
-          updatePinnedCounts(now);
-        }, 1000);
-        items.forEach((i) => updateOne(i, new Date()));
-        renderPinnedRow();
-        updatePinnedCounts(new Date());
-        applyMode();
-      }
+  // final pins: user's pins first, then upcoming (fill)
+  const finalPins = [];
+  for(const p of pinnedIndices){ if(finalPins.length >= PIN_LIMIT) break; if(EVENTS[p]) finalPins.push({ ev: EVENTS[p], idx: p, start: parseStart(EVENTS[p].start), end: parseEnd(EVENTS[p].end, parseStart(EVENTS[p].start)) }); }
+  for(const u of upcoming){
+    if(finalPins.length >= PIN_LIMIT) break;
+    if(pinnedSet.has(u.idx)) continue;
+    finalPins.push(u);
+  }
 
-      /* ---------- month buttons & helpers ---------- */
-      function generateMonthButtons() {
-        const container = byId("monthButtons");
-        if (!container) return;
-        container.innerHTML = "";
-        const months = new Map();
-        EVENTS.forEach((ev) => {
-          const s = parseStart(ev.start);
-          const key = `${s.getFullYear()}-${pad(s.getMonth() + 1)}`;
-          if (!months.has(key))
-            months.set(key, {
-              label: `${s.toLocaleString("en", {
-                month: "short",
-              })} ${s.getFullYear()}`,
-              month: pad(s.getMonth() + 1),
-            });
-        }); // create buttons in chronological order
-        Array.from(months.entries())
-          .sort()
-          .forEach(([key, val]) => {
-            const btn = document.createElement("button");
-            btn.className = "month-btn";
-            btn.textContent = val.label;
-            btn.dataset.month = val.month;
-            btn.addEventListener("click", () => {
-              const mf = byId("monthFilter");
-              if (!mf) return; // toggle
-              if (mf.value === val.month) {
-                mf.value = "";
-                btn.classList.remove("active");
-              } else {
-                mf.value = val.month;
-                highlightMonthButton(val.month);
-              }
-              renderAll();
-            });
-            container.appendChild(btn);
-          });
+  finalPins.forEach((o, pos) => {
+    const id = 'pin_' + slugify(o.ev.name + '-' + o.idx, o.idx);
+    const chip = document.createElement('button');
+    chip.className = 'pinned-chip';
+    chip.tabIndex = 0;
+    chip.dataset.eventIndex = String(o.idx);
+    chip.id = id;
+    chip.setAttribute('draggable','true');
+    chip.innerHTML = `
+      <div class="pinned-row-top">
+        <div style="min-width:0">
+          <div class="pinned-title">${o.ev.name}</div>
+          <div class="pinned-sub">${ o.ev.end ? formatISO(o.start) + ' → ' + formatISO(parseStart(o.ev.end)) : formatISO(o.start) }</div>
+        </div>
+        <div style="text-align:right">
+          <div class="pinned-count" id="count-${id}">—</div>
+        </div>
+      </div>
+      <div class="pinned-progress"><i style="width:0%"></i></div>
+    `;
+    // click: scroll to card
+    chip.addEventListener('click', () => {
+      const idx = Number(chip.dataset.eventIndex);
+      const target = items.find(it => it.idx === idx);
+      if(target && target.el){
+        target.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        target.el.style.transition = 'box-shadow .18s, transform .18s';
+        target.el.style.boxShadow = '0 20px 60px rgba(255,180,60,0.32)';
+        target.el.style.transform = 'translateY(-8px)';
+        setTimeout(()=>{ target.el.style.boxShadow=''; target.el.style.transform=''; }, 1200);
       }
-      function highlightMonthButton(month) {
-        const btns = Array.from(document.querySelectorAll(".month-btn"));
-        btns.forEach((b) => {
-          if (b.dataset.month === month) b.classList.add("active");
-          else b.classList.remove("active");
-        });
+    });
+    // drag & reorder
+    chip.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', String(o.idx)); chip.classList.add('dragging'); });
+    chip.addEventListener('dragend', e => { chip.classList.remove('dragging'); });
+    chip.addEventListener('dragover', e => {
+      e.preventDefault();
+      const dragging = container.querySelector('.dragging');
+      if(!dragging || dragging === chip) return;
+      const draggingIdx = Number(dragging.dataset.eventIndex);
+      const targetIdx = Number(chip.dataset.eventIndex);
+      const pins = getPinned();
+      const from = pins.indexOf(draggingIdx);
+      const to = pins.indexOf(targetIdx);
+      if(from > -1 && to > -1 && from !== to){
+        pins.splice(from, 1);
+        pins.splice(to, 0, draggingIdx);
+        setPinned(pins);
       }
+    });
 
-      /* ---------- pinned column rendering + reorder ---------- */
-      function renderPinnedRow() {
-        const container = pinnedContainer || byId("pinnedColumn");
-        if (!container) return;
-        Array.from(container.querySelectorAll(".pinned-chip")).forEach((n) =>
-          n.remove()
-        );
-        const now = new Date();
-        const pinned = getPinned();
-        const pinnedSet = new Set(pinned);
-        const mapped = EVENTS.map((ev, idx) => ({
-          ev,
-          idx,
-          start: parseStart(ev.start),
-          end: parseEnd(ev.end, parseStart(ev.start)),
-        }));
-        const upcoming = mapped
-          .filter((o) => o.end.getTime() >= now.getTime())
-          .sort((a, b) => a.start - b.start);
-        const finalPins = [];
-        for (const p of pinned) {
-          if (finalPins.length >= PIN_LIMIT) break;
-          if (EVENTS[p])
-            finalPins.push({
-              ev: EVENTS[p],
-              idx: p,
-              start: parseStart(EVENTS[p].start),
-              end: parseEnd(EVENTS[p].end, parseStart(EVENTS[p].start)),
-            });
-        }
-        for (const u of upcoming) {
-          if (finalPins.length >= PIN_LIMIT) break;
-          if (pinnedSet.has(u.idx)) continue;
-          finalPins.push(u);
-        }
-        finalPins.forEach((o, pos) => {
-          const id = "pin_" + slugify(o.ev.name + "-" + o.idx, o.idx);
-          const chip = document.createElement("button");
-          chip.className = "pinned-chip";
-          chip.setAttribute("tabindex", "0");
-          chip.dataset.eventIndex = String(o.idx);
-          chip.id = id;
-          chip.setAttribute("draggable", "true");
-          chip.innerHTML = `<div class="pinned-row-top"><div style="min-width:0"><div class="pinned-title">${
-            o.ev.name
-          }</div><div class="pinned-sub">${
-            o.ev.end
-              ? formatISO(o.start) + " → " + formatISO(parseStart(o.ev.end))
-              : formatISO(o.start)
-          }</div></div><div style="text-align:right"><div class="pinned-count" id="count-${id}">—</div></div></div><div class="pinned-progress"><i style="width:0%"></i></div>`;
-          chip.addEventListener("dragstart", (e) => {
-            e.dataTransfer.setData("text/plain", String(o.idx));
-            chip.classList.add("dragging");
-          });
-          chip.addEventListener("dragend", (e) => {
-            chip.classList.remove("dragging");
-          });
-          chip.addEventListener("click", () => {
-            const idx = Number(chip.dataset.eventIndex);
-            const t = items.find((it) => it.idx === idx);
-            if (t && t.el) {
-              t.el.scrollIntoView({ behavior: "smooth", block: "center" });
-              t.el.style.transition = "box-shadow .18s, transform .18s";
-              t.el.style.boxShadow = "0 20px 60px rgba(255,180,60,0.32)";
-              t.el.style.transform = "translateY(-8px)";
-              setTimeout(() => {
-                t.el.style.boxShadow = "";
-                t.el.style.transform = "";
-              }, 1200);
-            }
-          });
-          chip.addEventListener("dragover", (e) => {
-            e.preventDefault();
-            const dragging = container.querySelector(".dragging");
-            if (!dragging || dragging === chip) return;
-            const draggingIdx = Number(dragging.dataset.eventIndex);
-            const targetIdx = Number(chip.dataset.eventIndex);
-            const pins = getPinned();
-            const from = pins.indexOf(draggingIdx);
-            const to = pins.indexOf(targetIdx);
-            if (from > -1 && to > -1 && from !== to) {
-              pins.splice(from, 1);
-              pins.splice(to, 0, draggingIdx);
-              setPinned(pins);
-            }
-          });
-          container.appendChild(chip);
-        });
-        if (finalPins.length === 0) {
-          const placeholder = document.createElement("div");
-          placeholder.style.opacity = ".95";
-          placeholder.style.color = "#072238";
-          placeholder.style.fontSize = "14px";
-          placeholder.textContent =
-            "No pinned events — pin by clicking the 📌 on a card or dragging a card here.";
-          container.appendChild(placeholder);
-        }
-      }
+    container.appendChild(chip);
+  });
 
-      function updatePinnedCounts(now) {
-        if (!now) now = new Date();
-        const container = pinnedContainer || byId("pinnedColumn");
-        if (!container) return;
-        const pins = Array.from(container.querySelectorAll(".pinned-chip"));
-        pins.forEach((chip) => {
-          if (!chip.dataset.eventIndex) return;
-          const idx = Number(chip.dataset.eventIndex);
-          const ev = EVENTS[idx];
-          if (!ev) return;
-          const start = parseStart(ev.start);
-          const end = parseEnd(ev.end, start);
-          let txt = "",
-            percent = 0;
-          if (now.getTime() < start.getTime()) {
-            const diff = start.getTime() - now.getTime();
-            const d = Math.floor(diff / 86400000);
-            const h = Math.floor((diff % 86400000) / 3600000);
-            const m = Math.floor((diff % 3600000) / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
-            txt = `${d}d ${h}h ${m}m ${s}s left`;
-            percent = 0;
-          } else if (now.getTime() > end.getTime()) {
-            const diff = now.getTime() - end.getTime();
-            const d = Math.floor(diff / 86400000);
-            const h = Math.floor((diff % 86400000) / 3600000);
-            const m = Math.floor((diff % 3600000) / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
-            txt = `Ended ${d}d ${h}h ${m}m ${s}s ago`;
-            percent = 100;
-          } else {
-            const total = end.getTime() - start.getTime();
-            const remaining = end.getTime() - now.getTime();
-            const passed = total - remaining;
-            percent = Math.max(
-              0,
-              Math.min(100, Math.round((passed / total) * 100))
-            );
-            const diff = remaining;
-            const d = Math.floor(diff / 86400000);
-            const h = Math.floor((diff % 86400000) / 3600000);
-            const m = Math.floor((diff % 3600000) / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
-            txt = `${d}d ${h}h ${m}m ${s}s remaining`;
-          }
-          const countEl = chip.querySelector(`#count-${chip.id}`);
-          const prog = chip.querySelector(".pinned-progress i");
-          if (countEl) countEl.textContent = txt;
-          if (prog) prog.style.width = percent + "%";
-        });
-      }
+  if(finalPins.length === 0){
+    const placeholder = document.createElement('div');
+    placeholder.style.opacity = '.95';
+    placeholder.style.color = '#072238';
+    placeholder.style.fontSize = '14px';
+    placeholder.textContent = 'No pinned events — pin by clicking the 📌 on a card or dragging a card here.';
+    container.appendChild(placeholder);
+  }
+}
 
-      /* ---------- drag & museum ---------- */
-      function checkDropToPinned(el, idx) {
-        const pinEl = pinnedContainer || byId("pinnedColumn");
-        if (!pinEl) return false;
-        const rect = el.getBoundingClientRect();
-        const pinRect = pinEl.getBoundingClientRect();
-        const overlap = !(
-          rect.right < pinRect.left ||
-          rect.left > pinRect.right ||
-          rect.bottom < pinRect.top ||
-          rect.top > pinRect.bottom
-        );
-        const nearRight = rect.right > pinRect.left - 40;
-        if (overlap || nearRight) {
-          togglePin(idx);
-          renderPinnedRow();
-          pinEl.classList.add("drop-target");
-          setTimeout(() => pinEl.classList.remove("drop-target"), 600);
-          const pinBtn = el.querySelector(".pin-btn");
-          if (pinBtn) pinBtn.classList.toggle("active", isPinned(idx));
-          return true;
-        }
-        return false;
-      }
-      function applyMode() {
-        const stage = byId("stage");
-        const grid = byId("eventsGrid");
-        if (!stage || !grid) return;
-        const saved = (function () {
-          try {
-            return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-          } catch (e) {
-            return {};
-          }
-        })();
-        if (mode === "museum") {
-          stage.classList.add("museum");
-          items.forEach((it, i) => {
-            const el = it.el;
-            el.style.position = "absolute";
-            const savedPos = saved[it.id] || {};
-            const left = savedPos.x ?? 20 + (i % 4) * 280;
-            const top = savedPos.y ?? 20 + Math.floor(i / 4) * 220;
-            el.style.left = left + "px";
-            el.style.top = top + "px";
-            el.style.width = "260px";
-            el.style.zIndex = 50 + i;
-            enableDrag(el, it.idx);
-            el.addEventListener("pointermove", cardPointerTilt);
-            el.addEventListener("pointerleave", cardResetTilt);
-          });
-        } else {
-          stage.classList.remove("museum");
-          items.forEach((it) => {
-            const el = it.el;
-            el.style.position = "";
-            el.style.left = "";
-            el.style.top = "";
-            el.style.width = "";
-            el.style.zIndex = "";
-            disableDrag(el);
-            el.removeEventListener("pointermove", cardPointerTilt);
-            el.removeEventListener("pointerleave", cardResetTilt);
-            el.style.transform = "";
-          });
-        }
-      }
-      function enableDrag(el, idx) {
-        let dragging = false,
-          startX = 0,
-          startY = 0,
-          origX = 0,
-          origY = 0,
-          pointerId = null;
-        el.style.touchAction = "none";
-        function down(e) {
-          dragging = true;
-          pointerId = e.pointerId;
-          el.setPointerCapture(pointerId);
-          startX = e.clientX;
-          startY = e.clientY;
-          origX = parseFloat(el.style.left || "0");
-          origY = parseFloat(el.style.top || "0");
-          el.style.transition = "none";
-          el.style.cursor = "grabbing";
-          el.style.zIndex = 9999;
-        }
-        function move(e) {
-          if (!dragging) return;
-          const dx = e.clientX - startX;
-          const dy = e.clientY - startY;
-          const GRID = 10;
-          const x = Math.round((origX + dx) / GRID) * GRID;
-          const y = Math.round((origY + dy) / GRID) * GRID;
-          el.style.left = x + "px";
-          el.style.top = y + "px";
-        }
-        function up(e) {
-          if (!dragging) return;
-          dragging = false;
-          if (pointerId !== null) el.releasePointerCapture(pointerId);
-          el.style.cursor = "grab";
-          el.style.transition = "";
-          el.style.zIndex = "";
-          checkDropToPinned(el, idx);
-          savePosition(
-            el.getAttribute("data-id"),
-            parseFloat(el.style.left || "0"),
-            parseFloat(el.style.top || "0")
-          );
-        }
-        el.addEventListener("pointerdown", down);
-        el.addEventListener("pointermove", move);
-        el.addEventListener("pointerup", up);
-        el.__dragHandlers = { down, move, up };
-      }
-      function disableDrag(el) {
-        const h = el.__dragHandlers;
-        if (!h) return;
-        el.removeEventListener("pointerdown", h.down);
-        el.removeEventListener("pointermove", h.move);
-        el.removeEventListener("pointerup", h.up);
-        delete el.__dragHandlers;
-      }
-      function cardPointerTilt(e) {
-        const rect = this.getBoundingClientRect();
-        const cx = rect.left + rect.width / 2;
-        const dx = e.clientX - cx;
-        const dy = e.clientY - (rect.top + rect.height / 2);
-        const rx = (dy / rect.height) * -6;
-        const ry = (dx / rect.width) * 8;
-        this.style.transform = `perspective(800px) rotateX(${rx}deg) rotateY(${ry}deg) translateZ(8px)`;
-      }
-      function cardResetTilt() {
-        this.style.transform = "";
-      }
+/* update counts and small progress bars */
+function updatePinnedCounts(now){
+  if(!now) now = new Date();
+  const container = el('pinnedColumn');
+  if(!container) return;
+  const chips = Array.from(container.querySelectorAll('.pinned-chip'));
+  chips.forEach(chip => {
+    const idx = Number(chip.dataset.eventIndex);
+    const ev = EVENTS[idx];
+    if(!ev) return;
+    const start = parseStart(ev.start);
+    const end = parseEnd(ev.end, start);
+    let txt = '', percent = 0;
+    if(now.getTime() < start.getTime()){
+      const diff = start.getTime() - now.getTime();
+      const d = Math.floor(diff/86400000);
+      const h = Math.floor((diff%86400000)/3600000);
+      const m = Math.floor((diff%3600000)/60000);
+      const s = Math.floor((diff%60000)/1000);
+      txt = `${d}d ${h}h ${m}m ${s}s left`;
+      percent = 0;
+    } else if(now.getTime() > end.getTime()){
+      const diff = now.getTime() - end.getTime();
+      const d = Math.floor(diff/86400000);
+      const h = Math.floor((diff%86400000)/3600000);
+      const m = Math.floor((diff%3600000)/60000);
+      const s = Math.floor((diff%60000)/1000);
+      txt = `Ended ${d}d ${h}h ${m}m ${s}s ago`;
+      percent = 100;
+    } else {
+      const total = end.getTime() - start.getTime();
+      const remaining = end.getTime() - now.getTime();
+      const passed = total - remaining;
+      percent = Math.max(0, Math.min(100, Math.round((passed/total)*100)));
+      const diff = remaining;
+      const d = Math.floor(diff/86400000);
+      const h = Math.floor((diff%86400000)/3600000);
+      const m = Math.floor((diff%3600000)/60000);
+      const s = Math.floor((diff%60000)/1000);
+      txt = `${d}d ${h}h ${m}m ${s}s remaining`;
+    }
+    const countEl = chip.querySelector(`#count-${chip.id}`);
+    const prog = chip.querySelector('.pinned-progress i');
+    if(countEl) countEl.textContent = txt;
+    if(prog) prog.style.width = percent + '%';
+  });
+}
 
-      /* ---------- present & UI ---------- */
-      function enterPresentMode() {
-        document.body.classList.add("present-mode");
-        try {
-          document.documentElement.requestFullscreen?.();
-        } catch (e) {}
+/* ---------------- DRAG-TO-PIN (museum mode) ---------------- */
+function checkDropToPinned(elCard, idx){
+  const panel = el('pinnedColumn');
+  if(!panel) return false;
+  const rect = elCard.getBoundingClientRect();
+  const pinRect = panel.getBoundingClientRect();
+  const overlap = !(rect.right < pinRect.left || rect.left > pinRect.right || rect.bottom < pinRect.top || rect.top > pinRect.bottom);
+  const nearRight = rect.right > pinRect.left - 40;
+  if(overlap || nearRight){
+    togglePin(idx);
+    renderPinnedPanel();
+    panel.classList.add('drop-target');
+    setTimeout(()=> panel.classList.remove('drop-target'), 600);
+    const pinBtn = elCard.querySelector('.pin-btn');
+    if(pinBtn) pinBtn.classList.toggle('active', isPinned(idx));
+    return true;
+  }
+  return false;
+}
+
+/* Museum drag / tilt helpers */
+function enableDrag(elCard, idx){
+  let dragging = false, startX=0, startY=0, origX=0, origY=0, pointerId=null;
+  elCard.style.touchAction = 'none';
+  function down(e){
+    dragging = true; pointerId = e.pointerId; elCard.setPointerCapture(pointerId);
+    startX = e.clientX; startY = e.clientY;
+    origX = parseFloat(elCard.style.left || '0'); origY = parseFloat(elCard.style.top || '0');
+    elCard.style.transition = 'none'; elCard.style.cursor = 'grabbing'; elCard.style.zIndex = 9999;
+  }
+  function move(e){
+    if(!dragging) return;
+    const dx = e.clientX - startX; const dy = e.clientY - startY;
+    const GRID = 8;
+    const x = Math.round((origX + dx) / GRID) * GRID;
+    const y = Math.round((origY + dy) / GRID) * GRID;
+    elCard.style.left = x + 'px'; elCard.style.top = y + 'px';
+  }
+  function up(){
+    if(!dragging) return;
+    dragging = false;
+    elCard.releasePointerCapture(pointerId);
+    elCard.style.cursor = 'grab';
+    elCard.style.transition = '';
+    elCard.style.zIndex = '';
+    checkDropToPinned(elCard, idx);
+    savePos(elCard.getAttribute('data-id'), parseFloat(elCard.style.left || '0'), parseFloat(elCard.style.top || '0'));
+  }
+  elCard.addEventListener('pointerdown', down);
+  elCard.addEventListener('pointermove', move);
+  elCard.addEventListener('pointerup', up);
+  elCard.__drag = {down,move,up};
+}
+function disableDrag(elCard){
+  const h = elCard.__drag;
+  if(!h) return;
+  elCard.removeEventListener('pointerdown', h.down);
+  elCard.removeEventListener('pointermove', h.move);
+  elCard.removeEventListener('pointerup', h.up);
+  delete elCard.__drag;
+}
+function cardPointerTilt(e){
+  const rect = this.getBoundingClientRect();
+  const cx = rect.left + rect.width/2;
+  const cy = rect.top + rect.height/2;
+  const dx = e.clientX - cx;
+  const dy = e.clientY - cy;
+  const rx = (dy / rect.height) * -6;
+  const ry = (dx / rect.width) * 8;
+  this.style.transform = `perspective(800px) rotateX(${rx}deg) rotateY(${ry}deg) translateZ(8px)`;
+}
+function cardResetTilt(){ this.style.transform = ''; }
+
+/* ---------------- PRESENT MODE ---------------- */
+function enterPresentMode(){ document.body.classList.add('present-mode'); try{ document.documentElement.requestFullscreen?.() }catch(e){} }
+function exitPresentMode(){ document.body.classList.remove('present-mode'); try{ document.exitFullscreen?.() }catch(e){} }
+
+/* ---------------- UI WIRING ---------------- */
+function wireUI(){
+  const gridBtn = el('gridBtn'), museumBtn = el('museumBtn'), presentBtn = el('presentBtn'),
+        searchBox = el('searchBox'), monthFilter = el('monthFilter'),
+        pinCollapseBtn = el('pinCollapseBtn'), pinnedToggle = el('pinnedToggleBtn'),
+        clearPinsBtn = el('clearPins'), exportPinsBtn = el('exportPins');
+
+  gridBtn && gridBtn.addEventListener('click', ()=>{ mode='grid'; applyMode(); gridBtn.classList.add('primary'); museumBtn.classList.remove('primary'); });
+  museumBtn && museumBtn.addEventListener('click', ()=>{ mode='museum'; applyMode(); museumBtn.classList.add('primary'); gridBtn.classList.remove('primary'); });
+  presentBtn && presentBtn.addEventListener('click', enterPresentMode);
+  document.addEventListener('keydown', e => { if(e.key === 'Escape' && document.body.classList.contains('present-mode')) exitPresentMode(); });
+
+  searchBox && searchBox.addEventListener('input', () => renderAll());
+  monthFilter && monthFilter.addEventListener('change', () => { highlightMonthButton(monthFilter.value); renderAll(); });
+
+  pinCollapseBtn && pinCollapseBtn.addEventListener('click', () => {
+    const panel = el('pinnedColumn');
+    if(!panel) return;
+    const collapsed = !panel.classList.contains('collapsed');
+    panel.classList.toggle('collapsed', collapsed);
+    pinCollapseBtn.setAttribute('aria-pressed', String(collapsed));
+    pinCollapseBtn.textContent = collapsed ? 'Show' : 'Hide';
+  });
+
+  pinnedToggle && pinnedToggle.addEventListener('click', () => {
+    const panel = el('pinnedColumn');
+    if(!panel) return;
+    const nowCollapsed = panel.classList.toggle('collapsed');
+    pinnedToggle.classList.toggle('collapsed', nowCollapsed);
+  });
+
+  clearPinsBtn && clearPinsBtn.addEventListener('click', ()=> setPinned([]));
+
+  exportPinsBtn && exportPinsBtn.addEventListener('click', () => {
+    const pins = getPinned();
+    const rows = [['name','start','end']];
+    for(const i of pins){
+      if(EVENTS[i]) rows.push([EVENTS[i].name, EVENTS[i].start || '', EVENTS[i].end || '']);
+    }
+    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], {type: 'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'pinned-events.csv'; a.click();
+    URL.revokeObjectURL(url);
+  });
+}
+
+/* ---------------- MONTH BUTTONS ---------------- */
+function generateMonthButtons(){
+  const container = el('monthButtons'); if(!container) return;
+  const months = new Map();
+  EVENTS.forEach(ev => {
+    const s = parseStart(ev.start);
+    const key = `${s.getFullYear()}-${pad(s.getMonth()+1)}`;
+    if(!months.has(key)) months.set(key, { label: `${s.toLocaleString('en',{month:'short'})} ${s.getFullYear()}`, month: pad(s.getMonth()+1) });
+  });
+  container.innerHTML = '';
+  Array.from(months.entries()).sort().forEach(([k, val]) => {
+    const btn = document.createElement('button');
+    btn.className = 'month-btn';
+    btn.textContent = val.label;
+    btn.dataset.month = val.month;
+    btn.addEventListener('click', () => {
+      const mf = el('monthFilter');
+      if(!mf) return;
+      if(mf.value === val.month){ mf.value = ''; btn.classList.remove('active'); }
+      else{ mf.value = val.month; highlightMonthButton(val.month); }
+      renderAll();
+    });
+    container.appendChild(btn);
+  });
+}
+function highlightMonthButton(month){
+  const btns = Array.from(document.querySelectorAll('.month-btn'));
+  btns.forEach(b => b.classList.toggle('active', b.dataset.month === month));
+}
+
+/* ---------------- MODE (museum/grid) ---------------- */
+function applyMode(){
+  const stage = el('stage'), grid = el('eventsGrid');
+  if(!stage || !grid) return;
+  const saved = (function(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }catch(e){ return {}; } })();
+
+  if(mode === 'museum'){
+    stage.classList.add('museum');
+    items.forEach((it, i) => {
+      const elCard = it.el;
+      elCard.style.position = 'absolute';
+      const savedPos = saved[it.id] || {};
+      const left = (savedPos.x ?? (20 + (i % Math.min(4, window.innerWidth > 1200 ? 4 : 2)) * 280));
+      const top  = (savedPos.y ?? (20 + Math.floor(i/ (Math.min(4, window.innerWidth > 1200 ? 4 : 2))) * 220));
+      elCard.style.left = left + 'px';
+      elCard.style.top  = top + 'px';
+      elCard.style.width = '260px';
+      elCard.style.zIndex = 50 + i;
+      enableDrag(elCard, it.idx);
+      elCard.addEventListener('pointermove', cardPointerTilt);
+      elCard.addEventListener('pointerleave', cardResetTilt);
+    });
+  } else {
+    stage.classList.remove('museum');
+    items.forEach(it => {
+      const elCard = it.el;
+      elCard.style.position = '';
+      elCard.style.left = '';
+      elCard.style.top = '';
+      elCard.style.width = '';
+      elCard.style.zIndex = '';
+      disableDrag(elCard);
+      elCard.removeEventListener('pointermove', cardPointerTilt);
+      elCard.removeEventListener('pointerleave', cardResetTilt);
+      elCard.style.transform = '';
+    });
+  }
+}
+
+/* ---------------- COLOR SAMPLING (attempt) ----------------
+   Try to sample a readable accent color from the hero image using an offscreen canvas.
+   This will fail silently if the image is cross-origin blocked; we fall back to month color.
+*/
+async function trySampleAccent(){
+  const img = el('heroImg');
+  if(!img) return;
+  // Ensure crossOrigin set (already set on <img>), give it time to load
+  await new Promise(r => {
+    if(img.complete) return r();
+    img.addEventListener('load', ()=>r(), {once:true});
+    img.addEventListener('error', ()=>r(), {once:true});
+  });
+  try{
+    const w = Math.min(img.naturalWidth || 200, 160);
+    const h = Math.min(img.naturalHeight || 200, 120);
+    const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, w, h);
+    const data = ctx.getImageData(0,0,w,h).data;
+    let r=0,g=0,b=0,count=0;
+    for(let i=0;i<data.length;i+=4){
+      const alpha = data[i+3];
+      if(alpha < 80) continue;
+      r += data[i]; g += data[i+1]; b += data[i+2]; count++;
+    }
+    if(count === 0) throw new Error('no pixels');
+    r = Math.round(r/count); g = Math.round(g/count); b = Math.round(b/count);
+    const rgb = `rgb(${r},${g},${b})`;
+    document.documentElement.style.setProperty('--accent', rgb);
+    // set readable accent text color
+    const lum = (0.2126*r + 0.7152*g + 0.0722*b)/255;
+    const accentText = lum > 0.6 ? '#072238' : '#ffffff';
+    document.documentElement.style.setProperty('--accent-text', accentText);
+    return true;
+  }catch(err){
+    // fallback: use next upcoming month color
+    const n = findNextUpcoming();
+    if(n){
+      const m = pad(parseStart(n.start).getMonth() + 1);
+      const col = MONTH_COLORS[m] || '#ffd24a';
+      document.documentElement.style.setProperty('--accent', col);
+      document.documentElement.style.setProperty('--accent-text', '#072238');
+    }
+    return false;
+  }
+}
+
+/* ---------------- BOOT ---------------- */
+function init(){
+  // set hero
+  const heroImg = el('heroImg');
+  if(heroImg){
+    heroImg.crossOrigin = 'anonymous'; // try to enable sampling (may still be blocked)
+    heroImg.src = HERO_URL;
+  }
+
+  // UI wiring
+  wireUI();
+  generateMonthButtons();
+
+  // collapse pinned panel by default
+  const panel = el('pinnedColumn');
+  if(panel){ panel.classList.add('collapsed'); el('pinCollapseBtn').textContent = 'Show'; el('pinCollapseBtn').setAttribute('aria-pressed','true'); }
+
+  // try to sample accent color; always continue to render the UI
+  trySampleAccent().finally(()=> {
+    // ensure any primary buttons pick up color variable
+    document.querySelectorAll('.btn.primary').forEach(b => b.classList.add('primary'));
+    renderAll();
+  });
+
+  // accessibility: keyboard to toggle panel with 'p'
+  document.addEventListener('keydown', (e) => {
+    if(e.key.toLowerCase() === 'p' && !e.metaKey && !e.ctrlKey){
+      const panel = el('pinnedColumn');
+      if(panel){
+        panel.classList.toggle('collapsed');
       }
-      function exitPresentMode() {
-        document.body.classList.remove("present-mode");
-        try {
-          document.exitFullscreen?.();
-        } catch (e) {}
-      }
+    }
+  });
 
-      function wireUI() {
-        const gridBtn = byId("gridBtn"),
-          museumBtn = byId("museumBtn"),
-          presentBtn = byId("presentBtn"),
-          searchBox = byId("searchBox"),
-          monthFilter = byId("monthFilter"),
-          pinCollapseBtn = byId("pinCollapseBtn"),
-          pinnedToggle = byId("pinnedToggleBtn"),
-          clearPins = byId("clearPins");
-        if (gridBtn && museumBtn) {
-          gridBtn.addEventListener("click", () => {
-            mode = "grid";
-            applyMode();
-            gridBtn.classList.add("primary");
-            museumBtn.classList.remove("primary");
-          });
-          museumBtn.addEventListener("click", () => {
-            mode = "museum";
-            applyMode();
-            museumBtn.classList.add("primary");
-            gridBtn.classList.remove("primary");
-          });
-        }
-        if (presentBtn) presentBtn.addEventListener("click", enterPresentMode);
-        document.addEventListener("keydown", (e) => {
-          if (
-            e.key === "Escape" &&
-            document.body.classList.contains("present-mode")
-          )
-            exitPresentMode();
-        });
-        if (searchBox) searchBox.addEventListener("input", () => renderAll());
-        if (monthFilter)
-          monthFilter.addEventListener("change", () => {
-            highlightMonthButton(monthFilter.value);
-            renderAll();
-          });
-        if (pinCollapseBtn) {
-          pinCollapseBtn.addEventListener("click", () => {
-            const panel = byId("pinnedColumn");
-            if (!panel) return;
-            panel.classList.toggle("collapsed");
-            const pressed = panel.classList.contains("collapsed");
-            pinCollapseBtn.setAttribute(
-              "aria-pressed",
-              pressed ? "true" : "false"
-            );
-            pinCollapseBtn.textContent = pressed ? "⤢" : "⤫";
-          });
-        }
-        if (pinnedToggle) {
-          pinnedToggle.addEventListener("click", () => {
-            const panel = byId("pinnedColumn");
-            if (!panel) return;
-            panel.classList.toggle("collapsed");
-            pinnedToggle.classList.toggle("collapsed");
-          });
-        }
-        if (clearPins) {
-          clearPins.addEventListener("click", () => {
-            setPinned([]);
-          });
-        }
-      }
+  // small UX: clicking outside pinned panel closes it (desktop)
+  document.addEventListener('click', (evt) => {
+    const panel = el('pinnedColumn');
+    const toggle = el('pinnedToggleBtn');
+    if(!panel) return;
+    if(panel.classList.contains('collapsed')) return;
+    const inside = panel.contains(evt.target) || (toggle && toggle.contains(evt.target));
+    if(!inside && window.innerWidth > 900){
+      panel.classList.add('collapsed');
+    }
+  });
+}
 
-      /* ---------- color sampling (tries local first) ---------- */
-      async function trySetAccentFromHero() {
-        // try local image first to avoid CORS issues
-        // helper to sample and apply
-        function sampleAndApply(imgEl) {
-          try {
-            const w = Math.min(imgEl.naturalWidth || 300, 160);
-            const h = Math.min(imgEl.naturalHeight || 200, 120);
-            const canvas = document.createElement("canvas");
-            canvas.width = w;
-            canvas.height = h;
-            const ctx = canvas.getContext("2d");
-            ctx.drawImage(imgEl, 0, 0, w, h);
-            const data = ctx.getImageData(0, 0, w, h).data;
-            let r = 0,
-              g = 0,
-              b = 0,
-              count = 0;
-            for (let i = 0; i < data.length; i += 4) {
-              r += data[i];
-              g += data[i + 1];
-              b += data[i + 2];
-              count++;
-            }
-            r = Math.round(r / count);
-            g = Math.round(g / count);
-            b = Math.round(b / count);
-            const rgb = `rgb(${r},${g},${b})`;
-            document.documentElement.style.setProperty("--accent", rgb); // compute readable accent-text
-            const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-            const accentText = luminance > 0.6 ? "#072238" : "#ffffff";
-            document.documentElement.style.setProperty(
-              "--accent-text",
-              accentText
-            );
-            return true;
-          } catch (err) {
-            console.warn("color sampling failed", err);
-            return false;
-          }
-        }
+document.addEventListener('DOMContentLoaded', init);
 
-        // attempt to load local hero
-        try {
-          const localImg = new Image();
-          localImg.crossOrigin = "anonymous";
-          const localLoaded = await new Promise((resolve) => {
-            localImg.onload = () => resolve(true);
-            localImg.onerror = () => resolve(false);
-            localImg.src = LOCAL_HERO;
-          });
-          if (localLoaded) {
-            const ok = sampleAndApply(localImg);
-            if (ok) {
-              setHeroSrc(LOCAL_HERO);
-              return;
-            }
-          }
-        } catch (e) {
-          /* fallthrough */
-        }
-        // fallback: try sampling the in-page hero (may be tainted by CORS)
-        try {
-          const imgEl = byId("heroImg");
-          if (imgEl && imgEl.complete) {
-            const ok = sampleAndApply(imgEl);
-            if (ok) {
-              setHeroSrc(imgEl.src);
-              return;
-            }
-          }
-        } catch (e) {
-          /* fallthrough */
-        }
-        // final fallback: pick color from next upcoming event month
-        const n = findNextUpcoming();
-        if (n) {
-          const m = parseStart(n.start).getMonth() + 1;
-          const mm = pad(m);
-          const col = MONTH_COLORS[mm] || "var(--accent)";
-          document.documentElement.style.setProperty("--accent", col);
-          document.documentElement.style.setProperty(
-            "--accent-text",
-            "#072238"
-          );
-        }
-      }
-
-      function setHeroSrc(src) {
-        const img = byId("heroImg");
-        if (img && img.src !== src) {
-          img.src = src;
-        }
-      }
-
-      /* ---------- boot & init ---------- */
-      function init() {
-        // set drive image as fallback if local doesn't exist (we will attempt sampling inside trySetAccentFromHero)
-        // test local first asynchronously; meanwhile set hero to drive so something shows
-        const img = byId("heroImg");
-        if (img) img.src = DRIVE_HERO;
-        wireUI(); // collapse pinned panel by default
-        const panel = byId("pinnedColumn");
-        const pinnedToggle = byId("pinnedToggleBtn");
-        if (panel) {
-          panel.classList.add("collapsed");
-          if (pinnedToggle) pinnedToggle.classList.add("collapsed");
-        }
-        generateMonthButtons(); // colors
-        trySetAccentFromHero().then(() => {
-          // ensure buttons pick up accent color after sampling
-          const monthBtns = document.querySelectorAll(".month-btn");
-          monthBtns.forEach((b) => {
-            /* noop, CSS var updated */
-          });
-          document
-            .querySelectorAll(".btn.primary")
-            .forEach((b) => b.classList.add("primary"));
-        });
-        renderAll();
-      }
-
-      document.addEventListener("DOMContentLoaded", init);
-
-      // expose for debugging
-      window.__SE_DEBUG = { EVENTS, renderAll, items };
-    </script>
-  </body>
+</script>
+</body>
 </html>
