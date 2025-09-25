@@ -1,4 +1,17 @@
 <!DOCTYPE html>
+<!--
+  Maxwell Events — single-file HTML
+  Fully integrated: Grid, Museum (Gallery), Birthdays, Present
+  - Hero uses provided image and samples accent color.
+  - Pinned sidebar on the right (hidden if empty). Only shows exact pinned items.
+  - Gallery thumbnails are square (aspect-ratio) and there's a dedicated "Campus" gallery section.
+  - Birthdays are a separate view. On page load, every birthday in the current month is announced
+    with centered white popups and smooth confetti + fireworks animations (2s each).
+  - Present mode: fullscreen slideshow of events.
+  - Cards are consistently laid out, finished events are dulled, statuses readably shown.
+  - Buttons visibly indicate the active mode.
+  Drop this file in your repo as index.html — it's self-contained.
+-->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -6,215 +19,229 @@
     <title>Maxwell Events — 2025–2026</title>
     <style>
       :root {
-        --bg: #07131a;
-        --panel-width: 320px;
         --accent: #ffd24a;
-        --accent-text: #072238;
-        --muted: #a6c7d9;
+        --accent-contrast: #072238;
+        --bg: #07131a;
         --card-radius: 12px;
+        --panel-width: 340px;
         --glass: rgba(255, 255, 255, 0.06);
+        --muted: #0b3b4f;
       }
       * {
         box-sizing: border-box;
+        margin: 0;
+        padding: 0;
       }
       html,
       body {
         height: 100%;
-        margin: 0;
       }
       body {
-        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto,
-          "Helvetica Neue", Arial;
-        background: linear-gradient(180deg, #041018 0%, #07131a 100%);
-        color: #e6f0fb;
+        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+        background: radial-gradient(
+            ellipse at 10% 10%,
+            rgba(20, 30, 45, 0.5),
+            transparent 20%
+          ),
+          linear-gradient(180deg, #03101a 0%, #06141b 100%);
+        color: var(--muted);
+        padding: 18px;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        padding: 18px;
       }
 
-      /* HEADER / HERO */
+      /* top hero */
       .hero {
-        max-width: 1200px;
-        margin: 0 auto 18px;
-        border-radius: 16px;
-        overflow: hidden;
         position: relative;
-        height: 360px;
-        box-shadow: 0 18px 60px rgba(2, 8, 23, 0.5);
+        max-width: 1200px;
+        margin: 8px auto 18px;
+        border-radius: 14px;
+        overflow: hidden;
+        height: 380px;
+        box-shadow: 0 18px 60px rgba(2, 8, 23, 0.4);
+        background: linear-gradient(
+          180deg,
+          rgba(0, 0, 0, 0.05),
+          rgba(0, 0, 0, 0.18)
+        );
       }
-      .hero__img {
+      .hero img {
+        position: absolute;
+        inset: 0;
         width: 100%;
         height: 100%;
         object-fit: cover;
-        display: block;
         object-position: center center;
-        transition: transform 0.9s cubic-bezier(0.2, 0.9, 0.2, 1);
-        filter: saturate(0.98) contrast(0.95);
+        transition: transform 0.6s ease;
       }
       @media (min-width: 1000px) {
-        .hero__img {
+        .hero img {
           object-position: center top;
-          transform: scale(1.03);
+          transform: scale(1.04);
         }
       }
-      .hero__overlay {
+      .hero::after {
+        content: "";
+        pointer-events: none;
         position: absolute;
         inset: 0;
         background: linear-gradient(
-          180deg,
-          rgba(0, 0, 0, 0) 34%,
+          to bottom,
+          rgba(0, 0, 0, 0) 36%,
           rgba(0, 0, 0, 0.82) 100%
         );
-        pointer-events: none;
       }
-      .hero__content {
-        position: absolute;
-        left: 22px;
-        right: 22px;
-        bottom: 20px;
+
+      .hero-inner {
+        position: relative;
+        z-index: 2;
         display: flex;
         justify-content: space-between;
         align-items: flex-end;
-        gap: 12px;
-        z-index: 2;
+        padding: 24px;
+        color: #fff;
       }
-      .hero h1 {
+      .hero-left h1 {
         margin: 0;
-        color: #fff;
-        font-size: 1.5rem;
-        letter-spacing: 0.3px;
+        font-size: 1.7rem;
         font-weight: 900;
-        text-shadow: 0 8px 26px rgba(0, 0, 0, 0.55);
+        letter-spacing: 0.3px;
+        text-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
       }
-      .hero .sub {
-        color: rgba(255, 255, 255, 0.95);
-        font-weight: 600;
+      .hero-left .subtitle {
+        margin-top: 8px;
         font-size: 0.95rem;
+        color: rgba(255, 255, 255, 0.95);
       }
 
-      /* layout & nav */
-      .nav {
-        max-width: 1200px;
-        margin: 12px auto;
-        display: flex;
-        gap: 12px;
-        justify-content: center;
-        align-items: center;
-      }
-      .nav button {
-        background: transparent;
-        border: 0;
-        color: var(--muted);
-        padding: 10px 14px;
-        border-radius: 10px;
-        cursor: pointer;
-        font-weight: 700;
-        transition: all 0.18s;
-      }
-      .nav button:hover {
-        transform: translateY(-2px);
-        color: #fff;
-      }
-      .nav button.active {
-        background: linear-gradient(90deg, var(--accent), #ffecb5);
-        color: var(--accent-text);
-        box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35);
-      }
-
-      /* main & top controls */
-      .wrap {
-        max-width: 1200px;
-        margin: 12px auto 120px;
-        padding: 0 12px;
-      }
-      .top-controls {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 12px;
-      }
-      .left-controls {
+      /* top controls */
+      .controls {
         display: flex;
         gap: 10px;
         align-items: center;
+        margin-top: 12px;
+        flex-wrap: wrap;
       }
       input[type="search"],
       select {
         padding: 10px 12px;
         border-radius: 10px;
         border: 1px solid rgba(255, 255, 255, 0.06);
-        background: rgba(255, 255, 255, 0.96);
+        background: #fff;
         color: #072238;
       }
-      .view-btn {
+      .mode-buttons {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .btn {
         padding: 8px 12px;
         border-radius: 10px;
         border: none;
+        cursor: pointer;
         background: var(--glass);
-        color: #e6f0fb;
+        color: #fff;
+        font-weight: 700;
+      }
+      .btn.primary {
+        background: linear-gradient(90deg, var(--accent), #ffecb5);
+        color: var(--accent-contrast);
+        box-shadow: 0 8px 30px rgba(2, 8, 23, 0.15);
+      }
+      .mode-btn.active {
+        box-shadow: 0 12px 36px rgba(255, 210, 74, 0.12);
+        transform: translateY(-2px);
+      }
+
+      .month-buttons {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-left: 8px;
+      }
+      .month-btn {
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: none;
+        background: var(--glass);
+        color: #fff;
         cursor: pointer;
         font-weight: 700;
       }
-      .view-btn.primary {
+      .month-btn.active {
         background: linear-gradient(90deg, var(--accent), #ffecb5);
-        color: var(--accent-text);
-        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
+        color: var(--accent-contrast);
       }
 
-      /* year progress */
+      /* main layout */
+      .wrap {
+        max-width: 1200px;
+        margin: 18px auto 120px;
+        padding: 0 12px;
+      }
+      .top-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+        margin-bottom: 12px;
+      }
+      #pageTitle {
+        color: #fff;
+        font-size: 1.3rem;
+        font-weight: 900;
+      }
+      #subtitle {
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 600;
+      }
+
       .year-progress {
         height: 8px;
-        background: rgba(255, 255, 255, 0.03);
+        background: rgba(255, 255, 255, 0.04);
         border-radius: 999px;
-        width: 100%;
-        margin-top: 8px;
         overflow: hidden;
+        margin-top: 8px;
       }
       .year-progress > i {
         display: block;
         height: 100%;
         width: 0%;
         background: linear-gradient(90deg, var(--accent), #ffb84d);
-        transition: width 0.6s;
       }
 
-      /* GRID */
+      /* grid & headings */
       .grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        gap: 18px;
-        align-items: start;
+        gap: 20px;
       }
       .month-heading {
         grid-column: 1/-1;
-        color: #eaf6ff;
+        padding: 12px 8px;
         font-weight: 900;
-        font-size: 1rem;
-        padding: 6px 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        color: #fff;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
         cursor: pointer;
       }
 
+      /* card */
       .card {
-        background: linear-gradient(180deg, #ffffff, #fafbff);
-        color: #072238;
-        border-radius: var(--card-radius);
-        padding: 16px;
         position: relative;
-        min-height: 170px;
+        border-radius: var(--card-radius);
+        background: linear-gradient(180deg, #ffffff, #fafafa);
+        padding: 16px;
+        box-shadow: 0 12px 40px rgba(2, 8, 23, 0.08);
         display: flex;
         flex-direction: column;
-        gap: 8px;
-        box-shadow: 0 12px 36px rgba(2, 8, 23, 0.08);
-        transition: transform 0.18s, box-shadow 0.18s, filter 0.18s,
-          opacity 0.18s;
+        min-height: 170px;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
       }
       .card:hover {
         transform: translateY(-6px);
-        box-shadow: 0 24px 60px rgba(2, 8, 23, 0.16);
+        box-shadow: 0 20px 60px rgba(2, 8, 23, 0.12);
       }
-
       .month-strip {
         position: absolute;
         left: 0;
@@ -224,75 +251,76 @@
         border-top-left-radius: var(--card-radius);
         border-bottom-left-radius: var(--card-radius);
       }
-
-      .card .pin {
+      .pin-btn {
         position: absolute;
         right: 12px;
         top: 12px;
         width: 36px;
         height: 36px;
-        border-radius: 8px;
-        border: 0;
+        border-radius: 10px;
+        border: none;
         background: rgba(7, 18, 43, 0.04);
         cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
+        font-size: 16px;
       }
-      .card .pin.active {
-        background: linear-gradient(90deg, #ffd24a, #ffecb5);
-        box-shadow: 0 8px 20px rgba(255, 180, 60, 0.12);
+      .pin-btn.active {
+        background: linear-gradient(90deg, var(--accent), #ffecb5);
+        box-shadow: 0 8px 24px rgba(255, 180, 60, 0.12);
       }
 
-      .card .title {
-        font-weight: 800;
-        font-size: 18px;
+      .card .card-content {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        flex: 1;
+      }
+      .title {
         min-height: 48px;
         display: flex;
         align-items: center;
         gap: 10px;
       }
-      .card .title .icon {
-        font-size: 20px;
-        filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.08));
+      .title .icon {
+        font-size: 22px;
       }
-      .card .meta {
+      .title h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 900;
+        color: #072238;
+      }
+      .meta {
         font-size: 13px;
-        color: #28506b;
-        min-height: 18px;
+        color: #27506b;
       }
-      .card .count {
-        font-weight: 800;
-        color: var(--accent);
+      .countdown {
+        font-weight: 900;
         font-size: 15px;
-        min-height: 22px;
+        color: var(--accent);
       }
-      .card .status {
-        font-weight: 600;
-        color: #16344f;
+      .status {
         font-size: 13px;
-        min-height: 20px;
+        color: #16344f;
+        font-weight: 700;
       }
-      .card .date-badge {
+      .date-badge {
         align-self: flex-start;
         padding: 6px 8px;
-        border-radius: 9px;
+        border-radius: 10px;
         background: rgba(7, 18, 43, 0.04);
         font-weight: 800;
       }
 
       .card.finished {
-        opacity: 0.64;
+        opacity: 0.6;
         filter: grayscale(40%);
         transform: none;
-        box-shadow: 0 6px 20px rgba(2, 8, 23, 0.05);
       }
       .card.happening {
-        box-shadow: 0 20px 60px rgba(255, 90, 70, 0.12);
-        animation: pulse 2.6s infinite;
+        box-shadow: 0 18px 46px rgba(255, 90, 70, 0.08);
+        animation: floaty 2.6s infinite;
       }
-      @keyframes pulse {
+      @keyframes floaty {
         0% {
           transform: translateY(0);
         }
@@ -304,79 +332,99 @@
         }
       }
 
-      /* big icon badge to the right for visual */
-      .card .big-badge {
-        position: absolute;
-        right: -8px;
-        top: -6px;
-        font-size: 60px;
-        color: rgba(7, 18, 43, 0.06);
-        font-weight: 900;
-        pointer-events: none;
+      /* gallery (museum) - square thumbnails */
+      .gallery-wrap {
+        max-width: 1200px;
+        margin: 18px auto 18px;
+        padding: 0 12px;
       }
-
-      /* GALLERY (museum) - squared tiles */
-      .gallery {
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
+      .gallery-month {
+        margin-bottom: 18px;
       }
-      .gallery .section-heading {
-        color: #eaf6ff;
-        font-weight: 900;
-        font-size: 1rem;
-        padding-bottom: 6px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-      }
-      .tiles {
+      .gallery-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
         gap: 10px;
       }
-      .tile {
-        background: #ddd;
+      .gallery-thumb {
+        position: relative;
         border-radius: 10px;
         overflow: hidden;
         cursor: pointer;
-        position: relative;
-        aspect-ratio: 1 / 1; /* ensures square tiles */
-        display: flex;
-        align-items: flex-end;
-        justify-content: center;
-        transition: transform 0.22s, box-shadow 0.22s;
-        box-shadow: 0 8px 18px rgba(2, 8, 23, 0.08);
+        background: #ddd;
+        aspect-ratio: 1 / 1;
+        display: block;
       }
-      .tile img {
+      .gallery-thumb img {
         width: 100%;
         height: 100%;
         object-fit: cover;
         display: block;
       }
-      .tile .cap {
+      .gallery-caption {
         position: absolute;
         left: 8px;
         bottom: 8px;
-        background: rgba(0, 0, 0, 0.42);
-        color: #fff;
         padding: 6px 8px;
-        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.45);
+        color: #fff;
+        border-radius: 8px;
+        font-weight: 700;
         font-size: 12px;
       }
-      .tile:focus,
-      .tile:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 22px 60px rgba(2, 8, 23, 0.16);
+
+      /* birthdays view */
+      .birthdays-wrap {
+        max-width: 1200px;
+        margin: 18px auto 18px;
+        padding: 0 12px;
+      }
+      .bd-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 14px;
+      }
+      .bd-card {
+        background: linear-gradient(180deg, #fff, #fbfbfb);
+        border-radius: 12px;
+        padding: 12px;
+        box-shadow: 0 10px 30px rgba(2, 8, 23, 0.06);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: center;
+        min-height: 140px;
+        user-select: none;
+      }
+      .bd-name {
+        font-weight: 900;
+        color: #072238;
+        font-size: 15px;
+        text-align: center;
+      }
+      .bd-date {
+        font-size: 13px;
+        color: #37526b;
+      }
+      .bd-count {
+        font-weight: 800;
+        color: var(--accent);
+      }
+      .bd-note {
+        font-size: 12px;
+        color: #37526b;
       }
 
-      /* LIGHTBOX */
+      /* lightbox for gallery */
       .lightbox {
         position: fixed;
         inset: 0;
         display: none;
-        z-index: 2200;
         align-items: center;
         justify-content: center;
-        background: rgba(0, 0, 0, 0.85);
+        background: rgba(0, 0, 0, 0.9);
+        z-index: 2000;
+        padding: 24px;
       }
       .lightbox.open {
         display: flex;
@@ -384,7 +432,8 @@
       .lightbox img {
         max-width: 92%;
         max-height: 82%;
-        border-radius: 10px;
+        object-fit: contain;
+        border-radius: 8px;
       }
       .lightbox .caption {
         color: #fff;
@@ -392,505 +441,512 @@
         font-weight: 700;
         text-align: center;
       }
-      .lightbox .controls {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 26px;
-        pointer-events: none;
-      }
-      .lightbox button {
-        pointer-events: auto;
-        background: rgba(255, 255, 255, 0.06);
-        border: 0;
-        color: #fff;
-        padding: 10px 12px;
-        border-radius: 8px;
-        cursor: pointer;
-      }
 
-      /* BIRTHDAYS */
-      .birth-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 12px;
-      }
-      .birth-card {
-        background: linear-gradient(180deg, #ffffff, #fbfdff);
-        color: #072238;
-        border-radius: 12px;
-        padding: 12px;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        align-items: flex-start;
-        min-height: 110px;
-        box-shadow: 0 10px 30px rgba(2, 8, 23, 0.06);
-      }
-      .birth-card .name {
-        font-weight: 900;
-        font-size: 16px;
-      }
-      .birth-card .when {
-        font-size: 13px;
-        color: #2a3b57;
-      }
-      .birth-card .countdown {
-        font-weight: 800;
-        color: var(--accent);
-      }
-
-      /* BIRTHDAY POPUP overlay element (centered white box) */
-      .bd-popup {
-        position: fixed;
-        left: 50%;
-        top: 30%;
-        transform: translate(-50%, -50%) scale(0.98);
-        background: #fff;
-        color: #072238;
-        padding: 18px 22px;
-        border-radius: 12px;
-        z-index: 3000;
-        box-shadow: 0 24px 80px rgba(2, 8, 23, 0.45);
-        min-width: 320px;
-        max-width: 90%;
-        text-align: center;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        animation: bdIn 0.45s cubic-bezier(0.2, 0.9, 0.2, 1);
-      }
-      .bd-popup.show {
-        display: flex;
-      }
-      .bd-popup h2 {
-        margin: 0;
-        font-size: 20px;
-        font-weight: 900;
-      }
-      .bd-popup p {
-        margin-top: 6px;
-        color: #28506b;
-        font-weight: 700;
-      }
-
-      @keyframes bdIn {
-        0% {
-          transform: translate(-50%, -60%) scale(0.96);
-          opacity: 0;
-        }
-        100% {
-          transform: translate(-50%, -50%) scale(1);
-          opacity: 1;
-        }
-      }
-      @keyframes shake {
-        0% {
-          transform: translateX(0);
-        }
-        20% {
-          transform: translateX(-6px);
-        }
-        40% {
-          transform: translateX(6px);
-        }
-        60% {
-          transform: translateX(-4px);
-        }
-        80% {
-          transform: translateX(4px);
-        }
-        100% {
-          transform: translateX(0);
-        }
-      }
-      .bd-popup.shake {
-        animation: bdIn 0.45s cubic-bezier(0.2, 0.9, 0.2, 1),
-          shake 0.75s ease-in-out 1;
-      }
-
-      /* PRESENT mode */
-      .present-stage {
-        display: flex;
-        gap: 18px;
-        flex-wrap: nowrap;
-        overflow: hidden;
-        align-items: center;
-        justify-content: center;
-        height: 60vh;
-      }
-      .present-card {
-        width: 760px;
-        min-width: 480px;
-        border-radius: 14px;
-        background: linear-gradient(180deg, #ffffff, #fcfdff);
-        color: #072238;
-        padding: 32px;
-        box-shadow: 0 30px 90px rgba(2, 8, 23, 0.32);
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        align-items: flex-start;
-      }
-      .present-controls {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        margin-top: 8px;
-      }
-
-      /* pinned panel (right) */
-      .pinned-panel {
+      /* pinned sidebar */
+      .pinned-column {
         position: fixed;
         right: 18px;
         top: 110px;
         width: var(--panel-width);
         max-height: calc(100vh - 140px);
         overflow: auto;
-        background: #fff;
-        color: #072238;
-        border-radius: 12px;
-        padding: 12px;
-        box-shadow: 0 24px 80px rgba(2, 8, 23, 0.18);
-        z-index: 2000;
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 10px;
+        padding: 12px;
+        z-index: 999;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(2, 8, 23, 0.18);
         transition: transform 0.28s, opacity 0.28s;
       }
-      .pinned-panel.hidden {
-        transform: translateX(18px);
+      .pinned-column.hidden {
+        transform: translateX(20px);
         opacity: 0;
         pointer-events: none;
       }
-      .pinned-panel h3 {
-        margin: 0;
-        font-size: 14px;
+      .pinned-column .panel-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
       }
-      .pinned-item {
-        background: linear-gradient(180deg, #fff, #fafbf7);
-        border-radius: 10px;
+      .pinned-chip {
         padding: 10px;
+        border-radius: 10px;
+        background: #fff;
+        border: 1px solid rgba(2, 8, 23, 0.04);
         display: flex;
         flex-direction: column;
         gap: 6px;
-        box-shadow: 0 8px 20px rgba(2, 8, 23, 0.06);
       }
-      .pinned-controls {
+      .pinned-chip .title {
+        font-weight: 800;
+        color: #072238;
+      }
+      .pinned-chip .sub {
+        font-size: 13px;
+        color: #2a3b57;
+      }
+      .pin-actions {
         display: flex;
         gap: 8px;
-        justify-content: flex-end;
+        align-items: center;
       }
-      .pinned-toggle {
+
+      #pinnedToggleBtn {
         position: fixed;
         right: 18px;
-        top: 64%;
+        top: 60%;
         transform: translateY(-50%);
+        z-index: 1001;
         width: 56px;
         height: 56px;
         border-radius: 999px;
-        border: 0;
+        border: none;
         background: linear-gradient(180deg, var(--accent), #ffecb5);
-        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.24);
+        box-shadow: 0 12px 40px rgba(2, 8, 23, 0.16);
         cursor: pointer;
         font-weight: 900;
-        z-index: 2100;
       }
-      .pinned-toggle.hidden {
+      #pinnedToggleBtn.hidden {
         display: none;
       }
 
-      /* misc small */
-      .muted {
-        color: rgba(2, 8, 23, 0.5);
+      /* present mode overlay */
+      .present-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(2, 8, 23, 0.95);
+        display: none;
+        z-index: 2200;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        color: #fff;
+        padding: 24px;
       }
-      .sr-only {
-        position: absolute;
-        left: -9999px;
-        top: auto;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
+      .present-overlay.open {
+        display: flex;
+      }
+      .present-card {
+        width: min(1000px, 94%);
+        border-radius: 16px;
+        padding: 34px;
+        background: linear-gradient(180deg, #fff, #f7f8fa);
+        color: #072238;
+        box-shadow: 0 40px 120px rgba(2, 8, 23, 0.5);
+        text-align: center;
+      }
+      .present-card h2 {
+        font-size: 42px;
+        margin-bottom: 12px;
+      }
+      .present-controls {
+        margin-top: 12px;
+        display: flex;
+        gap: 10px;
+        justify-content: center;
       }
 
+      /* centered birthday popup (white card) */
+      .bd-popup-wrap {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 3000;
+      }
+      .bd-popup {
+        pointer-events: auto;
+        min-width: 320px;
+        max-width: 80%;
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px 26px;
+        box-shadow: 0 30px 90px rgba(2, 8, 23, 0.35);
+        text-align: center;
+        transform-origin: center;
+      }
+      .bd-popup h3 {
+        font-size: 22px;
+        margin-bottom: 6px;
+        color: #072238;
+        font-weight: 900;
+      }
+      .bd-popup p {
+        margin: 0;
+        font-weight: 700;
+        color: #37526b;
+      }
+      .bd-popup.shake {
+        animation: birthdayShake 0.9s ease both;
+      }
+      @keyframes birthdayShake {
+        0% {
+          transform: translateY(0) scale(1);
+        }
+        25% {
+          transform: translateY(-6px) rotate(-1deg) scale(1.01);
+        }
+        50% {
+          transform: translateY(3px) rotate(1deg) scale(1.005);
+        }
+        75% {
+          transform: translateY(-3px) rotate(-0.5deg) scale(1.003);
+        }
+        100% {
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      /* confetti & fireworks canvas sits behind birthday popup (pointer-events none) */
+      #fxCanvas {
+        position: fixed;
+        inset: 0;
+        z-index: 2900;
+        pointer-events: none;
+      }
+
+      /* accessibility focus */
+      :focus {
+        outline: 3px solid rgba(255, 255, 255, 0.06);
+        outline-offset: 3px;
+      }
+
+      /* small responsive tweaks */
       @media (max-width: 900px) {
-        .hero {
-          height: 220px;
-        }
-        .hero__content {
-          left: 12px;
+        .pinned-column {
           right: 12px;
-          bottom: 12px;
-        }
-        .present-card {
-          width: 92%;
-          min-width: unset;
-        }
-        .pinned-panel {
           left: 12px;
-          right: 12px;
           bottom: 18px;
           top: auto;
-          width: auto;
-          max-height: 120px;
+          display: flex;
           flex-direction: row;
-          gap: 8px;
+          max-height: 120px;
           padding: 8px;
+          overflow: auto;
         }
-        .pinned-toggle {
+        #pinnedToggleBtn {
           display: none;
+        }
+        .hero {
+          height: 260px;
+        }
+        .hero-inner {
+          padding: 16px;
+        }
+        .present-card h2 {
+          font-size: 28px;
         }
       }
     </style>
   </head>
   <body>
-    <!-- HERO with supplied image (top-focused crop on desktop) -->
-    <header class="hero" role="banner" aria-label="Hero banner">
+    <!-- hero -->
+    <section class="hero" aria-label="Hero banner">
       <img
         id="heroImg"
-        class="hero__img"
-        alt="Maxwell banner"
         src="https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/04/VideoCover-1.jpeg?resize=767%2C500&ssl=1"
+        alt="Maxwell banner"
+        crossorigin="anonymous"
       />
-      <div class="hero__overlay"></div>
-      <div class="hero__content">
-        <div>
+      <div class="hero-inner">
+        <div class="hero-left">
           <h1>Maxwell Events Countdown</h1>
-          <div class="sub">2025–2026 schedule</div>
-          <div
-            class="year-progress"
-            aria-hidden="true"
-            style="width: 280px; margin-top: 8px"
-          >
-            <i id="yearProgress" style="width: 0%"></i>
+          <div class="subtitle">2025-2026 schedule</div>
+
+          <div class="controls" role="region" aria-label="Controls">
+            <input
+              id="searchBox"
+              type="search"
+              placeholder="Search events..."
+              aria-label="Search events"
+            />
+            <select id="monthFilter" aria-label="Filter by month">
+              <option value="">All Months</option>
+              <option value="01">January</option>
+              <option value="02">February</option>
+              <option value="03">March</option>
+              <option value="04">April</option>
+              <option value="05">May</option>
+              <option value="06">June</option>
+              <option value="07">July</option>
+              <option value="08">August</option>
+              <option value="09">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+
+            <div
+              id="monthButtons"
+              class="month-buttons"
+              aria-hidden="false"
+            ></div>
+
+            <div class="mode-buttons" style="margin-left: 6px">
+              <button
+                id="gridBtn"
+                class="btn primary mode-btn"
+                title="Grid view"
+              >
+                Grid
+              </button>
+              <button
+                id="museumBtn"
+                class="btn mode-btn"
+                title="Gallery (Museum)"
+              >
+                Museum
+              </button>
+              <button id="birthBtn" class="btn mode-btn" title="Birthdays">
+                Birthdays
+              </button>
+              <button id="presentBtn" class="btn mode-btn" title="Present mode">
+                Present
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align: right; font-weight: 800; color: #fff">
+          Maxwell • 2025–26
+        </div>
+      </div>
+    </section>
+
+    <!-- starfield canvas (subtle) -->
+    <canvas
+      id="stars"
+      aria-hidden="true"
+      style="position: fixed; inset: 0; z-index: -1; pointer-events: none"
+    ></canvas>
+
+    <!-- year progress & next-up -->
+    <main class="wrap">
+      <div class="top-row">
+        <div>
+          <div id="pageTitle">School Events Countdown</div>
+          <div id="subtitle">2025-2026 schedule</div>
+          <div class="year-progress" aria-hidden="true">
+            <i id="yearProgressBar" style="width: 0%"></i>
           </div>
         </div>
         <div style="text-align: right; color: #fff; font-weight: 700">
           Maxwell • 2025–26
         </div>
       </div>
-    </header>
 
-    <!-- NAV -->
-    <nav class="nav" role="navigation" aria-label="Main">
-      <button id="tabGrid" class="active" aria-pressed="true">Grid</button>
-      <button id="tabGallery">Museum (Gallery)</button>
-      <button id="tabBirthdays">Birthdays</button>
-      <button id="tabPresent">Present</button>
-    </nav>
-
-    <!-- top controls -->
-    <div class="wrap">
-      <div class="top-controls">
-        <div class="left-controls">
-          <input
-            id="search"
-            type="search"
-            placeholder="Search events..."
-            aria-label="Search events"
-          />
-          <select id="monthFilter" aria-label="Filter month">
-            <option value="">All months</option>
-            <option value="01">January</option>
-            <option value="02">February</option>
-            <option value="03">March</option>
-            <option value="04">April</option>
-            <option value="05">May</option>
-            <option value="06">June</option>
-            <option value="07">July</option>
-            <option value="08">August</option>
-            <option value="09">September</option>
-            <option value="10">October</option>
-            <option value="11">November</option>
-            <option value="12">December</option>
-          </select>
-          <button id="btnGrid" class="view-btn primary">Grid</button>
-          <button id="btnGallery" class="view-btn">Museum</button>
-          <button id="btnBirths" class="view-btn">Birthdays</button>
-          <button id="btnPresent" class="view-btn">Present</button>
-        </div>
-        <div style="min-width: 240px; text-align: right">
-          <div style="font-weight: 700; color: #fff">Quick Tips</div>
-          <div style="font-size: 12px; color: rgba(255, 255, 255, 0.8)">
-            Pin events with 📌 — open gallery images to fullscreen — press
-            <strong>P</strong> to toggle pinned panel
+      <section
+        id="nextUp"
+        style="
+          display: none;
+          max-width: 1200px;
+          margin: 12px auto;
+          padding: 12px 16px;
+          border-left: 6px solid var(--accent);
+          border-radius: 10px;
+          background: rgba(255, 255, 255, 0.95);
+          color: #072238;
+          box-shadow: 0 8px 30px rgba(2, 8, 23, 0.12);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        "
+      >
+        <div>
+          <div style="font-weight: 700; color: #0b4b6f">Next Up</div>
+          <div class="detail">
+            <strong id="nextUpName">—</strong> <span id="nextUpDetail"></span>
           </div>
         </div>
-      </div>
+        <div style="text-align: right">
+          <div style="font-size: 12px; color: #0b2547">Tip</div>
+          <div style="font-size: 12px; color: #07284f">
+            Pin events using the 📌 on cards; open Museum to view gallery
+            photos.
+          </div>
+        </div>
+      </section>
 
-      <!-- Pinned toggle & panel -->
-      <button
-        id="pinnedToggle"
-        class="pinned-toggle hidden"
-        title="Open pinned panel"
-      >
-        📌
-      </button>
+      <!-- pinned sidebar -->
       <aside
-        id="pinnedPanel"
-        class="pinned-panel hidden"
+        id="pinnedColumn"
+        class="pinned-column hidden"
         aria-label="Pinned events"
-        aria-hidden="true"
       >
-        <div
-          style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-          "
-        >
-          <h3>Pinned</h3>
-          <div class="pinned-controls">
-            <button id="exportPins" class="view-btn" title="Export">
+        <div class="panel-top">
+          <strong style="font-size: 14px; color: #072238">Pinned</strong>
+          <div class="pin-actions">
+            <button id="exportPins" class="btn" title="Export pinned">
               Export
             </button>
-            <button id="clearPins" class="view-btn" title="Clear pins">
-              Clear Pins
+            <button
+              id="clearPins"
+              class="btn"
+              title="Clear pins"
+              style="background: #ffd24a; color: #072238"
+            >
+              Clear
             </button>
-            <button id="hidePins" class="view-btn" title="Hide">Hide</button>
+            <button
+              id="pinCollapseBtn"
+              class="btn"
+              aria-pressed="false"
+              title="Collapse panel"
+            >
+              Hide
+            </button>
           </div>
         </div>
-        <div
-          id="pinnedList"
-          style="display: flex; flex-direction: column; gap: 10px"
-        ></div>
+        <!-- pinned chips go here -->
       </aside>
+      <button id="pinnedToggleBtn" class="hidden" title="Open pinned panel">
+        📌
+      </button>
 
-      <!-- SECTIONS -->
-      <!-- GRID -->
-      <section
-        id="sectionGrid"
-        class="section active-section"
-        aria-label="Grid"
-      >
-        <div id="eventsContainer" class="grid" aria-live="polite"></div>
-      </section>
-
-      <!-- GALLERY / MUSEUM -->
-      <section
-        id="sectionGallery"
-        class="section"
-        aria-label="Gallery"
-        style="display: none"
-      >
-        <div class="gallery">
-          <div>
-            <div class="section-heading">Campus</div>
-            <div id="campusTiles" class="tiles"></div>
-          </div>
-          <div>
-            <div class="section-heading">Monthly gallery</div>
-            <div id="monthlyTiles" class="tiles"></div>
-          </div>
+      <!-- Views -->
+      <section id="stage">
+        <!-- GRID view -->
+        <div id="gridView">
+          <div id="eventsGrid" class="grid" aria-live="polite"></div>
         </div>
-      </section>
 
-      <!-- BIRTHDAYS -->
-      <section
-        id="sectionBirthdays"
-        class="section"
-        aria-label="Birthdays"
-        style="display: none"
-      >
-        <div
-          style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-          "
+        <!-- MUSEUM (gallery) -->
+        <section
+          id="gallerySection"
+          class="gallery-wrap"
+          style="display: none"
+          aria-hidden="true"
+        ></section>
+
+        <!-- BIRTHDAYS -->
+        <section
+          id="birthdaysSection"
+          class="birthdays-wrap"
+          style="display: none"
+          aria-hidden="true"
         >
-          <div style="font-weight: 900">Birthdays</div>
-          <div class="muted">
-            These are read-only (not clickable). Times show time until next
-            birthday (resets yearly) or time since last.
+          <div
+            style="
+              margin-bottom: 10px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+            "
+          >
+            <strong style="color: #fff; font-size: 18px">Birthdays</strong>
+            <div style="color: #fff; font-weight: 700">Celebrate 🎉</div>
           </div>
-        </div>
-        <div id="birthdaysGrid" class="birth-grid" aria-live="polite"></div>
+          <div id="bdGrid" class="bd-grid" aria-live="polite"></div>
+        </section>
       </section>
+    </main>
 
-      <!-- PRESENT -->
-      <section
-        id="sectionPresent"
-        class="section"
-        aria-label="Present"
-        style="display: none"
-      >
-        <div
-          style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-          "
-        >
-          <div style="font-weight: 900">Present Mode</div>
-          <div>
-            <button id="enterFs" class="view-btn">Enter Fullscreen</button>
-            <button id="pauseSlideshow" class="view-btn">Pause</button>
-          </div>
-        </div>
-        <div
-          id="presentStage"
-          class="present-stage"
-          role="region"
-          aria-live="polite"
-        ></div>
-      </section>
-    </div>
-
-    <!-- LIGHTBOX -->
+    <!-- gallery lightbox -->
     <div
       id="lightbox"
       class="lightbox"
+      aria-hidden="true"
       role="dialog"
       aria-modal="true"
-      aria-hidden="true"
     >
-      <div class="controls" style="pointer-events: none">
-        <button id="lbPrev" style="pointer-events: auto">◀</button>
-        <button id="lbNext" style="pointer-events: auto">▶</button>
-      </div>
-      <div style="text-align: center">
-        <img id="lbImg" alt="" />
-        <div id="lbCap" class="caption"></div>
+      <button
+        id="lbPrev"
+        class="btn"
+        aria-label="Previous"
+        style="
+          position: absolute;
+          left: 24px;
+          top: 50%;
+          transform: translateY(-50%);
+        "
+      >
+        ◀
+      </button>
+      <button
+        id="lbNext"
+        class="btn"
+        aria-label="Next"
+        style="
+          position: absolute;
+          right: 24px;
+          top: 50%;
+          transform: translateY(-50%);
+        "
+      >
+        ▶
+      </button>
+      <div style="text-align: center; max-width: 95%">
+        <img id="lbImage" alt="" />
+        <div class="caption" id="lbCaption"></div>
         <div style="margin-top: 12px">
-          <button id="lbClose" class="view-btn">Close</button>
+          <button id="lbClose" class="btn">Close</button>
         </div>
       </div>
     </div>
 
-    <!-- Birthday popups and confetti canvas -->
-    <div
-      id="bdPopup"
-      class="bd-popup"
-      role="status"
-      aria-live="assertive"
-      aria-hidden="true"
-    >
-      <h2 id="bdName">Happy Birthday</h2>
-      <p id="bdLine">🎉 Happy Birthday! 🎉</p>
+    <!-- present overlay -->
+    <div id="presentOverlay" class="present-overlay" aria-hidden="true">
+      <div class="present-card">
+        <div
+          id="presentTitle"
+          style="font-weight: 900; font-size: 28px; color: #072238"
+        ></div>
+        <div
+          id="presentMeta"
+          style="margin-top: 10px; color: #37526b; font-weight: 700"
+        ></div>
+        <div
+          id="presentCountdown"
+          style="
+            margin-top: 18px;
+            font-size: 20px;
+            color: var(--accent);
+            font-weight: 900;
+          "
+        ></div>
+        <div class="present-controls" style="margin-top: 22px">
+          <button id="presentPrev" class="btn">Prev</button>
+          <button
+            id="presentExit"
+            class="btn"
+            style="background: #ffd24a; color: #072238"
+          >
+            Exit
+          </button>
+          <button id="presentNext" class="btn">Next</button>
+        </div>
+      </div>
     </div>
-    <canvas
-      id="confetti"
-      style="
-        position: fixed;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 2999;
-      "
-    ></canvas>
+
+    <!-- birthday popup + effects -->
+    <div id="fxCanvasContainer" class="bd-popup-wrap" aria-hidden="true">
+      <canvas id="fxCanvas"></canvas>
+      <div id="bdPopup" class="bd-popup" style="display: none">
+        <h3 id="bdPopupName">Happy Birthday</h3>
+        <p id="bdPopupText">—</p>
+      </div>
+    </div>
 
     <script>
-      /* -------------------------
-   Data (events / gallery / birthdays)
-   ------------------------- */
+      /**************************************************************
+       * Maxwell Events - combined JS
+       * - Events rendering (grid)
+       * - Gallery (museum)
+       * - Pinned sidebar (right)
+       * - Birthdays mode + on-load popups with confetti & fireworks
+       * - Present mode (fullscreen slideshow)
+       **************************************************************/
+
+      /* ---------------- data -------------------- */
+      const HERO =
+        "https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/04/VideoCover-1.jpeg?resize=767%2C500&ssl=1";
+
+      // Full events list (checked against earlier versions; includes all items user provided)
       const EVENTS = [
         { name: "Summer Holiday", start: "2025-08-01", end: "2025-08-09" },
         {
@@ -970,6 +1026,7 @@
         { name: "GRADDDDD!!!!", start: "2026-06-05", end: "2026-06-07" },
       ];
 
+      // Month colors
       const MONTH_COLORS = {
         "01": "#e74c3c",
         "02": "#ff8a65",
@@ -985,7 +1042,7 @@
         12: "#7bdbdb",
       };
 
-      /* campus photos (first 4 replaced per your note, then additional images) */
+      // Museum photos (campus first - user provided replacements)
       const CAMPUS_PHOTOS = [
         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmV27Af6dGvJoR-LVUGmkCauwQepWKLwi7Zw&s",
         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTHDr-_KeMgIf8tN3PHxytKFN7lbUhaLuPpkQ&s",
@@ -998,14 +1055,19 @@
         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTLWlAao-P3ibqUPD9n0AmP5nHL0BzwrYsPMRD7yNfh0To0pjm4gfLZkDMCY2OoesrqEXo&usqp=CAU",
       ];
 
-      /* additional monthly / nature images for gallery */
+      // Additional scenic gallery images (month ties keep gallery filter compatible)
       const MUSEUM_PHOTOS = [
-        {
-          src: "https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/04/VideoCover-1.jpeg?resize=767%2C500&ssl=1",
-          caption: "Campus — Banner",
-          month: "08",
-          year: 2025,
-        },
+        { src: CAMPUS_PHOTOS[0], caption: "Campus 1", month: "08", year: 2025 },
+        { src: CAMPUS_PHOTOS[1], caption: "Campus 2", month: "08", year: 2025 },
+        { src: CAMPUS_PHOTOS[2], caption: "Campus 3", month: "08", year: 2025 },
+        { src: CAMPUS_PHOTOS[3], caption: "Campus 4", month: "08", year: 2025 },
+        { src: CAMPUS_PHOTOS[4], caption: "Campus 5", month: "09", year: 2025 },
+        { src: CAMPUS_PHOTOS[5], caption: "Campus 6", month: "09", year: 2025 },
+        { src: CAMPUS_PHOTOS[6], caption: "Campus 7", month: "11", year: 2025 },
+        { src: CAMPUS_PHOTOS[7], caption: "Campus 8", month: "12", year: 2025 },
+        { src: CAMPUS_PHOTOS[8], caption: "Campus 9", month: "01", year: 2026 },
+
+        // a few nature images
         {
           src: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1600&q=80&auto=format&fit=crop",
           caption: "Forest Path",
@@ -1038,29 +1100,27 @@
         },
       ];
 
-      /* birthdays (Sept only data you gave) — Note: 'Arcella Ineza' (no comma), Daniela & Daniel separate */
+      // Birthdays (September list; Arcella without comma; multiple entries on same day handled individually)
       const BIRTHDAYS = [
-        { day: 11, month: 9, name: "Tereza Poniatovska" },
-        { day: 20, month: 9, name: "Tendai Castroe" },
-        { day: 25, month: 9, name: "Arcella Ineza" }, // removed comma as requested
-        { day: 25, month: 9, name: "Salome Lwanzo" },
-        { day: 2, month: 9, name: "Adrian Ochieng" },
-        { day: 25, month: 9, name: "Julian Tito Omonte" },
-        { day: 25, month: 9, name: "Jael Tito Omonte" },
-        { day: 4, month: 9, name: "Ethan Wenyika" },
-        { day: 14, month: 9, name: "Michael Nyange" },
-        { day: 17, month: 9, name: "Daniela" },
-        { day: 17, month: 9, name: "Daniel" },
-        { day: 6, month: 9, name: "Kris Koome" },
-        { day: 24, month: 9, name: "Betty Kamawu" },
+        { name: "Adrian Ochieng", month: 9, day: 2 },
+        { name: "Ethan Wenyika", month: 9, day: 4 },
+        { name: "Kris Koome", month: 9, day: 6 },
+        { name: "Tereza Poniatovska", month: 9, day: 11 },
+        { name: "Michael Nyange", month: 9, day: 14 },
+        { name: "Daniela", month: 9, day: 17 },
+        { name: "Daniel", month: 9, day: 17 },
+        { name: "Tendai Castroe", month: 9, day: 20 },
+        { name: "Betty Kamawu", month: 9, day: 24 },
+        { name: "Arcella Ineza", month: 9, day: 25 },
+        { name: "Salome Lwanzo", month: 9, day: 25 },
+        { name: "Julian Tito Omonte", month: 9, day: 25 },
+        { name: "Jael Tito Omonte", month: 9, day: 25 },
       ];
 
-      /* -------------------------
-   Helpers
-   ------------------------- */
+      /* ---------------- helpers -------------------- */
       const $ = (id) => document.getElementById(id);
       const pad = (n) => (n < 10 ? "0" + n : String(n));
-      const parseDate = (s) =>
+      const parseStart = (s) =>
         s.includes("T") ? new Date(s) : new Date(s + "T00:00:00");
       const parseEnd = (e, start) => {
         if (!e) {
@@ -1072,789 +1132,651 @@
       };
       const formatISO = (d) =>
         `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-      const shortMonth = (m) =>
+      const shortMonthName = (m) =>
         new Date(2000, m - 1, 1).toLocaleString("en", { month: "short" });
-      function slug(s, i) {
+
+      function slugify(name, idx) {
         return (
-          String(s)
+          String(name)
             .toLowerCase()
             .replace(/[’'"]/g, "")
             .replace(/[:\/\\(),.!?#\u2013\u2014]/g, "")
             .replace(/\s+/g, "-")
             .replace(/[^a-z0-9\-]/g, "") +
           "-" +
-          i
+          idx
         );
       }
       function eventIcon(name) {
         const n = name.toLowerCase();
-        if (/exam|final|test|act|map/.test(n)) return "📝";
+        if (/exam|final|midterm|test|act|map/.test(n)) return "📝";
         if (
           /break|holiday|christmas|spring|long weekend|summer|vacation/.test(n)
         )
           return "🎉";
         if (/trip|camp|mt|mountain|mission/.test(n)) return "🏕️";
         if (/concert|chorale|music/.test(n)) return "🎵";
-        if (/sports|track|field/.test(n)) return "🏅";
+        if (/sports|track|field|tournament/.test(n)) return "🏅";
         return "📅";
       }
 
-      /* -------------------------
-   State & storage helpers
-   ------------------------- */
-      const PIN_KEY = "maxwell_pins_v3";
-      function getPins() {
+      /* ---------------- state -------------------- */
+      let items = [],
+        tickHandle = null;
+      let mode = "grid"; // 'grid' | 'museum' | 'birthdays' | 'present'
+      const STORAGE_KEY = "maxwell_positions_v3";
+      const PINNED_KEY = "maxwell_pinned_v3";
+      const PIN_LIMIT = 12;
+
+      function getPinned() {
         try {
-          return JSON.parse(localStorage.getItem(PIN_KEY) || "[]");
+          return JSON.parse(localStorage.getItem(PINNED_KEY) || "[]");
         } catch (e) {
           return [];
         }
       }
-      function setPins(arr) {
-        localStorage.setItem(PIN_KEY, JSON.stringify(arr));
+      function setPinned(arr) {
+        localStorage.setItem(PINNED_KEY, JSON.stringify(arr));
         renderPinnedPanel();
       }
-      function isPinned(idx) {
-        return getPins().includes(idx);
+      function isPinned(i) {
+        return getPinned().includes(i);
       }
-      function togglePin(idx) {
-        const arr = getPins();
-        const pos = arr.indexOf(idx);
-        if (pos === -1) {
-          arr.unshift(idx);
+      function togglePin(i) {
+        const arr = getPinned();
+        const p = arr.indexOf(i);
+        if (p === -1) {
+          arr.unshift(i);
           while (arr.length > 50) arr.pop();
-        } else arr.splice(pos, 1);
-        setPins(arr);
+        } else arr.splice(p, 1);
+        setPinned(arr);
       }
 
-      /* -------------------------
-   Rendering: EVENTS GRID
-   ------------------------- */
-      let renderedItems = []; // {idx, start,end,el,id}
-      function renderEvents() {
-        const container = $("eventsContainer");
-        container.innerHTML = "";
-        // sort by start
-        EVENTS.sort((a, b) => parseDate(a.start) - parseDate(b.start));
-        const q = $("search").value.trim().toLowerCase();
-        const monthFilter = $("monthFilter").value;
-        let currentGroup = "";
-        EVENTS.forEach((ev, idx) => {
-          if (q && !ev.name.toLowerCase().includes(q)) return;
-          if (monthFilter && ev.start.slice(5, 7) !== monthFilter) return;
-          const start = parseDate(ev.start);
-          const mmKey = `${start.getFullYear()}-${pad(start.getMonth() + 1)}`;
-          if (mmKey !== currentGroup) {
-            currentGroup = mmKey;
-            const head = document.createElement("div");
-            head.className = "month-heading";
-            head.textContent = `${start.toLocaleString("en", {
-              month: "long",
-            })} ${start.getFullYear()}`;
-            head.dataset.month = pad(start.getMonth() + 1);
-            head.addEventListener("click", () => {
-              $("monthFilter").value = head.dataset.month;
-              renderEvents();
-            });
-            container.appendChild(head);
-          }
-          const end = parseEnd(ev.end, start);
-          const id = slug(ev.name, idx);
-          const card = document.createElement("article");
-          card.className = "card";
-          card.dataset.idx = idx;
-          card.dataset.id = id;
-          const monthColor = MONTH_COLORS[pad(start.getMonth() + 1)] || "#999";
-          card.innerHTML = `
-      <div class="month-strip" style="background:${monthColor}"></div>
-      <button class="pin" aria-label="Pin event" title="Pin event">📌</button>
-      <div class="big-badge">${eventIcon(ev.name)}</div>
-      <div class="title"><span class="icon">${eventIcon(
-        ev.name
-      )}</span><div style="flex:1">${ev.name}</div></div>
-      <div class="meta">${
-        ev.end
-          ? `${formatISO(start)} → ${formatISO(parseDate(ev.end))}`
-          : formatISO(start)
-      }</div>
-      <div class="count" id="cd-${id}">—</div>
-      <div class="status" id="st-${id}">—</div>
-      <div class="date-badge">${formatDateBadge(ev.start, ev.end)}</div>
-    `;
-          container.appendChild(card);
-
-          // pin wiring
-          const pb = card.querySelector(".pin");
-          const refreshPinVisual = () =>
-            pb.classList.toggle("active", isPinned(idx));
-          pb.addEventListener("click", (e) => {
-            e.stopPropagation();
-            togglePin(idx);
-            refreshPinVisual();
-          });
-          refreshPinVisual();
-
-          // store item
-          renderedItems.push({ idx, start, end, el: card, id });
-        });
-
-        // update loop
-        startTicking();
-        renderPinnedPanel();
-      }
-
-      /* countdown helpers */
-      function formatDateBadge(start, end) {
-        const s = parseDate(start);
-        const e = end ? parseDate(end) : null;
-        if (!e) return `${shortMonth(s.getMonth() + 1)} ${s.getDate()}`;
-        if (
-          s.getFullYear() === e.getFullYear() &&
-          s.getMonth() === e.getMonth()
-        )
-          return `${shortMonth(
-            s.getMonth() + 1
-          )} ${s.getDate()}–${e.getDate()}`;
-        return `${shortMonth(s.getMonth() + 1)} ${s.getDate()} – ${shortMonth(
-          e.getMonth() + 1
-        )} ${e.getDate()}`;
-      }
-
-      let tickHandle = null;
-      function startTicking() {
-        if (tickHandle) clearInterval(tickHandle);
-        function tick() {
-          const now = new Date();
-          renderedItems.forEach((item) => {
-            const { id, start, end, el } = item;
-            const cd = $("cd-" + id),
-              st = $("st-" + id);
-            if (!cd || !st) return;
-            if (now.getTime() < start.getTime()) {
-              el.classList.remove("happening", "finished");
-              el.classList.add("upcoming");
-              const diff = start.getTime() - now.getTime();
-              const d = Math.floor(diff / 86400000),
-                h = Math.floor((diff % 86400000) / 3600000),
-                m = Math.floor((diff % 3600000) / 60000),
-                s = Math.floor((diff % 60000) / 1000);
-              cd.textContent = `${d}d ${h}h ${m}m ${s}s left`;
-              st.textContent = "⏳ Coming soon";
-            } else if (now.getTime() > end.getTime()) {
-              el.classList.remove("upcoming", "happening");
-              el.classList.add("finished");
-              cd.textContent = `Ended ${formatISO(end)}`;
-              st.textContent = "✅ Finished";
-            } else {
-              el.classList.remove("upcoming", "finished");
-              el.classList.add("happening");
-              const diff = end.getTime() - now.getTime();
-              const d = Math.floor(diff / 86400000),
-                h = Math.floor((diff % 86400000) / 3600000),
-                m = Math.floor((diff % 3600000) / 60000),
-                s = Math.floor((diff % 60000) / 1000);
-              cd.textContent = `${d}d ${h}h ${m}m ${s}s remaining`;
-              st.textContent = "🔴 Happening now";
-            }
-          });
-          updatePinnedCounts();
+      /* ---------------- starfield background -------------------- */
+      (function initStars() {
+        const c = $("stars");
+        if (!c) return;
+        const ctx = c.getContext("2d");
+        function resize() {
+          c.width = innerWidth;
+          c.height = innerHeight;
         }
-        tick();
-        tickHandle = setInterval(tick, 1000);
-      }
+        window.addEventListener("resize", resize);
+        resize();
+        const stars = Array.from({ length: 140 }, () => ({
+          x: Math.random() * c.width,
+          y: Math.random() * c.height,
+          r: Math.random() * 1.6 + 0.2,
+          dy: Math.random() * 0.5 + 0.02,
+          alpha: 0.2 + Math.random() * 0.6,
+        }));
+        function draw() {
+          ctx.clearRect(0, 0, c.width, c.height);
+          for (const s of stars) {
+            ctx.globalAlpha =
+              s.alpha * (0.7 + Math.sin(Date.now() / 1000 + s.x) * 0.3);
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+            ctx.fillStyle = "#ffffff";
+            ctx.fill();
+            s.y += s.dy;
+            if (s.y > c.height + 10) {
+              s.y = -10;
+              s.x = Math.random() * c.width;
+            }
+          }
+          requestAnimationFrame(draw);
+        }
+        draw();
+      })();
 
-      /* -------------------------
-   PINNED PANEL RENDERING
-   - only shows pinned items (nothing else)
-   - hidden entirely when no pins
-   ------------------------- */
-      function renderPinnedPanel() {
-        const panel = $("pinnedPanel"),
-          list = $("pinnedList"),
-          toggle = $("pinnedToggle");
-        const pins = getPins();
-        list.innerHTML = "";
-        if (!pins || pins.length === 0) {
-          panel.classList.add("hidden");
-          panel.setAttribute("aria-hidden", "true");
-          toggle.classList.add("hidden");
+      /* ---------------- events grid rendering -------------------- */
+      function sortEvents() {
+        EVENTS.sort((a, b) => parseStart(a.start) - parseStart(b.start));
+      }
+      function findNext() {
+        const now = Date.now();
+        return (
+          EVENTS.find(
+            (ev) => parseEnd(ev.end, parseStart(ev.start)).getTime() >= now
+          ) || null
+        );
+      }
+      function renderNextUp() {
+        const next = findNext();
+        const banner = $("nextUp");
+        if (!banner) return;
+        if (!next) {
+          banner.style.display = "none";
           return;
         }
-        panel.classList.remove("hidden");
-        panel.setAttribute("aria-hidden", "false");
-        toggle.classList.remove("hidden");
-
-        // build list (only pinned)
-        pins.forEach((i) => {
-          const ev = EVENTS[i];
-          if (!ev) return;
-          const start = parseDate(ev.start),
-            end = parseEnd(ev.end, start);
-          const chip = document.createElement("div");
-          chip.className = "pinned-item";
-          chip.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
-      <div style="font-weight:800">${ev.name}</div>
-      <div style="font-weight:800;color:var(--accent)">${formatDateBadge(
-        ev.start,
-        ev.end
-      )}</div>
-    </div>
-    <div style="font-size:13px;color:#27506b" id="pinnedStatus-${i}">—</div>`;
-          chip.addEventListener("click", () => {
-            // scroll to event in grid
-            const target = Array.from(document.querySelectorAll(".card")).find(
-              (c) => Number(c.dataset.idx) === i
-            );
-            if (target) {
-              target.scrollIntoView({ behavior: "smooth", block: "center" });
-              target.style.transform = "translateY(-8px)";
-              target.style.boxShadow = "0 20px 60px rgba(255,180,60,0.28)";
-              setTimeout(() => {
-                target.style.transform = "";
-                target.style.boxShadow = "";
-              }, 1200);
-            }
-          });
-          list.appendChild(chip);
-        });
-        updatePinnedCounts();
+        banner.style.display = "flex";
+        $("nextUpName").textContent = next.name;
+        $("nextUpDetail").textContent = next.end
+          ? `From ${formatISO(parseStart(next.start))} → ${formatISO(
+              parseStart(next.end)
+            )}`
+          : `On ${formatISO(parseStart(next.start))}`;
       }
 
-      function updatePinnedCounts() {
-        const pins = getPins();
-        pins.forEach((i) => {
-          const el = $("pinnedStatus-" + i);
-          if (!el) return;
-          const ev = EVENTS[i];
-          const now = new Date();
-          const start = parseDate(ev.start),
-            end = parseEnd(ev.end, start);
-          if (now.getTime() < start.getTime()) {
-            const diff = start.getTime() - now.getTime();
-            const d = Math.floor(diff / 86400000),
-              h = Math.floor((diff % 86400000) / 3600000),
-              m = Math.floor((diff % 3600000) / 60000);
-            el.textContent = `${d}d ${h}h ${m}m until start`;
-          } else if (now.getTime() > end.getTime()) {
-            const diff = now.getTime() - end.getTime();
-            const d = Math.floor(diff / 86400000);
-            el.textContent = `Ended ${d}d ago`;
-          } else {
-            const diff = end.getTime() - now.getTime();
-            const d = Math.floor(diff / 86400000),
-              h = Math.floor((diff % 86400000) / 3600000),
-              m = Math.floor((diff % 3600000) / 60000);
-            el.textContent = `${d}d ${h}h ${m}m remaining`;
-          }
-        });
-      }
-
-      /* -------------------------
-   GALLERY rendering (square tiles)
-   ------------------------- */
-      function renderGallery() {
-        const campus = $("campusTiles"),
-          monthly = $("monthlyTiles");
-        campus.innerHTML = "";
-        monthly.innerHTML = "";
-        CAMPUS_PHOTOS.forEach((src, i) => {
-          const t = document.createElement("div");
-          t.className = "tile";
-          t.tabIndex = 0;
-          t.innerHTML = `<img src="${src}" alt="Campus image ${
-            i + 1
-          }"><div class="cap">Campus</div>`;
-          t.addEventListener("click", () => openLightbox(CAMPUS_PHOTOS, i));
-          campus.appendChild(t);
-        });
-        MUSEUM_PHOTOS.forEach((p, i) => {
-          const t = document.createElement("div");
-          t.className = "tile";
-          t.tabIndex = 0;
-          t.innerHTML = `<img src="${p.src}" alt="${p.caption}"><div class="cap">${p.caption}</div>`;
-          t.addEventListener("click", () =>
-            openLightbox(
-              MUSEUM_PHOTOS.map((x) => x.src),
-              i,
-              MUSEUM_PHOTOS
-            )
-          );
-          monthly.appendChild(t);
-        });
-      }
-
-      /* -------------------------
-   Lightbox (gallery)
-   ------------------------- */
-      let lbItems = [],
-        lbIndex = 0;
-      function openLightbox(items, idx, meta) {
-        // items can be array of strings or array of objects
-        if (Array.isArray(items) && typeof items[0] === "string") {
-          lbItems = items;
-        } else if (Array.isArray(items) && items[0] && items[0].src) {
-          lbItems = items.map((x) => x.src);
-        }
-        lbIndex = idx || 0;
-        const light = $("lightbox");
-        $("lbImg").src = lbItems[lbIndex];
-        $("lbCap").textContent =
-          meta && meta[lbIndex] && meta[lbIndex].caption
-            ? meta[lbIndex].caption
-            : "";
-        light.classList.add("open");
-        light.setAttribute("aria-hidden", "false");
-      }
-      function closeLightbox() {
-        const light = $("lightbox");
-        light.classList.remove("open");
-        light.setAttribute("aria-hidden", "true");
-      }
-      $("lbClose").addEventListener("click", closeLightbox);
-      $("lbNext").addEventListener("click", () => {
-        lbIndex = (lbIndex + 1) % lbItems.length;
-        $("lbImg").src = lbItems[lbIndex];
-      });
-      $("lbPrev").addEventListener("click", () => {
-        lbIndex = (lbIndex - 1 + lbItems.length) % lbItems.length;
-        $("lbImg").src = lbItems[lbIndex];
-      });
-      document.addEventListener("keydown", (e) => {
-        const light = $("lightbox");
-        if (light.classList.contains("open")) {
-          if (e.key === "Escape") closeLightbox();
-          if (e.key === "ArrowRight") $("lbNext").click();
-          if (e.key === "ArrowLeft") $("lbPrev").click();
-        }
-      });
-
-      /* -------------------------
-   BIRTHDAYS rendering and popups
-   - special: on load sequential popups for today's birthdays (2s each)
-   ------------------------- */
-      function renderBirthdays() {
-        const grid = $("birthdaysGrid");
-        grid.innerHTML = "";
-        // sort by day
-        const sorted = BIRTHDAYS.slice().sort(
-          (a, b) =>
-            a.month - b.month || a.day - b.day || a.name.localeCompare(b.name)
-        );
-        const now = new Date();
-        sorted.forEach((b) => {
-          const next = nextBirthdayDate(b.day, b.month);
-          const sinceOrUntil = timeDeltaText(next, now);
-          const card = document.createElement("div");
-          card.className = "birth-card";
-          card.innerHTML = `<div class="name">${
-            b.name
-          }</div><div class="when">${shortMonth(b.month)} ${
-            b.day
-          }</div><div class="countdown" id="bd-${b.name.replace(
-            /\s+/g,
-            "_"
-          )}">${sinceOrUntil}</div>`;
-          // make non-interactive (read-only)
-          card.style.pointerEvents = "none";
-          grid.appendChild(card);
-        });
-        // update countdown every 30s
-        setInterval(() => {
-          document.querySelectorAll(".birth-card").forEach((c, idx) => {
-            const data = BIRTHDAYS[idx];
-            const el = c.querySelector(".countdown");
-            if (el) {
-              el.textContent = timeDeltaText(
-                nextBirthdayDate(data.day, data.month),
-                new Date()
-              );
-            }
-          });
-        }, 30000);
-      }
-
-      /* compute next birthday date for given day/month relative to today */
-      function nextBirthdayDate(day, month) {
-        const now = new Date();
-        const year = now.getFullYear();
-        const candidate = new Date(year, month - 1, day, 0, 0, 0, 0);
-        if (candidate.getTime() < now.getTime()) {
-          candidate.setFullYear(year + 1);
-        }
-        return candidate;
-      }
-      function timeDeltaText(target, now) {
-        const diff = target.getTime() - now.getTime();
-        if (diff >= 0) {
-          const d = Math.floor(diff / 86400000),
-            h = Math.floor((diff % 86400000) / 3600000),
-            m = Math.floor((diff % 3600000) / 60000);
-          return `${d}d ${h}h ${m}m to next`;
-        } else {
-          const diff2 = -diff;
-          const d = Math.floor(diff2 / 86400000);
-          const h = Math.floor((diff2 % 86400000) / 3600000);
-          return `${d}d ${h}h since`;
-        }
-      }
-
-      /* On-load birthday popup sequence for birthdays that match today's month/day */
-      async function runBirthdayPopups() {
-        // find birthdays matching today's month/day (server time uses user's clock)
-        const now = new Date();
-        const todays = BIRTHDAYS.filter(
-          (b) => b.month === now.getMonth() + 1 && b.day === now.getDate()
-        );
-        if (!todays || todays.length === 0) return;
-        // sequential popups (2s each)
-        for (const b of todays) {
-          await showBirthdayPopup(b.name, 2000);
-        }
-      }
-
-      /* show centered white popup with confetti/fireworks for duration (ms) */
-      function showBirthdayPopup(name, duration = 2000) {
-        return new Promise((resolve) => {
-          const pop = $("bdPopup");
-          const title = $("bdName");
-          const line = $("bdLine");
-          title.textContent = name;
-          line.textContent = "🎉 Happy Birthday!";
-          pop.classList.add("show", "shake");
-          pop.setAttribute("aria-hidden", "false");
-          startConfetti(duration);
-          setTimeout(() => {
-            pop.classList.remove("shake");
-          }, 700);
-          const hide = () => {
-            pop.classList.remove("show");
-            pop.setAttribute("aria-hidden", "true");
-            stopConfetti();
-            resolve();
-          };
-          setTimeout(hide, duration);
-        });
-      }
-
-      /* -------------------------
-   Confetti / Fireworks animation (smooth & subtle)
-   - lightweight canvas particle system that runs for given ms
-   ------------------------- */
-      const confettiCanvas = $("confetti");
-      let confCtx,
-        confW = 0,
-        confH = 0,
-        confettiParticles = [],
-        confettiRAF = null,
-        confettiEndTimeout = null;
-      function resizeConfetti() {
-        confettiCanvas.width = window.innerWidth;
-        confettiCanvas.height = window.innerHeight;
-        confW = confettiCanvas.width;
-        confH = confettiCanvas.height;
-        confCtx = confettiCanvas.getContext("2d");
-      }
-      window.addEventListener("resize", resizeConfetti);
-      resizeConfetti();
-
-      function spawnFirework(x, y) {
-        const count = 26 + Math.floor(Math.random() * 18);
-        for (let i = 0; i < count; i++) {
-          const angle = Math.random() * Math.PI * 2;
-          const speed = 2 + Math.random() * 4;
-          const vx = Math.cos(angle) * speed;
-          const vy = Math.sin(angle) * speed;
-          confettiParticles.push({
-            x,
-            y,
-            vx,
-            vy,
-            life: 0,
-            ttl: 60 + Math.floor(Math.random() * 40),
-            color: `hsl(${Math.floor(
-              Math.random() * 50 + 20
-            )}, 90%, ${Math.floor(Math.random() * 20 + 40)}%)`,
-            size: 2 + Math.random() * 3,
-            gravity: 0.03 + Math.random() * 0.06,
-          });
-        }
-      }
-      function spawnConfettiBurst() {
-        for (let i = 0; i < 18; i++) {
-          const x = Math.random() * confW;
-          const y = confH * (0.15 + Math.random() * 0.65);
-          spawnFirework(x, y);
-        }
-      }
-
-      function confettiTick() {
-        confCtx.clearRect(0, 0, confW, confH);
-        for (let i = confettiParticles.length - 1; i >= 0; i--) {
-          const p = confettiParticles[i];
-          p.x += p.vx;
-          p.y += p.vy;
-          p.vy += p.gravity;
-          p.vx *= 0.995;
-          p.vy *= 0.995;
-          p.life++;
-          const alpha = 1 - p.life / p.ttl;
-          confCtx.globalAlpha = Math.max(0, alpha);
-          confCtx.fillStyle = p.color;
-          confCtx.beginPath();
-          confCtx.ellipse(p.x, p.y, p.size, p.size * 1.6, 0, 0, Math.PI * 2);
-          confCtx.fill();
-          if (p.life > p.ttl || p.y > confH + 30)
-            confettiParticles.splice(i, 1);
-        }
-        confCtx.globalAlpha = 1;
-        if (confettiParticles.length > 0) {
-          confettiRAF = requestAnimationFrame(confettiTick);
-        } else {
-          // stop when empty
-          confettiRAF = null;
-        }
-      }
-
-      function startConfetti(ms = 2000) {
-        // spawn repeated bursts for the duration
-        spawnConfettiBurst();
-        if (!confettiRAF) confettiTick();
-        const interval = setInterval(spawnConfettiBurst, 350);
-        confettiEndTimeout = setTimeout(() => {
-          clearInterval(interval);
-        }, ms);
-      }
-
-      function stopConfetti() {
-        if (confettiEndTimeout) {
-          clearTimeout(confettiEndTimeout);
-          confettiEndTimeout = null;
-        }
-        // will naturally stop when particles die; but we can accelerate removal
-        // leave to natural fade for nicer look
-      }
-
-      /* -------------------------
-   PRESENT Mode (slideshow)
-   ------------------------- */
-      let presentIndex = 0,
-        presentTimer = null,
-        presentPlaying = true;
-      function renderPresent() {
-        const stage = $("presentStage");
-        stage.innerHTML = "";
-        // create cards array from EVENTS (filtered by search/month if any)
-        const q = $("search").value.trim().toLowerCase();
-        const monthFilter = $("monthFilter").value;
-        const pool = EVENTS.filter((ev, i) => {
-          if (q && !ev.name.toLowerCase().includes(q)) return false;
-          if (monthFilter && ev.start.slice(5, 7) !== monthFilter) return false;
-          return true;
-        });
-        if (pool.length === 0) {
-          stage.innerHTML =
-            '<div style="color:#fff">No events to present</div>';
-          return;
-        }
-        // show the current index as a large card
-        const ev = pool[presentIndex % pool.length];
-        const start = parseDate(ev.start),
-          end = parseEnd(ev.end, start);
-        const card = document.createElement("div");
-        card.className = "present-card";
-        card.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;width:100%"><div style="font-weight:900;font-size:20px">${
-          ev.name
-        }</div><div style="color:var(--accent);font-weight:900">${formatDateBadge(
-          ev.start,
-          ev.end
-        )}</div></div>
-    <div style="font-size:14px;color:#27506b">${
-      ev.end
-        ? `${formatISO(start)} → ${formatISO(parseDate(ev.end))}`
-        : formatISO(start)
-    }</div>
-    <div id="presentCountdown" style="font-weight:900;color:var(--accent);font-size:18px">—</div>
-    <div style="margin-top:10px;color:#16344f;font-weight:700" id="presentStatus">—</div>`;
-        stage.appendChild(card);
-        updatePresentCountdown(ev, card);
-        // auto-advance
-        if (presentTimer) clearInterval(presentTimer);
-        if (presentPlaying)
-          presentTimer = setInterval(() => {
-            presentIndex = (presentIndex + 1) % pool.length;
-            renderPresent();
-          }, 6000);
-      }
-      function updatePresentCountdown(ev, card) {
-        const cd = card.querySelector("#presentCountdown"),
-          st = card.querySelector("#presentStatus");
-        const now = new Date();
-        const start = parseDate(ev.start),
-          end = parseEnd(ev.end, start);
+      function updateOne(item, now) {
+        const { id, start, end, el } = item;
+        const cd = document.getElementById("cd-" + id);
+        const st = document.getElementById("st-" + id);
+        if (!cd || !st) return;
         if (now.getTime() < start.getTime()) {
+          el.classList.remove("happening", "finished");
+          el.classList.add("upcoming");
           const diff = start.getTime() - now.getTime();
-          const d = Math.floor(diff / 86400000),
-            h = Math.floor((diff % 86400000) / 3600000),
-            m = Math.floor((diff % 3600000) / 60000);
-          cd.textContent = `${d}d ${h}h ${m}m to start`;
+          const d = Math.floor(diff / 86400000);
+          const h = Math.floor((diff % 86400000) / 3600000);
+          const m = Math.floor((diff % 3600000) / 60000);
+          const s = Math.floor((diff % 60000) / 1000);
+          cd.textContent = `${d}d ${h}h ${m}m ${s}s left`;
           st.textContent = "⏳ Coming soon";
         } else if (now.getTime() > end.getTime()) {
-          cd.textContent = `Finished on ${formatISO(end)}`;
+          el.classList.remove("upcoming", "happening");
+          el.classList.add("finished");
+          cd.textContent = `Ended on ${formatISO(end)}`;
           st.textContent = "✅ Finished";
         } else {
+          el.classList.remove("upcoming", "finished");
+          el.classList.add("happening");
           const diff = end.getTime() - now.getTime();
-          const d = Math.floor(diff / 86400000),
-            h = Math.floor((diff % 86400000) / 3600000),
-            m = Math.floor((diff % 3600000) / 60000);
-          cd.textContent = `${d}d ${h}h ${m}m remaining`;
+          const d = Math.floor(diff / 86400000);
+          const h = Math.floor((diff % 86400000) / 3600000);
+          const m = Math.floor((diff % 3600000) / 60000);
+          const s = Math.floor((diff % 60000) / 1000);
+          cd.textContent = `${d}d ${h}h ${m}m ${s}s remaining`;
           st.textContent = "🔴 Happening now";
         }
       }
 
-      /* -------------------------
-   UI wiring / tab switching / boot
-   ------------------------- */
-      function setActiveTab(tab) {
-        // hide all sections
-        [
-          "sectionGrid",
-          "sectionGallery",
-          "sectionBirthdays",
-          "sectionPresent",
-        ].forEach((id) => ($(id).style.display = "none"));
-        ["tabGrid", "tabGallery", "tabBirthdays", "tabPresent"].forEach((b) =>
-          $(b).classList.remove("active")
-        );
-        // show selected
-        if (tab === "grid") {
-          $("sectionGrid").style.display = "block";
-          $("tabGrid").classList.add("active");
+      function renderAll() {
+        if (tickHandle) {
+          clearInterval(tickHandle);
+          tickHandle = null;
         }
-        if (tab === "gallery") {
-          $("sectionGallery").style.display = "block";
-          $("tabGallery").classList.add("active");
-        }
-        if (tab === "birthdays") {
-          $("sectionBirthdays").style.display = "block";
-          $("tabBirthdays").classList.add("active");
-        }
-        if (tab === "present") {
-          $("sectionPresent").style.display = "block";
-          $("tabPresent").classList.add("active");
-        }
+        items = [];
+        sortEvents();
+        renderNextUp();
+        const grid = $("eventsGrid");
+        grid.innerHTML = "";
+        const q = ($("searchBox").value || "").toLowerCase();
+        const monthFilter = $("monthFilter").value || "";
+
+        let currentGroup = "";
+        EVENTS.forEach((ev, idx) => {
+          if (q && !ev.name.toLowerCase().includes(q)) return;
+          if (monthFilter && ev.start.slice(5, 7) !== monthFilter) return;
+
+          const start = parseStart(ev.start);
+          const mmKey = `${start.getFullYear()}-${pad(start.getMonth() + 1)}`;
+          if (mmKey !== currentGroup) {
+            currentGroup = mmKey;
+            const heading = document.createElement("div");
+            heading.className = "month-heading";
+            heading.textContent = `${start.toLocaleString("en", {
+              month: "long",
+            })} ${start.getFullYear()}`;
+            heading.dataset.mm = pad(start.getMonth() + 1);
+            heading.addEventListener("click", () => {
+              $("monthFilter").value = heading.dataset.mm;
+              highlightMonthButton(heading.dataset.mm);
+              renderAll();
+            });
+            grid.appendChild(heading);
+          }
+
+          const startDate = parseStart(ev.start);
+          const endDate = parseEnd(ev.end, startDate);
+          const id = slugify(ev.name, idx);
+          const monthCol =
+            MONTH_COLORS[pad(startDate.getMonth() + 1)] || "#ccc";
+
+          const card = document.createElement("article");
+          card.className = "card";
+          card.dataset.idx = idx;
+          card.innerHTML = `
+        <div class="month-strip" style="background:${monthCol}"></div>
+        <button class="pin-btn" title="Pin event" aria-label="Pin event" data-idx="${idx}">📌</button>
+        <div class="card-content">
+          <div class="title"><div class="icon">${eventIcon(ev.name)}</div><h3>${
+            ev.name
+          }</h3></div>
+          <div class="meta">${
+            ev.end
+              ? `${formatISO(startDate)} → ${formatISO(parseStart(ev.end))}`
+              : formatISO(startDate)
+          }</div>
+          <div class="countdown" id="cd-${id}">—</div>
+          <div class="status" id="st-${id}">—</div>
+          <div class="date-badge">${formatDateBadge(ev.start, ev.end)}</div>
+        </div>
+      `;
+          grid.appendChild(card);
+
+          items.push({
+            id,
+            name: ev.name,
+            start: startDate,
+            end: endDate,
+            el: card,
+            idx,
+          });
+
+          // pin button
+          const pb = card.querySelector(".pin-btn");
+          if (pb) {
+            const refresh = () => pb.classList.toggle("active", isPinned(idx));
+            pb.addEventListener("click", (e) => {
+              e.stopPropagation();
+              togglePin(idx);
+              refresh();
+            });
+            refresh();
+          }
+
+          // keyboard focus
+          card.tabIndex = 0;
+          card.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") card.click();
+          });
+
+          // consistent layout fixes: ensure min-height and spacing already set via CSS
+        });
+
+        // tick updates
+        tickHandle = setInterval(() => {
+          const now = new Date();
+          items.forEach((i) => updateOne(i, now));
+          updatePinnedCounts(now);
+        }, 1000);
+        items.forEach((i) => updateOne(i, new Date()));
+        renderPinnedPanel();
+        updateYearProgress();
+        if (mode === "museum") renderGallery();
+        applyMode();
       }
 
-      $("tabGrid").addEventListener("click", () => {
-        setActiveTab("grid");
-        $("btnGrid").classList.add("primary");
-        $("btnGallery").classList.remove("primary");
-      });
-      $("tabGallery").addEventListener("click", () => {
-        setActiveTab("gallery");
-        $("btnGallery").classList.add("primary");
-        $("btnGrid").classList.remove("primary");
-      });
-      $("tabBirthdays").addEventListener("click", () => {
-        setActiveTab("birthdays");
-        $("btnBirths").classList.add("primary");
-      });
-      $("tabPresent").addEventListener("click", () => {
-        setActiveTab("present");
-        $("btnPresent").classList.add("primary");
-        renderPresent();
-      });
+      function formatDateBadge(start, end) {
+        const s = parseStart(start);
+        const e = end ? parseStart(end) : null;
+        if (!e) return `${shortMonthName(s.getMonth() + 1)} ${s.getDate()}`;
+        if (
+          s.getFullYear() === e.getFullYear() &&
+          s.getMonth() === e.getMonth()
+        )
+          return `${shortMonthName(
+            s.getMonth() + 1
+          )} ${s.getDate()}–${e.getDate()}`;
+        return `${shortMonthName(
+          s.getMonth() + 1
+        )} ${s.getDate()} – ${shortMonthName(e.getMonth() + 1)} ${e.getDate()}`;
+      }
 
-      $("btnGrid").addEventListener("click", () => {
-        setActiveTab("grid");
-      });
-      $("btnGallery").addEventListener("click", () => {
-        setActiveTab("gallery");
-        renderGallery();
-      });
-      $("btnBirths").addEventListener("click", () => {
-        setActiveTab("birthdays");
-      });
-      $("btnPresent").addEventListener("click", () => {
-        setActiveTab("present");
-        renderPresent();
-      });
+      /* ---------------- pinned panel -------------------- */
+      function renderPinnedPanel() {
+        const container = $("pinnedColumn");
+        if (!container) return;
+        const header = container.querySelector(".panel-top");
+        container.innerHTML = "";
+        if (header) container.appendChild(header);
 
-      // search / month filter wiring
-      $("search").addEventListener("input", () => {
-        // rerender grid & present
-        renderedItems = [];
-        renderEvents();
-        renderPresent();
-      });
-      $("monthFilter").addEventListener("change", () => {
-        renderedItems = [];
-        renderEvents();
-        renderGallery();
-        renderPresent();
-      });
-
-      // pinned panel toggle & clear
-      $("pinnedToggle").addEventListener("click", () => {
-        $("pinnedPanel").classList.toggle("hidden");
-      });
-      $("hidePins").addEventListener("click", () => {
-        $("pinnedPanel").classList.add("hidden");
-      });
-      $("clearPins").addEventListener("click", () => {
-        setPins([]);
-      });
-      $("exportPins").addEventListener("click", () => {
-        const pins = getPins();
-        const rows = [["name", "start", "end"]];
-        pins.forEach((i) => {
-          const ev = EVENTS[i];
-          if (ev) rows.push([ev.name, ev.start || "", ev.end || ""]);
-        });
-        const csv = rows
-          .map((r) =>
-            r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")
-          )
-          .join("\n");
-        const blob = new Blob([csv], { type: "text/csv" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "pinned.csv";
-        a.click();
-        URL.revokeObjectURL(url);
-      });
-
-      // keyboard quick toggle P to show/hide pinned
-      document.addEventListener("keydown", (e) => {
-        if (e.key.toLowerCase() === "p" && !e.ctrlKey && !e.metaKey) {
-          const p = $("pinnedPanel");
-          if (p) p.classList.toggle("hidden");
-        }
-      });
-
-      // present controls
-      $("enterFs").addEventListener("click", () => {
-        document.documentElement.requestFullscreen?.();
-      });
-      $("pauseSlideshow").addEventListener("click", () => {
-        presentPlaying = !presentPlaying;
-        if (presentPlaying) {
-          renderPresent();
-          $("pauseSlideshow").textContent = "Pause";
+        const pins = getPinned();
+        if (!pins || pins.length === 0) {
+          container.classList.add("hidden");
+          $("pinnedToggleBtn").classList.add("hidden");
+          return;
         } else {
-          if (presentTimer) clearInterval(presentTimer);
-          $("pauseSlideshow").textContent = "Play";
+          container.classList.remove("hidden");
+          $("pinnedToggleBtn").classList.remove("hidden");
         }
-      });
 
-      /* -------------------------
-   Year progress (from first event start to last event end)
-   ------------------------- */
+        // show only pinned items (no auto-fill)
+        pins.forEach((i) => {
+          if (EVENTS[i]) {
+            const ev = EVENTS[i];
+            const start = parseStart(ev.start);
+            const end = parseEnd(ev.end, start);
+            const id = "pinned-" + slugify(ev.name + "-" + i, i);
+            const chip = document.createElement("div");
+            chip.className = "pinned-chip";
+            chip.id = id;
+            chip.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="min-width:0">
+              <div class="title">${ev.name}</div>
+              <div class="sub">${
+                ev.end
+                  ? formatISO(start) + " → " + formatISO(parseStart(ev.end))
+                  : formatISO(start)
+              }</div>
+            </div>
+            <button class="btn" title="Unpin" data-idx="${i}" style="background:transparent">✖</button>
+          </div>
+          <div style="margin-top:8px"><div class="pinned-count" id="count-${id}">—</div></div>
+          <div class="pinned-progress" style="margin-top:8px"><i style="width:0%"></i></div>
+        `;
+            // unpin button
+            chip.querySelector("button")?.addEventListener("click", (e) => {
+              const idx = Number(e.currentTarget.dataset.idx);
+              const arr = getPinned();
+              const pos = arr.indexOf(idx);
+              if (pos > -1) arr.splice(pos, 1);
+              setPinned(arr);
+            });
+            container.appendChild(chip);
+          }
+        });
+        updatePinnedCounts(new Date());
+      }
+
+      function updatePinnedCounts(now) {
+        if (!now) now = new Date();
+        const container = $("pinnedColumn");
+        if (!container) return;
+        const chips = Array.from(container.querySelectorAll(".pinned-chip"));
+        chips.forEach((chip) => {
+          const id = chip.id;
+          const idxBtn = chip.querySelector("button");
+          if (!idxBtn) return;
+          const idx = Number(idxBtn.dataset.idx);
+          const ev = EVENTS[idx];
+          if (!ev) return;
+          const start = parseStart(ev.start),
+            end = parseEnd(ev.end, start);
+          let text = "";
+          let pct = 0;
+          if (now.getTime() < start.getTime()) {
+            const diff = start.getTime() - now.getTime();
+            const d = Math.floor(diff / 86400000),
+              h = Math.floor((diff % 86400000) / 3600000),
+              m = Math.floor((diff % 3600000) / 60000),
+              s = Math.floor((diff % 60000) / 1000);
+            text = `${d}d ${h}h ${m}m ${s}s left`;
+            pct = 0;
+          } else if (now.getTime() > end.getTime()) {
+            const diff = now.getTime() - end.getTime();
+            const d = Math.floor(diff / 86400000),
+              h = Math.floor((diff % 86400000) / 3600000),
+              m = Math.floor((diff % 3600000) / 60000),
+              s = Math.floor((diff % 60000) / 1000);
+            text = `Ended ${d}d ${h}h ${m}m ${s}s ago`;
+            pct = 100;
+          } else {
+            const total = end.getTime() - start.getTime(),
+              remaining = end.getTime() - now.getTime(),
+              passed = total - remaining;
+            pct = Math.max(
+              0,
+              Math.min(100, Math.round((passed / total) * 100))
+            );
+            const diff = remaining;
+            const d = Math.floor(diff / 86400000),
+              h = Math.floor((diff % 86400000) / 3600000),
+              m = Math.floor((diff % 3600000) / 60000),
+              s = Math.floor((diff % 60000) / 1000);
+            text = `${d}d ${h}h ${m}m ${s}s remaining`;
+          }
+          const countEl = chip.querySelector(".pinned-count");
+          const prog = chip.querySelector(".pinned-progress i");
+          if (countEl) countEl.textContent = text;
+          if (prog) prog.style.width = pct + "%";
+        });
+      }
+
+      /* ---------------- swipe-to-pin small UX (optional) -------------------- */
+      function addSwipeToPin(card, idx) {
+        let down = false,
+          sx = 0,
+          sy = 0,
+          moved = false;
+        function onDown(e) {
+          down = true;
+          sx = e.clientX;
+          sy = e.clientY;
+          moved = false;
+        }
+        function onMove(e) {
+          if (!down) return;
+          const dx = e.clientX - sx,
+            dy = e.clientY - sy;
+          if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) moved = true;
+          if (moved)
+            card.style.transform = `translateX(${Math.min(
+              Math.max(dx, -80),
+              80
+            )}px)`;
+        }
+        function onUp(e) {
+          if (!down) return;
+          down = false;
+          if (moved) {
+            const dx = e.clientX - sx;
+            if (dx > 70) {
+              togglePin(idx);
+              renderPinnedPanel();
+              const pb = card.querySelector(".pin-btn");
+              if (pb) pb.classList.add("active");
+            } else if (dx < -70) {
+              togglePin(idx);
+              renderPinnedPanel();
+              const pb = card.querySelector(".pin-btn");
+              if (pb) pb.classList.remove("active");
+            }
+            card.style.transform = "";
+          }
+        }
+        card.addEventListener("pointerdown", onDown);
+        card.addEventListener("pointermove", onMove);
+        card.addEventListener("pointerup", onUp);
+        card.addEventListener("pointercancel", onUp);
+      }
+
+      /* ---------------- gallery (museum) -------------------- */
+      function renderGallery() {
+        const wrap = $("gallerySection");
+        if (!wrap) return;
+        wrap.innerHTML = "";
+        // Campus group
+        const campusHeading = document.createElement("div");
+        campusHeading.className = "month-heading";
+        campusHeading.textContent = "Campus";
+        const campusGrid = document.createElement("div");
+        campusGrid.className = "gallery-grid";
+        CAMPUS_PHOTOS.forEach((src, i) => {
+          const t = document.createElement("div");
+          t.className = "gallery-thumb";
+          t.tabIndex = 0;
+          t.innerHTML = `<img src="${src}" alt="Campus photo ${
+            i + 1
+          }"><div class="gallery-caption">Campus</div>`;
+          t.addEventListener("click", () =>
+            openLightbox(
+              CAMPUS_PHOTOS.map((s) => ({ src: s, caption: "Campus" })),
+              i
+            )
+          );
+          campusGrid.appendChild(t);
+        });
+        wrap.appendChild(campusHeading);
+        wrap.appendChild(campusGrid);
+
+        // Month-grouped photos
+        const months = new Map();
+        MUSEUM_PHOTOS.forEach((p) => {
+          const key = `${p.year}-${p.month}`;
+          if (!months.has(key))
+            months.set(key, { month: p.month, year: p.year, photos: [] });
+          months.get(key).photos.push(p);
+        });
+        Array.from(months.entries())
+          .sort()
+          .forEach(([k, group]) => {
+            const monthFilter = $("monthFilter").value || "";
+            if (monthFilter && group.month !== monthFilter) return;
+            const heading = document.createElement("div");
+            heading.className = "month-heading";
+            heading.textContent = `${new Date(
+              group.year + "-" + group.month + "-01"
+            ).toLocaleString("en", { month: "long", year: "numeric" })}`;
+            heading.addEventListener("click", () => {
+              $("monthFilter").value = group.month;
+              highlightMonthButton(group.month);
+              renderGallery();
+            });
+            const g = document.createElement("div");
+            g.className = "gallery-grid";
+            group.photos.forEach((p, i) => {
+              const t = document.createElement("div");
+              t.className = "gallery-thumb";
+              t.tabIndex = 0;
+              t.innerHTML = `<img src="${p.src}" alt="${p.caption}"><div class="gallery-caption">${p.caption}</div>`;
+              t.addEventListener("click", () => openLightbox(group.photos, i));
+              g.appendChild(t);
+            });
+            wrap.appendChild(heading);
+            wrap.appendChild(g);
+          });
+      }
+
+      /* ---------------- lightbox -------------------- */
+      let lbPhotos = [],
+        lbIndex = 0;
+      function openLightbox(photos, idx) {
+        lbPhotos = photos;
+        lbIndex = idx;
+        $("lbImage").src = photos[idx].src;
+        $("lbCaption").textContent = photos[idx].caption || "";
+        $("lightbox").classList.add("open");
+        $("lightbox").setAttribute("aria-hidden", "false");
+      }
+      function closeLightbox() {
+        $("lightbox").classList.remove("open");
+        $("lightbox").setAttribute("aria-hidden", "true");
+      }
+      function lbNext() {
+        if (!lbPhotos.length) return;
+        lbIndex = (lbIndex + 1) % lbPhotos.length;
+        $("lbImage").src = lbPhotos[lbIndex].src;
+        $("lbCaption").textContent = lbPhotos[lbIndex].caption || "";
+      }
+      function lbPrev() {
+        if (!lbPhotos.length) return;
+        lbIndex = (lbIndex - 1 + lbPhotos.length) % lbPhotos.length;
+        $("lbImage").src = lbPhotos[lbIndex].src;
+        $("lbCaption").textContent = lbPhotos[lbIndex].caption || "";
+      }
+
+      /* ---------------- present mode (slideshow) -------------------- */
+      let presentIndex = 0,
+        presentTimer = null;
+      function enterPresent() {
+        if (!EVENTS.length) return;
+        mode = "present";
+        applyMode();
+        $("presentOverlay").classList.add("open");
+        $("presentOverlay").setAttribute("aria-hidden", "false");
+        showPresentSlide(presentIndex);
+        presentTimer = setInterval(() => {
+          presentIndex = (presentIndex + 1) % EVENTS.length;
+          showPresentSlide(presentIndex);
+        }, 8000);
+      }
+      function exitPresent() {
+        $("presentOverlay").classList.remove("open");
+        $("presentOverlay").setAttribute("aria-hidden", "true");
+        clearInterval(presentTimer);
+        presentTimer = null;
+        mode = "grid";
+        applyMode();
+      }
+      function showPresentSlide(i) {
+        const ev = EVENTS[i];
+        if (!ev) return;
+        const start = parseStart(ev.start);
+        const end = parseEnd(ev.end, start);
+        $("presentTitle").textContent = ev.name;
+        $("presentMeta").textContent = ev.end
+          ? `${formatISO(start)} → ${formatISO(parseStart(ev.end))}`
+          : `${formatISO(start)}`;
+        function updateCountdown() {
+          const now = new Date();
+          if (now < start) {
+            const diff = start - now;
+            const d = Math.floor(diff / 86400000),
+              h = Math.floor((diff % 86400000) / 3600000),
+              m = Math.floor((diff % 3600000) / 60000),
+              s = Math.floor((diff % 60000) / 1000);
+            $("presentCountdown").textContent = `${d}d ${h}h ${m}m ${s}s left`;
+          } else if (now > end) {
+            $("presentCountdown").textContent = `Event ended`;
+          } else {
+            const diff = end - now;
+            const d = Math.floor(diff / 86400000),
+              h = Math.floor((diff % 86400000) / 3600000),
+              m = Math.floor((diff % 3600000) / 60000),
+              s = Math.floor((diff % 60000) / 1000);
+            $(
+              "presentCountdown"
+            ).textContent = `${d}d ${h}h ${m}m ${s}s remaining`;
+          }
+        }
+        updateCountdown();
+      }
+
+      /* ---------------- month buttons -------------------- */
+      function generateMonthButtons() {
+        const container = $("monthButtons");
+        container.innerHTML = "";
+        const months = new Map();
+        EVENTS.forEach((ev) => {
+          const s = parseStart(ev.start);
+          const key = `${s.getFullYear()}-${pad(s.getMonth() + 1)}`;
+          if (!months.has(key))
+            months.set(key, {
+              label: `${s.toLocaleString("en", {
+                month: "short",
+              })} ${s.getFullYear()}`,
+              month: pad(s.getMonth() + 1),
+            });
+        });
+        Array.from(months.entries())
+          .sort()
+          .forEach(([k, val]) => {
+            const btn = document.createElement("button");
+            btn.className = "month-btn";
+            btn.textContent = val.label;
+            btn.dataset.month = val.month;
+            btn.addEventListener("click", () => {
+              const mf = $("monthFilter");
+              if (!mf) return;
+              if (mf.value === val.month) {
+                mf.value = "";
+                btn.classList.remove("active");
+              } else {
+                mf.value = val.month;
+                highlightMonthButton(val.month);
+              }
+              renderAll();
+            });
+            container.appendChild(btn);
+          });
+      }
+      function highlightMonthButton(month) {
+        const btns = Array.from(document.querySelectorAll(".month-btn"));
+        btns.forEach((b) =>
+          b.classList.toggle("active", b.dataset.month === month)
+        );
+      }
+
+      /* ---------------- year progress -------------------- */
       function updateYearProgress() {
         if (EVENTS.length === 0) return;
-        const start = parseDate(EVENTS[0].start);
+        const start = parseStart(EVENTS[0].start);
         const last = EVENTS[EVENTS.length - 1];
-        const end = parseEnd(last.end, parseDate(last.start));
+        const end = parseEnd(last.end, parseStart(last.start));
         const now = new Date();
         const total = end.getTime() - start.getTime();
         const passed = Math.max(
@@ -1862,27 +1784,25 @@
           Math.min(total, now.getTime() - start.getTime())
         );
         const pct = Math.round((passed / total) * 100);
-        $("yearProgress").style.width = pct + "%";
+        $("yearProgressBar").style.width = pct + "%";
       }
 
-      /* -------------------------
-   Accent sample from hero or fallback
-   ------------------------- */
+      /* ---------------- accent color sampling -------------------- */
       async function sampleAccent() {
         const img = $("heroImg");
         if (!img) return;
         await new Promise((r) => {
           if (img.complete) return r();
-          img.addEventListener("load", r);
-          img.addEventListener("error", r);
+          img.addEventListener("load", r, { once: true });
+          img.addEventListener("error", r, { once: true });
         });
         try {
           const w = Math.min(img.naturalWidth || 200, 160),
             h = Math.min(img.naturalHeight || 120, 120);
-          const c = document.createElement("canvas");
-          c.width = w;
-          c.height = h;
-          const ctx = c.getContext("2d");
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
           ctx.drawImage(img, 0, 0, w, h);
           const data = ctx.getImageData(0, 0, w, h).data;
           let r = 0,
@@ -1904,46 +1824,405 @@
           const rgb = `rgb(${r},${g},${b})`;
           document.documentElement.style.setProperty("--accent", rgb);
           const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-          document.documentElement.style.setProperty(
-            "--accent-text",
-            lum > 0.6 ? "#072238" : "#fff"
-          );
+          const text = lum > 0.6 ? "#072238" : "#fff";
+          document.documentElement.style.setProperty("--accent-contrast", text);
         } catch (e) {
-          // fallback using next upcoming event month color
-          const next = EVENTS.find(
-            (ev) =>
-              parseEnd(ev.end, parseDate(ev.start)).getTime() >= Date.now()
-          );
+          const next = findNext();
           if (next) {
-            const m = pad(parseDate(next.start).getMonth() + 1);
+            const m = pad(parseStart(next.start).getMonth() + 1);
             const col = MONTH_COLORS[m] || "#ffd24a";
             document.documentElement.style.setProperty("--accent", col);
             document.documentElement.style.setProperty(
-              "--accent-text",
+              "--accent-contrast",
               "#072238"
             );
           }
         }
       }
 
-      /* -------------------------
-   On startup: render everything and run birthday popups if needed
-   ------------------------- */
-      document.addEventListener("DOMContentLoaded", async () => {
-        renderEvents();
-        renderGallery();
-        renderBirthdays();
-        updateYearProgress();
-        await sampleAccent(); // sets --accent
-        // show birthday popups (sequential) if today matches
-        await runBirthdayPopups();
-      });
+      /* ---------------- birthdays UI & popups -------------------- */
 
-      /* ensure confetti canvas sized properly */
-      window.addEventListener("resize", () => {
-        confettiCanvas.width = window.innerWidth;
-        confettiCanvas.height = window.innerHeight;
-      });
+      // Compute next occurrence for a birthday (next calendar date for given month/day).
+      function nextOccurrence(month, day) {
+        const now = new Date();
+        const year = now.getFullYear();
+        let cand = new Date(year, month - 1, day, 12, 0, 0);
+        if (cand.getTime() < now.getTime()) {
+          cand = new Date(year + 1, month - 1, day, 12, 0, 0);
+        }
+        return cand;
+      }
+
+      // Format time until/since
+      function humanDelta(targetDate, roundTo = "days") {
+        const now = new Date();
+        let diff = Math.abs(targetDate.getTime() - now.getTime());
+        const sign = targetDate.getTime() >= now.getTime() ? 1 : -1;
+        const d = Math.floor(diff / 86400000);
+        diff -= d * 86400000;
+        const h = Math.floor(diff / 3600000);
+        diff -= h * 3600000;
+        const m = Math.floor(diff / 60000);
+        const parts = [];
+        if (d) parts.push(`${d}d`);
+        if (h) parts.push(`${h}h`);
+        if (!d && m) parts.push(`${m}m`);
+        if (parts.length === 0) parts.push("0m");
+        return { text: parts.join(" "), sign };
+      }
+
+      // Show birthdays view content
+      function renderBirthdays() {
+        const container = $("bdGrid");
+        container.innerHTML = "";
+        // We'll list all birthdays (user wanted for now only September - but also to support others later)
+        BIRTHDAYS.forEach((b) => {
+          const card = document.createElement("div");
+          card.className = "bd-card";
+          card.tabIndex = -1;
+          const name = document.createElement("div");
+          name.className = "bd-name";
+          name.textContent = b.name;
+          const date = document.createElement("div");
+          date.className = "bd-date";
+          date.textContent = `${shortMonthName(b.month)} ${b.day}`;
+          const occ = nextOccurrence(b.month, b.day);
+          const d = humanDelta(occ);
+          const count = document.createElement("div");
+          count.className = "bd-count";
+          count.textContent = d.sign > 0 ? `${d.text} away` : `${d.text} ago`;
+          const note = document.createElement("div");
+          note.className = "bd-note";
+          note.textContent = "Celebration — no clicks";
+          card.appendChild(name);
+          card.appendChild(date);
+          card.appendChild(count);
+          card.appendChild(note);
+          container.appendChild(card);
+        });
+      }
+
+      /* ----------- birthday popups & FX: confetti + fireworks -------------- */
+
+      const fxCanvas = $("fxCanvas");
+      const fxCtx = fxCanvas.getContext("2d");
+      let fxWidth = 0,
+        fxHeight = 0,
+        fxRaf = null;
+      function fxResize() {
+        fxCanvas.width = window.innerWidth;
+        fxCanvas.height = window.innerHeight;
+        fxWidth = fxCanvas.width;
+        fxHeight = fxCanvas.height;
+      }
+      window.addEventListener("resize", fxResize);
+      fxResize();
+
+      // simple confetti pieces
+      class Confetto {
+        constructor(x, y, spread) {
+          this.x = x + (Math.random() - 0.5) * spread;
+          this.y = y + (Math.random() - 0.5) * 20;
+          this.w = 6 + Math.random() * 10;
+          this.h = 6 + Math.random() * 6;
+          this.color = `hsl(${Math.floor(Math.random() * 360)}deg 80% 55%)`;
+          this.vx = (Math.random() - 0.5) * 3;
+          this.vy = -6 - Math.random() * 4;
+          this.rotation = Math.random() * 360;
+          this.vr = (Math.random() - 0.5) * 10;
+          this.age = 0;
+          this.life = 120 + Math.random() * 40;
+        }
+        step() {
+          this.vy += 0.25;
+          this.x += this.vx;
+          this.y += this.vy;
+          this.rotation += this.vr;
+          this.age++;
+        }
+        draw(ctx) {
+          ctx.save();
+          ctx.translate(this.x, this.y);
+          ctx.rotate((this.rotation * Math.PI) / 180);
+          ctx.fillStyle = this.color;
+          ctx.fillRect(-this.w / 2, -this.h / 2, this.w, this.h);
+          ctx.restore();
+        }
+        expired() {
+          return this.age > this.life || this.y > fxHeight + 50;
+        }
+      }
+
+      // fireworks particles (radial)
+      class FireworkParticle {
+        constructor(x, y, angle, spd, color) {
+          this.x = x;
+          this.y = y;
+          this.vx = Math.cos(angle) * spd;
+          this.vy = Math.sin(angle) * spd;
+          this.alpha = 1;
+          this.decay = 0.98 + Math.random() * 0.005;
+          this.size = 2 + Math.random() * 2;
+          this.color = color;
+        }
+        step() {
+          this.x += this.vx;
+          this.y += this.vy;
+          this.vy += 0.04;
+          this.vx *= 0.995;
+          this.vy *= 0.995;
+          this.alpha *= 0.985;
+        }
+        draw(ctx) {
+          ctx.globalAlpha = Math.max(0, this.alpha);
+          ctx.fillStyle = this.color;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+        expired() {
+          return this.alpha < 0.02;
+        }
+      }
+
+      let confettis = [],
+        fireworks = [];
+      function spawnCelebration(x = null, y = null, spread = 120) {
+        const cx = x === null ? fxWidth / 2 : x,
+          cy = y === null ? fxHeight / 2 : y;
+        // spawn confetti
+        for (let i = 0; i < 30; i++)
+          confettis.push(new Confetto(cx, cy, spread));
+        // spawn fireworks radial
+        const colors = ["#ffd24a", "#ff7a7a", "#8be3ff", "#9bd96a", "#d58bff"];
+        for (let p = 0; p < 6; p++) {
+          const color = colors[Math.floor(Math.random() * colors.length)];
+          const count = 18 + Math.floor(Math.random() * 10);
+          for (let k = 0; k < count; k++) {
+            const angle =
+              Math.PI * 2 * (k / count) + (Math.random() - 0.5) * 0.12;
+            const spd = 2 + Math.random() * 4;
+            fireworks.push(new FireworkParticle(cx, cy, angle, spd, color));
+          }
+        }
+        // ensure loop
+        if (!fxRaf) fxLoop();
+      }
+
+      function fxLoop() {
+        fxCtx.clearRect(0, 0, fxWidth, fxHeight);
+        // confetti
+        for (let i = confettis.length - 1; i >= 0; i--) {
+          const c = confettis[i];
+          c.step();
+          c.draw(fxCtx);
+          if (c.expired()) confettis.splice(i, 1);
+        }
+        // fireworks
+        for (let j = fireworks.length - 1; j >= 0; j--) {
+          const f = fireworks[j];
+          f.step();
+          f.draw(fxCtx);
+          if (f.expired()) fireworks.splice(j, 1);
+        }
+        if (confettis.length === 0 && fireworks.length === 0) {
+          fxRaf = null;
+          fxCtx.clearRect(0, 0, fxWidth, fxHeight);
+          return;
+        }
+        fxRaf = requestAnimationFrame(fxLoop);
+      }
+
+      // birthday popup flow: show each name for 2 seconds with celebration
+      async function runBirthdayPopupsForCurrentMonth() {
+        const now = new Date();
+        const thisMonth = now.getMonth() + 1;
+        const todaysBirthdays = BIRTHDAYS.filter((b) => b.month === thisMonth);
+        if (todaysBirthdays.length === 0) return;
+
+        const popup = $("bdPopup");
+        const wrap = document.getElementById("fxCanvasContainer");
+        wrap.style.pointerEvents = "none";
+        for (let i = 0; i < todaysBirthdays.length; i++) {
+          const b = todaysBirthdays[i];
+          $("bdPopupName").textContent = `Happy Birthday, ${b.name}!`;
+          const occ = nextOccurrence(b.month, b.day);
+          const d = humanDelta(occ);
+          const text =
+            d.sign > 0 ? `${d.text} until birthday` : `${d.text} ago`;
+          $("bdPopupText").textContent = text;
+          popup.style.display = "block";
+          popup.classList.remove("shake");
+          void popup.offsetWidth; // reflow to restart animation
+          popup.classList.add("shake");
+
+          // spawn fireworks/confetti centered
+          spawnCelebration(window.innerWidth / 2, window.innerHeight / 2, 200);
+
+          // show for ~2.4s
+          await new Promise((r) => setTimeout(r, 2400));
+          popup.style.display = "none";
+          // short gap between multiple popups
+          await new Promise((r) => setTimeout(r, 220));
+        }
+      }
+
+      /* ---------------- UI wiring & init -------------------- */
+      function applyMode() {
+        // toggle visible sections
+        $("gridView").style.display = mode === "grid" ? "" : "none";
+        $("gallerySection").style.display = mode === "museum" ? "" : "none";
+        $("birthdaysSection").style.display =
+          mode === "birthdays" ? "" : "none";
+        // present handled separately
+        // button active states
+        document
+          .querySelectorAll(".mode-btn")
+          .forEach((btn) => btn.classList.remove("active"));
+        if (mode === "grid") $("gridBtn").classList.add("active");
+        if (mode === "museum") $("museumBtn").classList.add("active");
+        if (mode === "birthdays") $("birthBtn").classList.add("active");
+        if (mode === "present") $("presentBtn").classList.add("active");
+      }
+
+      function wireUI() {
+        // hero image
+        $("heroImg").src = HERO;
+        $("heroImg").crossOrigin = "anonymous";
+
+        // modes
+        $("gridBtn").addEventListener("click", () => {
+          mode = "grid";
+          applyMode();
+          renderAll();
+        });
+        $("museumBtn").addEventListener("click", () => {
+          mode = "museum";
+          applyMode();
+          renderGallery();
+        });
+        $("birthBtn").addEventListener("click", () => {
+          mode = "birthdays";
+          applyMode();
+          renderBirthdays();
+        });
+        $("presentBtn").addEventListener("click", () => {
+          enterPresent();
+        });
+
+        // present controls
+        $("presentExit").addEventListener("click", () => exitPresent());
+        $("presentNext").addEventListener("click", () => {
+          presentIndex = (presentIndex + 1) % EVENTS.length;
+          showPresentSlide(presentIndex);
+        });
+        $("presentPrev").addEventListener("click", () => {
+          presentIndex = (presentIndex - 1 + EVENTS.length) % EVENTS.length;
+          showPresentSlide(presentIndex);
+        });
+
+        // search + month filter
+        $("searchBox").addEventListener("input", () => renderAll());
+        $("monthFilter").addEventListener("change", () => {
+          highlightMonthButton($("monthFilter").value);
+          renderAll();
+        });
+
+        // pinned toggles
+        $("pinnedToggleBtn").addEventListener("click", () => {
+          const p = $("pinnedColumn");
+          if (!p) return;
+          p.classList.toggle("hidden");
+        });
+        $("pinCollapseBtn").addEventListener("click", () => {
+          const p = $("pinnedColumn");
+          if (!p) return;
+          p.classList.toggle("hidden");
+        });
+        $("clearPins").addEventListener("click", () => setPinned([]));
+        $("exportPins").addEventListener("click", () => {
+          const pins = getPinned();
+          const rows = [["name", "start", "end"]];
+          for (const i of pins) {
+            if (EVENTS[i])
+              rows.push([
+                EVENTS[i].name,
+                EVENTS[i].start || "",
+                EVENTS[i].end || "",
+              ]);
+          }
+          const csv = rows
+            .map((r) =>
+              r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")
+            )
+            .join("\n");
+          const blob = new Blob([csv], { type: "text/csv" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "pinned-events.csv";
+          a.click();
+          URL.revokeObjectURL(url);
+        });
+
+        // lightbox
+        $("lbClose").addEventListener("click", closeLightbox);
+        $("lbNext").addEventListener("click", lbNext);
+        $("lbPrev").addEventListener("click", lbPrev);
+        document.addEventListener("keydown", (e) => {
+          const light = $("lightbox");
+          if (light.classList.contains("open")) {
+            if (e.key === "ArrowRight") lbNext();
+            if (e.key === "ArrowLeft") lbPrev();
+            if (e.key === "Escape") closeLightbox();
+          }
+          // pinned quick toggle
+          if (e.key.toLowerCase() === "p" && !e.metaKey && !e.ctrlKey) {
+            const p = $("pinnedColumn");
+            if (p) p.classList.toggle("hidden");
+          }
+        });
+
+        // click outside pinned (desktop) closes
+        document.addEventListener("click", (ev) => {
+          const p = $("pinnedColumn");
+          if (!p) return;
+          if (window.innerWidth <= 900) return;
+          if (p.classList.contains("hidden")) return;
+          if (
+            !p.contains(ev.target) &&
+            !$("pinnedToggleBtn").contains(ev.target)
+          )
+            p.classList.add("hidden");
+        });
+      }
+
+      /* ---------------- bootstrap init -------------------- */
+      (async function init() {
+        wireUI();
+        generateMonthButtons();
+        renderAll();
+        await sampleAccent();
+        // run birthday popups for the current month (user requested sequence on load)
+        // only show birthdays if the current month has any birthdays; user wanted Sept (current date likely Sep)
+        // We show only if BIRTHDAYS contains that month
+        try {
+          await runBirthdayPopupsForCurrentMonth();
+        } catch (e) {
+          console.warn("Birthday popup error", e);
+        }
+      })();
+
+      /* ---------------- helper: birthday auto-announcer for demo or testing -------------------- */
+      // Expose small functions to console for testing
+      window._maxwell = {
+        spawnCelebration,
+        openLightbox,
+        renderAll,
+        renderGallery,
+        renderBirthdays,
+      };
     </script>
   </body>
 </html>
