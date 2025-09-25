@@ -1,13 +1,4 @@
 <!DOCTYPE html>
-<!--
-  Maxwell Events — single-file HTML
-  Full implementation (Grid, Gallery, Birthdays, Pinned panel, Present mode, hero fixes).
-  - Hero uses the WP image you provided and crops top on desktop.
-  - Gallery thumbnails are square (aspect-ratio:1/1).
-  - Birthdays show sequential popups (2s each) with confetti & shake when it's their day.
-  - Pinned panel hides when empty and is toggleable when pins exist.
-  - All data is client-side; pins persist to localStorage.
--->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -16,13 +7,12 @@
     <style>
       :root {
         --bg: #07131a;
-        --card: #ffffff;
+        --panel-width: 320px;
         --accent: #ffd24a;
-        --accent-dark: #ffb84d;
         --accent-text: #072238;
-        --muted: #2a3b57;
-        --panel-w: 320px;
-        --gap: 16px;
+        --muted: #a6c7d9;
+        --card-radius: 12px;
+        --glass: rgba(255, 255, 255, 0.06);
       }
       * {
         box-sizing: border-box;
@@ -31,59 +21,56 @@
       body {
         height: 100%;
         margin: 0;
-        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-        background: var(--bg);
-        color: #fff;
+      }
+      body {
+        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial;
+        background: linear-gradient(180deg, #041018 0%, #07131a 100%);
+        color: #e6f0fb;
         -webkit-font-smoothing: antialiased;
-      }
-      a {
-        color: inherit;
-      }
-      button {
-        font-family: inherit;
+        -moz-osx-font-smoothing: grayscale;
+        padding: 18px;
       }
 
-      /* HERO */
+      /* HEADER / HERO */
       .hero {
-        position: relative;
         max-width: 1200px;
-        margin: 18px auto;
-        height: 360px;
-        border-radius: 14px;
+        margin: 0 auto 18px;
+        border-radius: 16px;
         overflow: hidden;
-        box-shadow: 0 14px 60px rgba(0, 0, 0, 0.45);
+        position: relative;
+        height: 360px;
+        box-shadow: 0 18px 60px rgba(2, 8, 23, 0.5);
       }
-      .hero img {
+      .hero__img {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        object-position: center top;
         display: block;
-        transition: transform 0.6s cubic-bezier(0.2, 0.9, 0.2, 1);
+        object-position: center center;
+        transition: transform 0.9s cubic-bezier(0.2, 0.9, 0.2, 1);
+        filter: saturate(0.98) contrast(0.95);
       }
-      @media (max-width: 900px) {
-        .hero img {
-          object-position: center center;
-        }
-        .hero {
-          height: 260px;
+      @media (min-width: 1000px) {
+        .hero__img {
+          object-position: center top;
+          transform: scale(1.03);
         }
       }
-      .hero::after {
-        content: "";
+      .hero__overlay {
         position: absolute;
         inset: 0;
         background: linear-gradient(
-          to bottom,
-          rgba(0, 0, 0, 0) 36%,
-          rgba(0, 0, 0, 0.78) 100%
+          180deg,
+          rgba(0, 0, 0, 0) 34%,
+          rgba(0, 0, 0, 0.82) 100%
         );
         pointer-events: none;
       }
-      .hero-inner {
+      .hero__content {
         position: absolute;
-        left: 20px;
-        right: 20px;
+        left: 22px;
+        right: 22px;
         bottom: 20px;
         display: flex;
         justify-content: space-between;
@@ -91,314 +78,221 @@
         gap: 12px;
         z-index: 2;
       }
-      .hero-left {
-        max-width: 70%;
-      }
-      .site-title {
-        font-size: 1.6rem;
+      .hero h1 {
         margin: 0;
-        font-weight: 900;
+        color: #fff;
+        font-size: 1.5rem;
         letter-spacing: 0.3px;
-        text-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+        font-weight: 900;
+        text-shadow: 0 8px 26px rgba(0, 0, 0, 0.55);
       }
-      .site-sub {
+      .hero .sub {
+        color: rgba(255, 255, 255, 0.95);
+        font-weight: 600;
         font-size: 0.95rem;
-        color: rgba(255, 255, 255, 0.92);
-        margin-top: 6px;
-        max-width: 720px;
-        line-height: 1.22;
-        text-shadow: 0 6px 24px rgba(0, 0, 0, 0.22);
       }
 
-      /* controls */
-      .controls {
+      /* layout & nav */
+      .nav {
+        max-width: 1200px;
+        margin: 12px auto;
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        align-items: center;
+      }
+      .nav button {
+        background: transparent;
+        border: 0;
+        color: var(--muted);
+        padding: 10px 14px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 700;
+        transition: all 0.18s;
+      }
+      .nav button:hover {
+        transform: translateY(-2px);
+        color: #fff;
+      }
+      .nav button.active {
+        background: linear-gradient(90deg, var(--accent), #ffecb5);
+        color: var(--accent-text);
+        box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35);
+      }
+
+      /* main & top controls */
+      .wrap {
+        max-width: 1200px;
+        margin: 12px auto 120px;
+        padding: 0 12px;
+      }
+      .top-controls {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      .left-controls {
         display: flex;
         gap: 10px;
         align-items: center;
-        margin-top: 12px;
-        flex-wrap: wrap;
       }
-      .search,
+      input[type="search"],
       select {
         padding: 10px 12px;
         border-radius: 10px;
-        border: none;
-        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(255, 255, 255, 0.96);
         color: #072238;
-        font-size: 14px;
       }
-      .btn {
+      .view-btn {
         padding: 8px 12px;
         border-radius: 10px;
         border: none;
-        background: rgba(255, 255, 255, 0.06);
-        color: #fff;
+        background: var(--glass);
+        color: #e6f0fb;
         cursor: pointer;
         font-weight: 700;
       }
-      .btn.primary {
-        background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+      .view-btn.primary {
+        background: linear-gradient(90deg, var(--accent), #ffecb5);
         color: var(--accent-text);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
-      }
-      .mode-buttons {
-        display: flex;
-        gap: 8px;
-        align-items: center;
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
       }
 
-      /* month buttons row */
-      .month-buttons {
-        display: flex;
-        gap: 6px;
-        flex-wrap: wrap;
-        align-items: center;
-      }
-      .month-btn {
-        padding: 6px 10px;
-        border-radius: 999px;
-        border: none;
-        background: transparent;
-        color: rgba(255, 255, 255, 0.85);
-        cursor: pointer;
-        font-weight: 700;
-      }
-      .month-btn.active {
-        background: linear-gradient(90deg, var(--accent), var(--accent-dark));
-        color: var(--accent-text);
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
-      }
-
-      /* pinned panel */
-      .pinned-column {
-        position: fixed;
-        right: 18px;
-        top: 110px;
-        width: var(--panel-w);
-        max-height: calc(100vh - 140px);
-        overflow: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        padding: 12px;
-        background: #fff;
-        border-radius: 12px;
-        color: #072238;
-        box-shadow: 0 28px 80px rgba(2, 8, 23, 0.28);
-        z-index: 1200;
-        transition: transform 0.24s, opacity 0.24s;
-      }
-      .pinned-column.hidden {
-        transform: translateX(18px);
-        opacity: 0;
-        pointer-events: none;
-      }
-      .pinned-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 8px;
-      }
-      .pinned-empty {
-        padding: 12px;
-        border-radius: 8px;
-        background: rgba(2, 8, 23, 0.03);
-        color: #6b7b8d;
-        font-weight: 700;
-        text-align: center;
-      }
-      .pinned-chip {
-        padding: 10px;
-        border-radius: 10px;
-        background: #fff;
-        border: 1px solid rgba(2, 8, 23, 0.04);
-        box-shadow: 0 6px 20px rgba(2, 8, 23, 0.04);
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-      .pin-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      .pinned-title {
-        font-weight: 800;
-        color: #072238;
-        font-size: 13px;
-      }
-      .pinned-sub {
-        font-size: 12px;
-        color: #3d566a;
-      }
-      .pinned-count {
-        font-weight: 800;
-        color: var(--accent);
-      }
-      .pinned-progress {
-        height: 6px;
-        background: rgba(2, 8, 23, 0.05);
-        border-radius: 999px;
-        overflow: hidden;
-      }
-      .pinned-progress > i {
-        display: block;
-        height: 100%;
-        width: 0;
-        background: linear-gradient(90deg, var(--accent), var(--accent-dark));
-      }
-
-      #pinnedToggle {
-        position: fixed;
-        right: 18px;
-        top: 66%;
-        transform: translateY(-50%);
-        z-index: 1300;
-        width: 52px;
-        height: 52px;
-        border-radius: 999px;
-        border: none;
-        background: linear-gradient(180deg, var(--accent), var(--accent-dark));
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.28);
-        font-weight: 800;
-        cursor: pointer;
-      }
-      #pinnedToggle.hidden {
-        display: none;
-      }
-
-      /* layout */
-      .wrap {
-        max-width: 1200px;
-        margin: 18px auto 120px;
-        padding: 0 12px;
-      }
-      .top-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 16px;
-        margin-bottom: 8px;
-      }
-      #pageTitle {
-        font-size: 1.2rem;
-        color: #fff;
-        margin: 0;
-      }
-      #subtitle {
-        color: rgba(255, 255, 255, 0.92);
-      }
-
+      /* year progress */
       .year-progress {
         height: 8px;
-        background: rgba(255, 255, 255, 0.06);
+        background: rgba(255, 255, 255, 0.03);
         border-radius: 999px;
+        width: 100%;
+        margin-top: 8px;
         overflow: hidden;
-        margin-top: 12px;
       }
       .year-progress > i {
         display: block;
         height: 100%;
-        width: 0;
-        background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+        width: 0%;
+        background: linear-gradient(90deg, var(--accent), #ffb84d);
+        transition: width 0.6s;
       }
 
-      /* grid & month headings */
+      /* GRID */
       .grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
         gap: 18px;
+        align-items: start;
       }
       .month-heading {
         grid-column: 1/-1;
-        padding: 8px 0;
+        color: #eaf6ff;
         font-weight: 900;
-        color: #fff;
-        opacity: 0.95;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        font-size: 1rem;
+        padding: 6px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
         cursor: pointer;
       }
 
-      /* card */
       .card {
-        position: relative;
-        border-radius: 12px;
-        background: linear-gradient(180deg, #ffffff, #fafafa);
+        background: linear-gradient(180deg, #ffffff, #fafbff);
         color: #072238;
+        border-radius: var(--card-radius);
         padding: 16px;
+        position: relative;
+        min-height: 170px;
         display: flex;
         flex-direction: column;
         gap: 8px;
-        min-height: 176px;
-        box-shadow: 0 12px 40px rgba(2, 8, 23, 0.06);
-        transition: transform 0.18s, box-shadow 0.18s;
-        overflow: hidden;
+        box-shadow: 0 12px 36px rgba(2, 8, 23, 0.08);
+        transition: transform 0.18s, box-shadow 0.18s, filter 0.18s,
+          opacity 0.18s;
       }
       .card:hover {
         transform: translateY(-6px);
-        box-shadow: 0 20px 60px rgba(2, 8, 23, 0.12);
+        box-shadow: 0 24px 60px rgba(2, 8, 23, 0.16);
       }
+
       .month-strip {
         position: absolute;
         left: 0;
         top: 0;
         bottom: 0;
         width: 6px;
-        border-top-left-radius: 12px;
-        border-bottom-left-radius: 12px;
+        border-top-left-radius: var(--card-radius);
+        border-bottom-left-radius: var(--card-radius);
       }
-      .pin-btn {
+
+      .card .pin {
         position: absolute;
         right: 12px;
         top: 12px;
         width: 36px;
         height: 36px;
         border-radius: 8px;
-        border: none;
+        border: 0;
         background: rgba(7, 18, 43, 0.04);
         cursor: pointer;
-      }
-      .pin-btn.active {
-        background: linear-gradient(90deg, var(--accent), var(--accent-dark));
-        color: var(--accent-text);
-      }
-      .card .title {
-        font-weight: 900;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         font-size: 18px;
-        color: #072238;
-        min-height: 44px;
-        line-height: 1.05;
       }
-      .meta {
-        font-size: 13px;
-        color: #27506b;
+      .card .pin.active {
+        background: linear-gradient(90deg, #ffd24a, #ffecb5);
+        box-shadow: 0 8px 20px rgba(255, 180, 60, 0.12);
       }
-      .countdown {
+
+      .card .title {
         font-weight: 800;
-        font-size: 15px;
-        color: var(--accent);
+        font-size: 18px;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
       }
-      .status {
+      .card .title .icon {
+        font-size: 20px;
+        filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.08));
+      }
+      .card .meta {
         font-size: 13px;
-        color: #16344f;
-        font-weight: 700;
+        color: #28506b;
+        min-height: 18px;
       }
-      .date-badge {
+      .card .count {
+        font-weight: 800;
+        color: var(--accent);
+        font-size: 15px;
+        min-height: 22px;
+      }
+      .card .status {
+        font-weight: 600;
+        color: #16344f;
+        font-size: 13px;
+        min-height: 20px;
+      }
+      .card .date-badge {
         align-self: flex-start;
         padding: 6px 8px;
         border-radius: 9px;
         background: rgba(7, 18, 43, 0.04);
         font-weight: 800;
       }
+
       .card.finished {
-        opacity: 0.6;
-        filter: grayscale(30%);
+        opacity: 0.64;
+        filter: grayscale(40%);
+        transform: none;
+        box-shadow: 0 6px 20px rgba(2, 8, 23, 0.05);
       }
       .card.happening {
-        box-shadow: 0 18px 46px rgba(255, 120, 60, 0.1);
-        animation: float 2.4s infinite;
+        box-shadow: 0 20px 60px rgba(255, 90, 70, 0.12);
+        animation: pulse 2.6s infinite;
       }
-      @keyframes float {
+      @keyframes pulse {
         0% {
           transform: translateY(0);
         }
@@ -410,63 +304,79 @@
         }
       }
 
-      /* gallery */
-      .gallery-wrap {
-        max-width: 1200px;
-        margin: 18px auto;
-        padding: 0 12px;
+      /* big icon badge to the right for visual */
+      .card .big-badge {
+        position: absolute;
+        right: -8px;
+        top: -6px;
+        font-size: 60px;
+        color: rgba(7, 18, 43, 0.06);
+        font-weight: 900;
+        pointer-events: none;
       }
-      .gallery-controls {
+
+      /* GALLERY (museum) - squared tiles */
+      .gallery {
         display: flex;
-        gap: 8px;
-        align-items: center;
-        margin-bottom: 12px;
+        flex-direction: column;
+        gap: 18px;
       }
-      .gallery-grid {
+      .gallery .section-heading {
+        color: #eaf6ff;
+        font-weight: 900;
+        font-size: 1rem;
+        padding-bottom: 6px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      }
+      .tiles {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
         gap: 10px;
       }
-      .gallery-thumb {
-        position: relative;
+      .tile {
+        background: #ddd;
         border-radius: 10px;
         overflow: hidden;
         cursor: pointer;
-        background: #ddd;
-        display: block;
-        aspect-ratio: 1/1;
+        position: relative;
+        aspect-ratio: 1 / 1; /* ensures square tiles */
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        transition: transform 0.22s, box-shadow 0.22s;
+        box-shadow: 0 8px 18px rgba(2, 8, 23, 0.08);
       }
-      .gallery-thumb img {
+      .tile img {
         width: 100%;
         height: 100%;
         object-fit: cover;
         display: block;
-        transition: transform 0.36s;
       }
-      .gallery-thumb:hover img {
-        transform: scale(1.06);
-      }
-      .gallery-caption {
+      .tile .cap {
         position: absolute;
         left: 8px;
         bottom: 8px;
-        background: rgba(0, 0, 0, 0.45);
+        background: rgba(0, 0, 0, 0.42);
         color: #fff;
         padding: 6px 8px;
-        border-radius: 8px;
-        font-weight: 700;
+        border-radius: 6px;
         font-size: 12px;
       }
+      .tile:focus,
+      .tile:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 22px 60px rgba(2, 8, 23, 0.16);
+      }
 
-      /* lightbox */
+      /* LIGHTBOX */
       .lightbox {
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.88);
         display: none;
+        z-index: 2200;
         align-items: center;
         justify-content: center;
-        z-index: 1400;
+        background: rgba(0, 0, 0, 0.85);
       }
       .lightbox.open {
         display: flex;
@@ -474,13 +384,13 @@
       .lightbox img {
         max-width: 92%;
         max-height: 82%;
-        object-fit: contain;
-        border-radius: 8px;
+        border-radius: 10px;
       }
       .lightbox .caption {
         color: #fff;
         margin-top: 12px;
         font-weight: 700;
+        text-align: center;
       }
       .lightbox .controls {
         position: absolute;
@@ -488,390 +398,499 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 24px;
+        padding: 26px;
+        pointer-events: none;
       }
       .lightbox button {
+        pointer-events: auto;
         background: rgba(255, 255, 255, 0.06);
-        border: none;
+        border: 0;
         color: #fff;
-        padding: 10px;
-        border-radius: 10px;
+        padding: 10px 12px;
+        border-radius: 8px;
         cursor: pointer;
       }
 
-      /* birthdays */
-      .bd-grid {
+      /* BIRTHDAYS */
+      .birth-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 12px;
       }
-      .bd-card {
-        background: linear-gradient(180deg, #fff, #fbfbfb);
+      .birth-card {
+        background: linear-gradient(180deg, #ffffff, #fbfdff);
         color: #072238;
-        padding: 12px;
         border-radius: 12px;
-        box-shadow: 0 12px 40px rgba(2, 8, 23, 0.06);
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: flex-start;
+        min-height: 110px;
+        box-shadow: 0 10px 30px rgba(2, 8, 23, 0.06);
       }
-      .bd-name {
+      .birth-card .name {
         font-weight: 900;
+        font-size: 16px;
       }
-      .bd-date {
+      .birth-card .when {
         font-size: 13px;
-        color: #4a6b83;
+        color: #2a3b57;
       }
-      .bd-count {
+      .birth-card .countdown {
         font-weight: 800;
         color: var(--accent);
-        margin-top: 8px;
       }
 
-      /* birthday popup (no opaque overlay - just confetti on top and large text) */
+      /* BIRTHDAY POPUP overlay element (centered white box) */
       .bd-popup {
         position: fixed;
         left: 50%;
         top: 30%;
-        transform: translate(-50%, -50%);
-        z-index: 2000;
-        pointer-events: none;
-        display: flex;
-        flex-direction: column;
+        transform: translate(-50%, -50%) scale(0.98);
+        background: #fff;
+        color: #072238;
+        padding: 18px 22px;
+        border-radius: 12px;
+        z-index: 3000;
+        box-shadow: 0 24px 80px rgba(2, 8, 23, 0.45);
+        min-width: 320px;
+        max-width: 90%;
+        text-align: center;
+        display: none;
         align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        animation: bdIn 0.45s cubic-bezier(0.2, 0.9, 0.2, 1);
       }
-      .bd-popup .text {
-        font-size: 48px;
+      .bd-popup.show {
+        display: flex;
+      }
+      .bd-popup h2 {
+        margin: 0;
+        font-size: 20px;
         font-weight: 900;
-        color: #fff;
-        text-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
-        transform-origin: center;
-        animation: bdPop 0.72s cubic-bezier(0.2, 0.9, 0.3, 1);
       }
-      @keyframes bdPop {
+      .bd-popup p {
+        margin-top: 6px;
+        color: #28506b;
+        font-weight: 700;
+      }
+
+      @keyframes bdIn {
         0% {
-          transform: scale(0.72) translateY(-6px);
-        }
-        60% {
-          transform: scale(1.06) translateY(3px);
+          transform: translate(-50%, -60%) scale(0.96);
+          opacity: 0;
         }
         100% {
-          transform: scale(1) translateY(0);
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 1;
         }
       }
-      .bd-shake {
-        animation: bdShake 0.9s ease-in-out;
-      }
-      @keyframes bdShake {
-        10%,
-        90% {
-          transform: translateX(-2px);
+      @keyframes shake {
+        0% {
+          transform: translateX(0);
         }
-        20%,
+        20% {
+          transform: translateX(-6px);
+        }
+        40% {
+          transform: translateX(6px);
+        }
+        60% {
+          transform: translateX(-4px);
+        }
         80% {
           transform: translateX(4px);
         }
-        30%,
-        50%,
-        70% {
-          transform: translateX(-6px);
-        }
-        40%,
-        60% {
-          transform: translateX(6px);
+        100% {
+          transform: translateX(0);
         }
       }
-
-      /* present mode (slideshow) */
-      .present-mode header,
-      .present-mode .controls,
-      .present-mode .hero-inner,
-      .present-mode .month-buttons {
-        display: none !important;
-      }
-      .present-mode body {
-        padding: 0;
-      }
-      .present-mode .wrap {
-        margin-top: 18px;
+      .bd-popup.shake {
+        animation: bdIn 0.45s cubic-bezier(0.2, 0.9, 0.2, 1),
+          shake 0.75s ease-in-out 1;
       }
 
-      /* responsive */
+      /* PRESENT mode */
+      .present-stage {
+        display: flex;
+        gap: 18px;
+        flex-wrap: nowrap;
+        overflow: hidden;
+        align-items: center;
+        justify-content: center;
+        height: 60vh;
+      }
+      .present-card {
+        width: 760px;
+        min-width: 480px;
+        border-radius: 14px;
+        background: linear-gradient(180deg, #ffffff, #fcfdff);
+        color: #072238;
+        padding: 32px;
+        box-shadow: 0 30px 90px rgba(2, 8, 23, 0.32);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+      }
+      .present-controls {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: 8px;
+      }
+
+      /* pinned panel (right) */
+      .pinned-panel {
+        position: fixed;
+        right: 18px;
+        top: 110px;
+        width: var(--panel-width);
+        max-height: calc(100vh - 140px);
+        overflow: auto;
+        background: #fff;
+        color: #072238;
+        border-radius: 12px;
+        padding: 12px;
+        box-shadow: 0 24px 80px rgba(2, 8, 23, 0.18);
+        z-index: 2000;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        transition: transform 0.28s, opacity 0.28s;
+      }
+      .pinned-panel.hidden {
+        transform: translateX(18px);
+        opacity: 0;
+        pointer-events: none;
+      }
+      .pinned-panel h3 {
+        margin: 0;
+        font-size: 14px;
+      }
+      .pinned-item {
+        background: linear-gradient(180deg, #fff, #fafbf7);
+        border-radius: 10px;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        box-shadow: 0 8px 20px rgba(2, 8, 23, 0.06);
+      }
+      .pinned-controls {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+      .pinned-toggle {
+        position: fixed;
+        right: 18px;
+        top: 64%;
+        transform: translateY(-50%);
+        width: 56px;
+        height: 56px;
+        border-radius: 999px;
+        border: 0;
+        background: linear-gradient(180deg, var(--accent), #ffecb5);
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.24);
+        cursor: pointer;
+        font-weight: 900;
+        z-index: 2100;
+      }
+      .pinned-toggle.hidden {
+        display: none;
+      }
+
+      /* misc small */
+      .muted {
+        color: rgba(2, 8, 23, 0.5);
+      }
+      .sr-only {
+        position: absolute;
+        left: -9999px;
+        top: auto;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+      }
+
       @media (max-width: 900px) {
-        .pinned-column {
-          right: 12px;
+        .hero {
+          height: 220px;
+        }
+        .hero__content {
           left: 12px;
+          right: 12px;
+          bottom: 12px;
+        }
+        .present-card {
+          width: 92%;
+          min-width: unset;
+        }
+        .pinned-panel {
+          left: 12px;
+          right: 12px;
           bottom: 18px;
           top: auto;
-          display: flex;
-          flex-direction: row;
+          width: auto;
           max-height: 120px;
+          flex-direction: row;
+          gap: 8px;
           padding: 8px;
         }
-        #pinnedToggle {
+        .pinned-toggle {
           display: none;
-        }
-        .hero {
-          height: 260px;
-        }
-        .gallery-grid {
-          grid-template-columns: repeat(3, 1fr);
         }
       }
     </style>
   </head>
   <body>
-    <!-- HERO -->
-    <section class="hero" aria-label="Hero">
+    <!-- HERO with supplied image (top-focused crop on desktop) -->
+    <header class="hero" role="banner" aria-label="Hero banner">
       <img
         id="heroImg"
+        class="hero__img"
         alt="Maxwell banner"
         src="https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/04/VideoCover-1.jpeg?resize=767%2C500&ssl=1"
-        crossorigin="anonymous"
       />
-      <div class="hero-inner">
-        <div class="hero-left">
-          <h1 class="site-title">Maxwell Events Countdown</h1>
-          <div class="site-sub" id="heroSubtitle">2025-2026 schedule</div>
-
+      <div class="hero__overlay"></div>
+      <div class="hero__content">
+        <div>
+          <h1>Maxwell Events Countdown</h1>
+          <div class="sub">2025–2026 schedule</div>
           <div
-            class="controls"
-            role="region"
-            aria-label="Search and view controls"
+            class="year-progress"
+            aria-hidden="true"
+            style="width: 280px; margin-top: 8px"
           >
-            <input
-              id="searchBox"
-              class="search"
-              type="search"
-              placeholder="Search events..."
-              aria-label="Search events"
-            />
-            <select id="monthFilter" aria-label="Filter by month">
-              <option value="">All Months</option>
-              <option value="01">January</option>
-              <option value="02">February</option>
-              <option value="03">March</option>
-              <option value="04">April</option>
-              <option value="05">May</option>
-              <option value="06">June</option>
-              <option value="07">July</option>
-              <option value="08">August</option>
-              <option value="09">September</option>
-              <option value="10">October</option>
-              <option value="11">November</option>
-              <option value="12">December</option>
-            </select>
-
-            <div
-              id="monthButtons"
-              class="month-buttons"
-              aria-hidden="false"
-            ></div>
-
-            <div class="mode-buttons" role="tablist" aria-label="Views">
-              <button
-                id="gridBtn"
-                class="btn primary"
-                title="Grid view"
-                role="tab"
-                aria-selected="true"
-              >
-                Grid
-              </button>
-              <button
-                id="museumBtn"
-                class="btn"
-                title="Gallery view"
-                role="tab"
-                aria-selected="false"
-              >
-                Gallery
-              </button>
-              <button
-                id="birthBtn"
-                class="btn"
-                title="Birthdays"
-                role="tab"
-                aria-selected="false"
-              >
-                Birthdays
-              </button>
-              <button id="presentBtn" class="btn" title="Present mode">
-                Present
-              </button>
-            </div>
+            <i id="yearProgress" style="width: 0%"></i>
           </div>
         </div>
-
         <div style="text-align: right; color: #fff; font-weight: 700">
           Maxwell • 2025–26
         </div>
       </div>
-    </section>
+    </header>
 
-    <!-- canvas stars background -->
-    <canvas
-      id="stars"
-      aria-hidden="true"
-      style="position: fixed; inset: 0; z-index: -1; pointer-events: none"
-    ></canvas>
+    <!-- NAV -->
+    <nav class="nav" role="navigation" aria-label="Main">
+      <button id="tabGrid" class="active" aria-pressed="true">Grid</button>
+      <button id="tabGallery">Museum (Gallery)</button>
+      <button id="tabBirthdays">Birthdays</button>
+      <button id="tabPresent">Present</button>
+    </nav>
 
-    <!-- Next up banner -->
-    <section
-      id="nextUp"
-      style="
-        display: none;
-        max-width: 1200px;
-        margin: 12px auto;
-        padding: 12px 16px;
-        border-left: 6px solid var(--accent);
-        border-radius: 10px;
-        background: rgba(255, 255, 255, 0.95);
-        color: #072238;
-        box-shadow: 0 8px 30px rgba(2, 8, 23, 0.12);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      "
-    >
-      <div>
-        <div style="font-weight: 700; color: #0b4b6f">Next Up</div>
-        <div class="detail">
-          <strong id="nextUpName">—</strong> <span id="nextUpDetail"></span>
+    <!-- top controls -->
+    <div class="wrap">
+      <div class="top-controls">
+        <div class="left-controls">
+          <input
+            id="search"
+            type="search"
+            placeholder="Search events..."
+            aria-label="Search events"
+          />
+          <select id="monthFilter" aria-label="Filter month">
+            <option value="">All months</option>
+            <option value="01">January</option>
+            <option value="02">February</option>
+            <option value="03">March</option>
+            <option value="04">April</option>
+            <option value="05">May</option>
+            <option value="06">June</option>
+            <option value="07">July</option>
+            <option value="08">August</option>
+            <option value="09">September</option>
+            <option value="10">October</option>
+            <option value="11">November</option>
+            <option value="12">December</option>
+          </select>
+          <button id="btnGrid" class="view-btn primary">Grid</button>
+          <button id="btnGallery" class="view-btn">Museum</button>
+          <button id="btnBirths" class="view-btn">Birthdays</button>
+          <button id="btnPresent" class="view-btn">Present</button>
         </div>
-      </div>
-      <div style="text-align: right">
-        <div style="font-size: 12px; color: #0b2547">Tip</div>
-        <div style="font-size: 12px; color: #07284f">
-          Pin events with the 📌 on cards. In Gallery, click to open fullscreen.
-        </div>
-      </div>
-    </section>
-
-    <!-- pinned panel -->
-    <aside
-      id="pinnedColumn"
-      class="pinned-column hidden"
-      aria-label="Pinned events"
-    >
-      <div class="pinned-header">
-        <strong style="font-size: 14px">Pinned</strong>
-        <div style="display: flex; gap: 6px">
-          <button id="exportPins" class="btn" title="Export pinned">
-            Export
-          </button>
-          <button id="clearPins" class="btn" title="Clear pins">Clear</button>
-          <button id="hidePins" class="btn" title="Hide panel">Hide</button>
-        </div>
-      </div>
-      <div id="pinnedList"></div>
-    </aside>
-    <button id="pinnedToggle" class="hidden" title="Open pinned panel">
-      📌
-    </button>
-
-    <main class="wrap" id="mainWrap">
-      <div class="top-row">
-        <div>
-          <h2 id="pageTitle">School Events Countdown</h2>
-          <div id="subtitle">2025-2026 schedule</div>
-          <div class="year-progress" aria-hidden="true">
-            <i id="yearProgressBar" style="width: 0%"></i>
+        <div style="min-width: 240px; text-align: right">
+          <div style="font-weight: 700; color: #fff">Quick Tips</div>
+          <div style="font-size: 12px; color: rgba(255, 255, 255, 0.8)">
+            Pin events with 📌 — open gallery images to fullscreen — press
+            <strong>P</strong> to toggle pinned panel
           </div>
         </div>
+      </div>
+
+      <!-- Pinned toggle & panel -->
+      <button
+        id="pinnedToggle"
+        class="pinned-toggle hidden"
+        title="Open pinned panel"
+      >
+        📌
+      </button>
+      <aside
+        id="pinnedPanel"
+        class="pinned-panel hidden"
+        aria-label="Pinned events"
+        aria-hidden="true"
+      >
         <div
           style="
             display: flex;
-            flex-direction: column;
-            gap: 8px;
-            align-items: flex-end;
-            color: #fff;
-            font-weight: 700;
+            justify-content: space-between;
+            align-items: center;
           "
         >
-          Maxwell • 2025–26
+          <h3>Pinned</h3>
+          <div class="pinned-controls">
+            <button id="exportPins" class="view-btn" title="Export">
+              Export
+            </button>
+            <button id="clearPins" class="view-btn" title="Clear pins">
+              Clear Pins
+            </button>
+            <button id="hidePins" class="view-btn" title="Hide">Hide</button>
+          </div>
         </div>
-      </div>
+        <div
+          id="pinnedList"
+          style="display: flex; flex-direction: column; gap: 10px"
+        ></div>
+      </aside>
 
-      <!-- Gallery -->
+      <!-- SECTIONS -->
+      <!-- GRID -->
       <section
-        id="gallerySection"
-        class="gallery-wrap"
+        id="sectionGrid"
+        class="section active-section"
+        aria-label="Grid"
+      >
+        <div id="eventsContainer" class="grid" aria-live="polite"></div>
+      </section>
+
+      <!-- GALLERY / MUSEUM -->
+      <section
+        id="sectionGallery"
+        class="section"
+        aria-label="Gallery"
         style="display: none"
-        aria-hidden="true"
       >
-        <div class="gallery-controls">
-          <div style="display: flex; gap: 8px; align-items: center">
-            <button id="galleryAll" class="btn primary">All</button>
-            <button id="galleryCampus" class="btn">Campus</button>
+        <div class="gallery">
+          <div>
+            <div class="section-heading">Campus</div>
+            <div id="campusTiles" class="tiles"></div>
           </div>
-          <div style="margin-left: auto; color: #fff; font-weight: 700">
-            Gallery — square thumbnails
+          <div>
+            <div class="section-heading">Monthly gallery</div>
+            <div id="monthlyTiles" class="tiles"></div>
           </div>
         </div>
-        <div id="galleryGrid" class="gallery-grid" aria-live="polite"></div>
       </section>
 
-      <!-- Birthdays -->
+      <!-- BIRTHDAYS -->
       <section
-        id="birthdaysSection"
-        style="display: none; margin-top: 12px"
-        aria-hidden="true"
+        id="sectionBirthdays"
+        class="section"
+        aria-label="Birthdays"
+        style="display: none"
       >
-        <h3 style="color: #fff; margin-bottom: 12px">Birthdays — September</h3>
-        <div id="bdGrid" class="bd-grid"></div>
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+          "
+        >
+          <div style="font-weight: 900">Birthdays</div>
+          <div class="muted">
+            These are read-only (not clickable). Times show time until next
+            birthday (resets yearly) or time since last.
+          </div>
+        </div>
+        <div id="birthdaysGrid" class="birth-grid" aria-live="polite"></div>
       </section>
 
-      <!-- Events Grid -->
-      <section id="stage">
-        <div id="eventsGrid" class="grid" aria-live="polite"></div>
+      <!-- PRESENT -->
+      <section
+        id="sectionPresent"
+        class="section"
+        aria-label="Present"
+        style="display: none"
+      >
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+          "
+        >
+          <div style="font-weight: 900">Present Mode</div>
+          <div>
+            <button id="enterFs" class="view-btn">Enter Fullscreen</button>
+            <button id="pauseSlideshow" class="view-btn">Pause</button>
+          </div>
+        </div>
+        <div
+          id="presentStage"
+          class="present-stage"
+          role="region"
+          aria-live="polite"
+        ></div>
       </section>
-    </main>
+    </div>
 
-    <!-- lightbox -->
+    <!-- LIGHTBOX -->
     <div
       id="lightbox"
       class="lightbox"
-      aria-hidden="true"
       role="dialog"
       aria-modal="true"
+      aria-hidden="true"
     >
-      <div class="controls" aria-hidden="false">
-        <button id="lbPrev" aria-label="Previous">◀</button>
-        <button id="lbNext" aria-label="Next">▶</button>
+      <div class="controls" style="pointer-events: none">
+        <button id="lbPrev" style="pointer-events: auto">◀</button>
+        <button id="lbNext" style="pointer-events: auto">▶</button>
       </div>
-      <div style="text-align: center; max-width: 95%">
-        <img id="lbImage" alt="" />
-        <div class="caption" id="lbCaption"></div>
+      <div style="text-align: center">
+        <img id="lbImg" alt="" />
+        <div id="lbCap" class="caption"></div>
         <div style="margin-top: 12px">
-          <button id="lbClose" class="btn">Close</button>
+          <button id="lbClose" class="view-btn">Close</button>
         </div>
       </div>
     </div>
 
-    <!-- birthday popup and confetti canvas (no opaque overlay) -->
-    <canvas
-      id="confettiCanvas"
-      style="
-        position: fixed;
-        inset: 0;
-        pointer-events: none;
-        z-index: 1999;
-        display: none;
-      "
-    ></canvas>
+    <!-- Birthday popups and confetti canvas -->
     <div
       id="bdPopup"
       class="bd-popup"
-      style="display: none; z-index: 2000; pointer-events: none"
+      role="status"
+      aria-live="assertive"
+      aria-hidden="true"
     >
-      <div id="bdPopupText" class="text"></div>
+      <h2 id="bdName">Happy Birthday</h2>
+      <p id="bdLine">🎉 Happy Birthday! 🎉</p>
     </div>
+    <canvas
+      id="confetti"
+      style="
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 2999;
+      "
+    ></canvas>
 
     <script>
-      /* ----------------------
-   Data (events + galleries + birthdays)
-   ---------------------- */
-      const HERO =
-        "https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/04/VideoCover-1.jpeg?resize=767%2C500&ssl=1";
-
+      /* -------------------------
+   Data (events / gallery / birthdays)
+   ------------------------- */
       const EVENTS = [
         { name: "Summer Holiday", start: "2025-08-01", end: "2025-08-09" },
         {
@@ -966,9 +985,27 @@
         12: "#7bdbdb",
       };
 
-      /* museum photos (general) */
+      /* campus photos (first 4 replaced per your note, then additional images) */
+      const CAMPUS_PHOTOS = [
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmV27Af6dGvJoR-LVUGmkCauwQepWKLwi7Zw&s",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTHDr-_KeMgIf8tN3PHxytKFN7lbUhaLuPpkQ&s",
+        "https://static.wixstatic.com/media/b62f56_ce88667acf42430fbea4c12175730dd3.jpg/v1/fill/w_960,h_640,al_c,q_85,enc_avif,quality_auto/b62f56_ce88667acf42430fbea4c12175730dd3.jpg",
+        "https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/03/EsoPheb.jpeg?fit=1400%2C1400&ssl=1",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQwjR3VnDRD6LdSrblZYVliJaRRigcs-tRg1A&s",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_UAdf79fDLKoBvHdkMag3M7D2yQ_LqeaMfEHAc2SL3tjaM2YgYv7lnp03azSa0QtDdfs&usqp=CAU",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRSf7j4BoCP9Y4wsnOAPCmjaGtQ--w7biBxRWvnQXHA2_Jo0WCWdGmEeX5rB87zfhaWHQo&usqp=CAU",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQF4CttDiXRUIEdVk0US158Ob3-siokVF2RSppthCTBNSNtkbNshzNTVMTK0UxNVIqfpVc&usqp=CAU",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTLWlAao-P3ibqUPD9n0AmP5nHL0BzwrYsPMRD7yNfh0To0pjm4gfLZkDMCY2OoesrqEXo&usqp=CAU",
+      ];
+
+      /* additional monthly / nature images for gallery */
       const MUSEUM_PHOTOS = [
-        { src: HERO, caption: "Campus View", month: "08", year: 2025 },
+        {
+          src: "https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/04/VideoCover-1.jpeg?resize=767%2C500&ssl=1",
+          caption: "Campus — Banner",
+          month: "08",
+          year: 2025,
+        },
         {
           src: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1600&q=80&auto=format&fit=crop",
           caption: "Forest Path",
@@ -1001,42 +1038,29 @@
         },
       ];
 
-      /* campus photos (replacements you requested) */
-      const CAMPUS_PHOTOS = [
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmV27Af6dGvJoR-LVUGmkCauwQepWKLwi7Zw&s",
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTHDr-_KeMgIf8tN3PHxytKFN7lbUhaLuPpkQ&s",
-        "https://static.wixstatic.com/media/b62f56_ce88667acf42430fbea4c12175730dd3.jpg/v1/fill/w_960,h_640,al_c,q_85,enc_avif,quality_auto/b62f56_ce88667acf42430fbea4c12175730dd3.jpg",
-        "https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/03/EsoPheb.jpeg?fit=1400%2C1400&ssl=1",
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQwjR3VnDRD6LdSrblZYVliJaRRigcs-tRg1A&s",
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_UAdf79fDLKoBvHdkMag3M7D2yQ_LqeaMfEHAc2SL3tjaM2YgYv7lnp03azSa0QtDdfs&usqp=CAU",
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRSf7j4BoCP9Y4wsnOAPCmjaGtQ--w7biBxRWvnQXHA2_Jo0WCWdGmEeX5rB87zfhaWHQo&usqp=CAU",
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQF4CttDiXRUIEdVk0US158Ob3-siokVF2RSppthCTBNSNtkbNshzNTVMTK0UxNVIqfpVc&usqp=CAU",
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTLWlAao-P3ibqUPD9n0AmP5nHL0BzwrYsPMRD7yNfh0To0pjm4gfLZkDMCY2OoesrqEXo&usqp=CAU",
-      ];
-
-      /* birthdays (September only as requested) — note: removed comma for 'Arcella Ineza' */
+      /* birthdays (Sept only data you gave) — Note: 'Arcella Ineza' (no comma), Daniela & Daniel separate */
       const BIRTHDAYS = [
-        { name: "Tereza Poniatovska", month: 9, day: 11 },
-        { name: "Tendai Castroe", month: 9, day: 20 },
-        { name: "Arcella Ineza", month: 9, day: 25 },
-        { name: "Salome Lwanzo", month: 9, day: 25 },
-        { name: "Adrian Ochieng", month: 9, day: 2 },
-        { name: "Julian Tito Omonte", month: 9, day: 25 },
-        { name: "Jael Tito Omonte", month: 9, day: 25 },
-        { name: "Ethan Wenyika", month: 9, day: 4 },
-        { name: "Michael Nyange", month: 9, day: 14 },
-        { name: "Daniela", month: 9, day: 17 },
-        { name: "Daniel", month: 9, day: 17 },
-        { name: "Kris Koome", month: 9, day: 6 },
-        { name: "Betty Kamawu", month: 9, day: 24 },
+        { day: 11, month: 9, name: "Tereza Poniatovska" },
+        { day: 20, month: 9, name: "Tendai Castroe" },
+        { day: 25, month: 9, name: "Arcella Ineza" }, // removed comma as requested
+        { day: 25, month: 9, name: "Salome Lwanzo" },
+        { day: 2, month: 9, name: "Adrian Ochieng" },
+        { day: 25, month: 9, name: "Julian Tito Omonte" },
+        { day: 25, month: 9, name: "Jael Tito Omonte" },
+        { day: 4, month: 9, name: "Ethan Wenyika" },
+        { day: 14, month: 9, name: "Michael Nyange" },
+        { day: 17, month: 9, name: "Daniela" },
+        { day: 17, month: 9, name: "Daniel" },
+        { day: 6, month: 9, name: "Kris Koome" },
+        { day: 24, month: 9, name: "Betty Kamawu" },
       ];
 
-      /* ----------------------
+      /* -------------------------
    Helpers
-   ---------------------- */
+   ------------------------- */
       const $ = (id) => document.getElementById(id);
       const pad = (n) => (n < 10 ? "0" + n : String(n));
-      const parseStart = (s) =>
+      const parseDate = (s) =>
         s.includes("T") ? new Date(s) : new Date(s + "T00:00:00");
       const parseEnd = (e, start) => {
         if (!e) {
@@ -1048,21 +1072,23 @@
       };
       const formatISO = (d) =>
         `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-      function slugify(name, idx) {
+      const shortMonth = (m) =>
+        new Date(2000, m - 1, 1).toLocaleString("en", { month: "short" });
+      function slug(s, i) {
         return (
-          String(name)
+          String(s)
             .toLowerCase()
             .replace(/[’'"]/g, "")
             .replace(/[:\/\\(),.!?#\u2013\u2014]/g, "")
             .replace(/\s+/g, "-")
             .replace(/[^a-z0-9\-]/g, "") +
           "-" +
-          idx
+          i
         );
       }
       function eventIcon(name) {
         const n = name.toLowerCase();
-        if (/exam|final|midterm|test|act|map/.test(n)) return "📝";
+        if (/exam|final|test|act|map/.test(n)) return "📝";
         if (
           /break|holiday|christmas|spring|long weekend|summer|vacation/.test(n)
         )
@@ -1073,518 +1099,309 @@
         return "📅";
       }
 
-      /* ----------------------
-   State + storage
-   ---------------------- */
-      let items = [],
-        tickHandle = null;
-      let mode = "grid"; // 'grid', 'museum', 'birthdays'
-      const STORAGE_PIN = "maxwell_pins_v3";
-      const STORAGE_POS = "maxwell_positions_v3";
-      const PIN_LIMIT = 12;
-
-      function getPinned() {
+      /* -------------------------
+   State & storage helpers
+   ------------------------- */
+      const PIN_KEY = "maxwell_pins_v3";
+      function getPins() {
         try {
-          return JSON.parse(localStorage.getItem(STORAGE_PIN) || "[]");
+          return JSON.parse(localStorage.getItem(PIN_KEY) || "[]");
         } catch (e) {
           return [];
         }
       }
-      function setPinned(arr) {
-        localStorage.setItem(STORAGE_PIN, JSON.stringify(arr));
+      function setPins(arr) {
+        localStorage.setItem(PIN_KEY, JSON.stringify(arr));
         renderPinnedPanel();
       }
-      function isPinned(i) {
-        return getPinned().includes(i);
+      function isPinned(idx) {
+        return getPins().includes(idx);
       }
-      function togglePin(i) {
-        const arr = getPinned();
-        const p = arr.indexOf(i);
-        if (p === -1) {
-          arr.unshift(i);
-          while (arr.length > 100) arr.pop();
-        } else arr.splice(p, 1);
-        setPinned(arr);
-      }
-      function savePos(id, x, y) {
-        try {
-          const s = JSON.parse(localStorage.getItem(STORAGE_POS) || "{}");
-          s[id] = { x, y, at: Date.now() };
-          localStorage.setItem(STORAGE_POS, JSON.stringify(s));
-        } catch (e) {}
+      function togglePin(idx) {
+        const arr = getPins();
+        const pos = arr.indexOf(idx);
+        if (pos === -1) {
+          arr.unshift(idx);
+          while (arr.length > 50) arr.pop();
+        } else arr.splice(pos, 1);
+        setPins(arr);
       }
 
-      /* ----------------------
-   Starfield background
-   ---------------------- */
-      (function initStars() {
-        const canvas = $("stars");
-        if (!canvas) return;
-        const ctx = canvas.getContext("2d");
-        function resize() {
-          canvas.width = innerWidth;
-          canvas.height = innerHeight;
-        }
-        window.addEventListener("resize", resize);
-        resize();
-        const stars = Array.from({ length: 120 }, () => ({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          r: Math.random() * 1.6 + 0.2,
-          dy: Math.random() * 0.5 + 0.02,
-          a: 0.2 + Math.random() * 0.6,
-        }));
-        function frame() {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          for (const s of stars) {
-            ctx.globalAlpha =
-              s.a * (0.7 + Math.sin(Date.now() / 1000 + s.x) * 0.3);
-            ctx.beginPath();
-            ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-            ctx.fillStyle = "#ffffff";
-            ctx.fill();
-            s.y += s.dy;
-            if (s.y > canvas.height + 10) {
-              s.y = -10;
-              s.x = Math.random() * canvas.width;
-            }
-          }
-          requestAnimationFrame(frame);
-        }
-        frame();
-      })();
-
-      /* ----------------------
-   Render events grid
-   ---------------------- */
-      function sortEvents() {
-        EVENTS.sort((a, b) => parseStart(a.start) - parseStart(b.start));
-      }
-      function findNext() {
-        const now = Date.now();
-        return (
-          EVENTS.find(
-            (ev) => parseEnd(ev.end, parseStart(ev.start)).getTime() >= now
-          ) || null
-        );
-      }
-      function renderNextUp() {
-        const n = findNext();
-        const el = $("nextUp");
-        if (!el) return;
-        if (!n) {
-          el.style.display = "none";
-          return;
-        }
-        el.style.display = "flex";
-        $("nextUpName").textContent = n.name;
-        $("nextUpDetail").textContent = n.end
-          ? `From ${formatISO(parseStart(n.start))} → ${formatISO(
-              parseStart(n.end)
-            )}`
-          : `On ${formatISO(parseStart(n.start))}`;
-      }
-      function updateOne(item, now) {
-        const { id, start, end, el } = item;
-        const cd = document.getElementById("cd-" + id),
-          st = document.getElementById("st-" + id);
-        if (!cd || !st) return;
-        if (now.getTime() < start.getTime()) {
-          el.classList.remove("happening", "finished");
-          el.classList.add("upcoming");
-          const diff = start.getTime() - now.getTime(),
-            d = Math.floor(diff / 86400000),
-            h = Math.floor((diff % 86400000) / 3600000),
-            m = Math.floor((diff % 3600000) / 60000),
-            s = Math.floor((diff % 60000) / 1000);
-          cd.textContent = `${d}d ${h}h ${m}m ${s}s left`;
-          st.textContent = "⏳ Coming soon";
-        } else if (now.getTime() > end.getTime()) {
-          el.classList.remove("upcoming", "happening");
-          el.classList.add("finished");
-          cd.textContent = `Ended on ${formatISO(end)}`;
-          st.textContent = "✅ Finished";
-        } else {
-          el.classList.remove("upcoming", "finished");
-          el.classList.add("happening");
-          const diff = end.getTime() - now.getTime(),
-            d = Math.floor(diff / 86400000),
-            h = Math.floor((diff % 86400000) / 3600000),
-            m = Math.floor((diff % 3600000) / 60000),
-            s = Math.floor((diff % 60000) / 1000);
-          cd.textContent = `${d}d ${h}h ${m}m ${s}s remaining`;
-          st.textContent = "🔴 Happening now";
-        }
-      }
-
-      function renderAll() {
-        if (tickHandle) {
-          clearInterval(tickHandle);
-          tickHandle = null;
-        }
-        items = [];
-        const grid = $("eventsGrid");
-        if (!grid) return;
-        grid.innerHTML = "";
-        sortEvents();
-        renderNextUp();
-        const q = ($("searchBox").value || "").toLowerCase();
-        const month = $("monthFilter").value || "";
-        let curGroup = "";
+      /* -------------------------
+   Rendering: EVENTS GRID
+   ------------------------- */
+      let renderedItems = []; // {idx, start,end,el,id}
+      function renderEvents() {
+        const container = $("eventsContainer");
+        container.innerHTML = "";
+        // sort by start
+        EVENTS.sort((a, b) => parseDate(a.start) - parseDate(b.start));
+        const q = $("search").value.trim().toLowerCase();
+        const monthFilter = $("monthFilter").value;
+        let currentGroup = "";
         EVENTS.forEach((ev, idx) => {
           if (q && !ev.name.toLowerCase().includes(q)) return;
-          if (month && ev.start.slice(5, 7) !== month) return;
-          const start = parseStart(ev.start);
-          const end = parseEnd(ev.end, start);
-          const groupKey = `${start.getFullYear()}-${pad(
-            start.getMonth() + 1
-          )}`;
-          if (groupKey !== curGroup) {
-            curGroup = groupKey;
-            const heading = document.createElement("div");
-            heading.className = "month-heading";
-            heading.textContent = `${start.toLocaleString("en", {
+          if (monthFilter && ev.start.slice(5, 7) !== monthFilter) return;
+          const start = parseDate(ev.start);
+          const mmKey = `${start.getFullYear()}-${pad(start.getMonth() + 1)}`;
+          if (mmKey !== currentGroup) {
+            currentGroup = mmKey;
+            const head = document.createElement("div");
+            head.className = "month-heading";
+            head.textContent = `${start.toLocaleString("en", {
               month: "long",
             })} ${start.getFullYear()}`;
-            heading.dataset.mm = pad(start.getMonth() + 1);
-            heading.addEventListener("click", () => {
-              $("monthFilter").value = heading.dataset.mm;
-              highlightMonthButton(heading.dataset.mm);
-              renderAll();
+            head.dataset.month = pad(start.getMonth() + 1);
+            head.addEventListener("click", () => {
+              $("monthFilter").value = head.dataset.month;
+              renderEvents();
             });
-            grid.appendChild(heading);
+            container.appendChild(head);
           }
-
-          const id = slugify(ev.name, idx);
-          const monthColor = MONTH_COLORS[pad(start.getMonth() + 1)] || "#ccc";
+          const end = parseEnd(ev.end, start);
+          const id = slug(ev.name, idx);
           const card = document.createElement("article");
           card.className = "card";
-          card.setAttribute("data-idx", idx);
-          card.setAttribute("data-id", id);
+          card.dataset.idx = idx;
+          card.dataset.id = id;
+          const monthColor = MONTH_COLORS[pad(start.getMonth() + 1)] || "#999";
           card.innerHTML = `
       <div class="month-strip" style="background:${monthColor}"></div>
-      <button class="pin-btn" title="Pin event" aria-label="Pin event" data-idx="${idx}">📌</button>
-      <div class="title">${ev.name}</div>
-      <div class="meta">${eventIcon(ev.name)} ${
-            ev.end
-              ? `${formatISO(start)} → ${formatISO(parseStart(ev.end))}`
-              : formatISO(start)
-          }</div>
-      <div class="countdown" id="cd-${id}">—</div>
+      <button class="pin" aria-label="Pin event" title="Pin event">📌</button>
+      <div class="big-badge">${eventIcon(ev.name)}</div>
+      <div class="title"><span class="icon">${eventIcon(
+        ev.name
+      )}</span><div style="flex:1">${ev.name}</div></div>
+      <div class="meta">${
+        ev.end
+          ? `${formatISO(start)} → ${formatISO(parseDate(ev.end))}`
+          : formatISO(start)
+      }</div>
+      <div class="count" id="cd-${id}">—</div>
       <div class="status" id="st-${id}">—</div>
       <div class="date-badge">${formatDateBadge(ev.start, ev.end)}</div>
     `;
-          grid.appendChild(card);
+          container.appendChild(card);
 
-          items.push({ id, name: ev.name, start, end, el: card, idx });
-
-          // pin button wiring
-          const pb = card.querySelector(".pin-btn");
-          if (pb) {
-            const refresh = () => pb.classList.toggle("active", isPinned(idx));
-            pb.addEventListener("click", (e) => {
-              e.stopPropagation();
-              togglePin(idx);
-              refresh();
-            });
-            refresh();
-          }
-
-          // keyboard focus highlight
-          card.tabIndex = 0;
-          card.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") card.click();
+          // pin wiring
+          const pb = card.querySelector(".pin");
+          const refreshPinVisual = () =>
+            pb.classList.toggle("active", isPinned(idx));
+          pb.addEventListener("click", (e) => {
+            e.stopPropagation();
+            togglePin(idx);
+            refreshPinVisual();
           });
+          refreshPinVisual();
 
-          // simple swipe-to-pin on touch
-          addSwipeToPin(card, idx);
+          // store item
+          renderedItems.push({ idx, start, end, el: card, id });
         });
 
-        tickHandle = setInterval(() => {
-          const now = new Date();
-          items.forEach((i) => updateOne(i, now));
-          updatePinnedCounts(now);
-        }, 1000);
-        items.forEach((i) => updateOne(i, new Date()));
+        // update loop
+        startTicking();
         renderPinnedPanel();
-        updateYearProgress();
-        applyMode();
       }
 
-      /* helper: nice date badge formatting */
-      function formatDateBadge(startISO, endISO) {
-        const s = parseStart(startISO),
-          e = endISO ? parseStart(endISO) : null;
-        const short = (d) => d.toLocaleString("en", { month: "short" });
-        if (!e) return `${short(s)} ${s.getDate()}`;
+      /* countdown helpers */
+      function formatDateBadge(start, end) {
+        const s = parseDate(start);
+        const e = end ? parseDate(end) : null;
+        if (!e) return `${shortMonth(s.getMonth() + 1)} ${s.getDate()}`;
         if (
           s.getFullYear() === e.getFullYear() &&
           s.getMonth() === e.getMonth()
         )
-          return `${short(s)} ${s.getDate()}–${e.getDate()}`;
-        return `${short(s)} ${s.getDate()} – ${short(e)} ${e.getDate()}`;
+          return `${shortMonth(
+            s.getMonth() + 1
+          )} ${s.getDate()}–${e.getDate()}`;
+        return `${shortMonth(s.getMonth() + 1)} ${s.getDate()} – ${shortMonth(
+          e.getMonth() + 1
+        )} ${e.getDate()}`;
       }
 
-      /* ----------------------
-   Pinned panel
-   ---------------------- */
-      function renderPinnedPanel() {
-        const container = $("pinnedColumn");
-        if (!container) return;
-        const list = $("pinnedList");
-        list.innerHTML = "";
-        const pins = getPinned();
-        if (!pins || pins.length === 0) {
-          container.classList.add("hidden");
-          $("pinnedToggle").classList.add("hidden");
-          const empty = document.createElement("div");
-          empty.className = "pinned-empty";
-          empty.textContent =
-            "No pinned events yet — pin a card to see it here.";
-          list.appendChild(empty);
-          return;
-        }
-        container.classList.remove("hidden");
-        $("pinnedToggle").classList.remove("hidden");
-        // create chips (user pins first, then upcoming auto-fill)
-        const now = new Date();
-        const mapped = EVENTS.map((ev, i) => ({
-          ev,
-          i,
-          start: parseStart(ev.start),
-          end: parseEnd(ev.end, parseStart(ev.start)),
-        }));
-        const upcoming = mapped
-          .filter((o) => o.end.getTime() >= now.getTime())
-          .sort((a, b) => a.start - b.start);
-        const finalPins = [];
-        const pinnedSet = new Set(pins);
-        for (const p of pins) {
-          if (finalPins.length >= PIN_LIMIT) break;
-          if (EVENTS[p])
-            finalPins.push({
-              ev: EVENTS[p],
-              idx: p,
-              start: parseStart(EVENTS[p].start),
-              end: parseEnd(EVENTS[p].end, parseStart(EVENTS[p].start)),
-            });
-        }
-        for (const u of upcoming) {
-          if (finalPins.length >= PIN_LIMIT) break;
-          if (pinnedSet.has(u.idx)) continue;
-          finalPins.push(u);
-        }
-
-        finalPins.forEach((o) => {
-          const id = "pin_" + slugify(o.ev.name + "-" + o.idx, o.idx);
-          const chip = document.createElement("button");
-          chip.className = "pinned-chip";
-          chip.id = id;
-          chip.dataset.eventIndex = String(o.idx);
-          chip.innerHTML = `
-      <div class="pin-row">
-        <div style="min-width:0">
-          <div class="pinned-title">${o.ev.name}</div>
-          <div class="pinned-sub">${
-            o.ev.end
-              ? formatISO(o.start) + " → " + formatISO(parseStart(o.ev.end))
-              : formatISO(o.start)
-          }</div>
-        </div>
-        <div style="text-align:right"><div class="pinned-count" id="count-${id}">—</div></div>
-      </div>
-      <div class="pinned-progress"><i style="width:0%"></i></div>
-    `;
-          chip.addEventListener("click", () => {
-            const idx = Number(chip.dataset.eventIndex);
-            const target = items.find((it) => it.idx === idx);
-            if (target && target.el) {
-              target.el.scrollIntoView({ behavior: "smooth", block: "center" });
-              target.el.style.boxShadow = "0 20px 60px rgba(255,180,60,0.28)";
-              target.el.style.transform = "translateY(-8px)";
-              setTimeout(() => {
-                target.el.style.boxShadow = "";
-                target.el.style.transform = "";
-              }, 1200);
+      let tickHandle = null;
+      function startTicking() {
+        if (tickHandle) clearInterval(tickHandle);
+        function tick() {
+          const now = new Date();
+          renderedItems.forEach((item) => {
+            const { id, start, end, el } = item;
+            const cd = $("cd-" + id),
+              st = $("st-" + id);
+            if (!cd || !st) return;
+            if (now.getTime() < start.getTime()) {
+              el.classList.remove("happening", "finished");
+              el.classList.add("upcoming");
+              const diff = start.getTime() - now.getTime();
+              const d = Math.floor(diff / 86400000),
+                h = Math.floor((diff % 86400000) / 3600000),
+                m = Math.floor((diff % 3600000) / 60000),
+                s = Math.floor((diff % 60000) / 1000);
+              cd.textContent = `${d}d ${h}h ${m}m ${s}s left`;
+              st.textContent = "⏳ Coming soon";
+            } else if (now.getTime() > end.getTime()) {
+              el.classList.remove("upcoming", "happening");
+              el.classList.add("finished");
+              cd.textContent = `Ended ${formatISO(end)}`;
+              st.textContent = "✅ Finished";
+            } else {
+              el.classList.remove("upcoming", "finished");
+              el.classList.add("happening");
+              const diff = end.getTime() - now.getTime();
+              const d = Math.floor(diff / 86400000),
+                h = Math.floor((diff % 86400000) / 3600000),
+                m = Math.floor((diff % 3600000) / 60000),
+                s = Math.floor((diff % 60000) / 1000);
+              cd.textContent = `${d}d ${h}h ${m}m ${s}s remaining`;
+              st.textContent = "🔴 Happening now";
             }
           });
-          // drag reorder
-          chip.setAttribute("draggable", "true");
-          chip.addEventListener("dragstart", (e) => {
-            e.dataTransfer.setData("text/plain", String(o.idx));
-            chip.classList.add("dragging");
-          });
-          chip.addEventListener("dragend", (e) =>
-            chip.classList.remove("dragging")
-          );
-          chip.addEventListener("dragover", (e) => {
-            e.preventDefault();
-            const dragging = container.querySelector(".dragging");
-            if (!dragging || dragging === chip) return;
-            const draggingIdx = Number(dragging.dataset.eventIndex);
-            const targetIdx = Number(chip.dataset.eventIndex);
-            const pinsArr = getPinned();
-            const from = pinsArr.indexOf(draggingIdx);
-            const to = pinsArr.indexOf(targetIdx);
-            if (from > -1 && to > -1 && from !== to) {
-              pinsArr.splice(from, 1);
-              pinsArr.splice(to, 0, draggingIdx);
-              setPinned(pinsArr);
+          updatePinnedCounts();
+        }
+        tick();
+        tickHandle = setInterval(tick, 1000);
+      }
+
+      /* -------------------------
+   PINNED PANEL RENDERING
+   - only shows pinned items (nothing else)
+   - hidden entirely when no pins
+   ------------------------- */
+      function renderPinnedPanel() {
+        const panel = $("pinnedPanel"),
+          list = $("pinnedList"),
+          toggle = $("pinnedToggle");
+        const pins = getPins();
+        list.innerHTML = "";
+        if (!pins || pins.length === 0) {
+          panel.classList.add("hidden");
+          panel.setAttribute("aria-hidden", "true");
+          toggle.classList.add("hidden");
+          return;
+        }
+        panel.classList.remove("hidden");
+        panel.setAttribute("aria-hidden", "false");
+        toggle.classList.remove("hidden");
+
+        // build list (only pinned)
+        pins.forEach((i) => {
+          const ev = EVENTS[i];
+          if (!ev) return;
+          const start = parseDate(ev.start),
+            end = parseEnd(ev.end, start);
+          const chip = document.createElement("div");
+          chip.className = "pinned-item";
+          chip.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="font-weight:800">${ev.name}</div>
+      <div style="font-weight:800;color:var(--accent)">${formatDateBadge(
+        ev.start,
+        ev.end
+      )}</div>
+    </div>
+    <div style="font-size:13px;color:#27506b" id="pinnedStatus-${i}">—</div>`;
+          chip.addEventListener("click", () => {
+            // scroll to event in grid
+            const target = Array.from(document.querySelectorAll(".card")).find(
+              (c) => Number(c.dataset.idx) === i
+            );
+            if (target) {
+              target.scrollIntoView({ behavior: "smooth", block: "center" });
+              target.style.transform = "translateY(-8px)";
+              target.style.boxShadow = "0 20px 60px rgba(255,180,60,0.28)";
+              setTimeout(() => {
+                target.style.transform = "";
+                target.style.boxShadow = "";
+              }, 1200);
             }
           });
           list.appendChild(chip);
         });
+        updatePinnedCounts();
       }
 
-      /* pinned counts update */
-      function updatePinnedCounts(now) {
-        if (!now) now = new Date();
-        const container = $("pinnedColumn");
-        if (!container) return;
-        const chips = Array.from(container.querySelectorAll(".pinned-chip"));
-        chips.forEach((chip) => {
-          const idx = Number(chip.dataset.eventIndex);
-          const ev = EVENTS[idx];
-          if (!ev) return;
-          const start = parseStart(ev.start);
-          const end = parseEnd(ev.end, start);
-          let txt = "";
-          let pct = 0;
+      function updatePinnedCounts() {
+        const pins = getPins();
+        pins.forEach((i) => {
+          const el = $("pinnedStatus-" + i);
+          if (!el) return;
+          const ev = EVENTS[i];
+          const now = new Date();
+          const start = parseDate(ev.start),
+            end = parseEnd(ev.end, start);
           if (now.getTime() < start.getTime()) {
             const diff = start.getTime() - now.getTime();
-            const d = Math.floor(diff / 86400000);
-            const h = Math.floor((diff % 86400000) / 3600000);
-            const m = Math.floor((diff % 3600000) / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
-            txt = `${d}d ${h}h ${m}m ${s}s left`;
-            pct = 0;
+            const d = Math.floor(diff / 86400000),
+              h = Math.floor((diff % 86400000) / 3600000),
+              m = Math.floor((diff % 3600000) / 60000);
+            el.textContent = `${d}d ${h}h ${m}m until start`;
           } else if (now.getTime() > end.getTime()) {
             const diff = now.getTime() - end.getTime();
             const d = Math.floor(diff / 86400000);
-            txt = `Ended ${d}d ago`;
-            pct = 100;
+            el.textContent = `Ended ${d}d ago`;
           } else {
-            const total = end.getTime() - start.getTime();
-            const remaining = end.getTime() - now.getTime();
-            const passed = total - remaining;
-            pct = Math.max(
-              0,
-              Math.min(100, Math.round((passed / total) * 100))
-            );
-            const diff = remaining;
-            const d = Math.floor(diff / 86400000);
-            const h = Math.floor((diff % 86400000) / 3600000);
-            const m = Math.floor((diff % 3600000) / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
-            txt = `${d}d ${h}h ${m}m ${s}s remaining`;
+            const diff = end.getTime() - now.getTime();
+            const d = Math.floor(diff / 86400000),
+              h = Math.floor((diff % 86400000) / 3600000),
+              m = Math.floor((diff % 3600000) / 60000);
+            el.textContent = `${d}d ${h}h ${m}m remaining`;
           }
-          const countEl = chip.querySelector(`#count-${chip.id}`);
-          const prog = chip.querySelector(".pinned-progress i");
-          if (countEl) countEl.textContent = txt;
-          if (prog) prog.style.width = pct + "%";
         });
       }
 
-      /* ----------------------
-   swipe to pin helper
-   ---------------------- */
-      function addSwipeToPin(card, idx) {
-        let down = false,
-          sx = 0,
-          sy = 0,
-          moved = false;
-        function pointerdown(e) {
-          down = true;
-          sx = e.clientX;
-          sy = e.clientY;
-          moved = false;
-        }
-        function pointermove(e) {
-          if (!down) return;
-          const dx = e.clientX - sx,
-            dy = e.clientY - sy;
-          if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) moved = true;
-          if (moved)
-            card.style.transform = `translateX(${Math.min(
-              Math.max(dx, -60),
-              60
-            )}px)`;
-        }
-        function pointerup(e) {
-          if (!down) return;
-          down = false;
-          if (moved) {
-            const dx = e.clientX - sx;
-            if (dx > 60) {
-              togglePin(idx);
-              renderPinnedPanel();
-              const pb = card.querySelector(".pin-btn");
-              if (pb) pb.classList.add("active");
-            } else if (dx < -60) {
-              togglePin(idx);
-              renderPinnedPanel();
-              const pb = card.querySelector(".pin-btn");
-              if (pb) pb.classList.remove("active");
-            }
-            card.style.transform = "";
-          }
-        }
-        card.addEventListener("pointerdown", pointerdown);
-        card.addEventListener("pointermove", pointermove);
-        card.addEventListener("pointerup", pointerup);
-        card.addEventListener("pointercancel", pointerup);
-      }
-
-      /* ----------------------
-   Gallery (square thumbnails) + lightbox
-   ---------------------- */
-      let galleryMode = "all"; // 'all' or 'campus'
+      /* -------------------------
+   GALLERY rendering (square tiles)
+   ------------------------- */
       function renderGallery() {
-        const grid = $("galleryGrid");
-        if (!grid) return;
-        grid.innerHTML = "";
-        const monthFilter = $("monthFilter").value || "";
-        // build photos list depending on mode
-        let photos = [];
-        if (galleryMode === "campus") {
-          photos = CAMPUS_PHOTOS.map((src, i) => ({
-            src,
-            caption: `Campus ${i + 1}`,
-            month: "08",
-            year: 2025,
-          }));
-        } else {
-          photos = MUSEUM_PHOTOS.slice(); // includes campus-like hero
-          // mix in campus photos too in "all"
-          CAMPUS_PHOTOS.forEach((s, i) =>
-            photos.push({
-              src: s,
-              caption: `Campus ${i + 1}`,
-              month: "08",
-              year: 2025,
-            })
+        const campus = $("campusTiles"),
+          monthly = $("monthlyTiles");
+        campus.innerHTML = "";
+        monthly.innerHTML = "";
+        CAMPUS_PHOTOS.forEach((src, i) => {
+          const t = document.createElement("div");
+          t.className = "tile";
+          t.tabIndex = 0;
+          t.innerHTML = `<img src="${src}" alt="Campus image ${
+            i + 1
+          }"><div class="cap">Campus</div>`;
+          t.addEventListener("click", () => openLightbox(CAMPUS_PHOTOS, i));
+          campus.appendChild(t);
+        });
+        MUSEUM_PHOTOS.forEach((p, i) => {
+          const t = document.createElement("div");
+          t.className = "tile";
+          t.tabIndex = 0;
+          t.innerHTML = `<img src="${p.src}" alt="${p.caption}"><div class="cap">${p.caption}</div>`;
+          t.addEventListener("click", () =>
+            openLightbox(
+              MUSEUM_PHOTOS.map((x) => x.src),
+              i,
+              MUSEUM_PHOTOS
+            )
           );
-        }
-        photos.forEach((p, i) => {
-          if (monthFilter && String(p.month) !== monthFilter) return;
-          const t = document.createElement("button");
-          t.className = "gallery-thumb";
-          t.setAttribute("aria-label", p.caption);
-          t.innerHTML = `<img src="${p.src}" alt="${p.caption}"><div class="gallery-caption">${p.caption}</div>`;
-          t.addEventListener("click", () => openLightbox(photos, i));
-          grid.appendChild(t);
+          monthly.appendChild(t);
         });
       }
 
-      /* lightbox */
-      let lbPhotos = [],
+      /* -------------------------
+   Lightbox (gallery)
+   ------------------------- */
+      let lbItems = [],
         lbIndex = 0;
-      function openLightbox(photos, index) {
-        lbPhotos = photos;
-        lbIndex = index;
+      function openLightbox(items, idx, meta) {
+        // items can be array of strings or array of objects
+        if (Array.isArray(items) && typeof items[0] === "string") {
+          lbItems = items;
+        } else if (Array.isArray(items) && items[0] && items[0].src) {
+          lbItems = items.map((x) => x.src);
+        }
+        lbIndex = idx || 0;
         const light = $("lightbox");
-        $("lbImage").src = photos[index].src;
-        $("lbCaption").textContent = photos[index].caption;
+        $("lbImg").src = lbItems[lbIndex];
+        $("lbCap").textContent =
+          meta && meta[lbIndex] && meta[lbIndex].caption
+            ? meta[lbIndex].caption
+            : "";
         light.classList.add("open");
         light.setAttribute("aria-hidden", "false");
       }
@@ -1593,242 +1410,451 @@
         light.classList.remove("open");
         light.setAttribute("aria-hidden", "true");
       }
-      function lbNext() {
-        if (!lbPhotos.length) return;
-        lbIndex = (lbIndex + 1) % lbPhotos.length;
-        $("lbImage").src = lbPhotos[lbIndex].src;
-        $("lbCaption").textContent = lbPhotos[lbIndex].caption;
-      }
-      function lbPrev() {
-        if (!lbPhotos.length) return;
-        lbIndex = (lbIndex - 1 + lbPhotos.length) % lbPhotos.length;
-        $("lbImage").src = lbPhotos[lbIndex].src;
-        $("lbCaption").textContent = lbPhotos[lbIndex].caption;
-      }
+      $("lbClose").addEventListener("click", closeLightbox);
+      $("lbNext").addEventListener("click", () => {
+        lbIndex = (lbIndex + 1) % lbItems.length;
+        $("lbImg").src = lbItems[lbIndex];
+      });
+      $("lbPrev").addEventListener("click", () => {
+        lbIndex = (lbIndex - 1 + lbItems.length) % lbItems.length;
+        $("lbImg").src = lbItems[lbIndex];
+      });
+      document.addEventListener("keydown", (e) => {
+        const light = $("lightbox");
+        if (light.classList.contains("open")) {
+          if (e.key === "Escape") closeLightbox();
+          if (e.key === "ArrowRight") $("lbNext").click();
+          if (e.key === "ArrowLeft") $("lbPrev").click();
+        }
+      });
 
-      /* ----------------------
-   Birthdays rendering & popup confetti
-   ---------------------- */
+      /* -------------------------
+   BIRTHDAYS rendering and popups
+   - special: on load sequential popups for today's birthdays (2s each)
+   ------------------------- */
       function renderBirthdays() {
-        const grid = $("bdGrid");
-        if (!grid) return;
+        const grid = $("birthdaysGrid");
         grid.innerHTML = "";
+        // sort by day
+        const sorted = BIRTHDAYS.slice().sort(
+          (a, b) =>
+            a.month - b.month || a.day - b.day || a.name.localeCompare(b.name)
+        );
         const now = new Date();
-        const year = now.getFullYear();
-        BIRTHDAYS.forEach((b) => {
+        sorted.forEach((b) => {
+          const next = nextBirthdayDate(b.day, b.month);
+          const sinceOrUntil = timeDeltaText(next, now);
           const card = document.createElement("div");
-          card.className = "bd-card";
-          const name = document.createElement("div");
-          name.className = "bd-name";
-          name.textContent = b.name;
-          const date = document.createElement("div");
-          date.className = "bd-date";
-          date.textContent = `${new Date(
-            year,
-            b.month - 1,
+          card.className = "birth-card";
+          card.innerHTML = `<div class="name">${
+            b.name
+          }</div><div class="when">${shortMonth(b.month)} ${
             b.day
-          ).toLocaleString("en", { month: "short" })} ${b.day}`;
-          const nextOcc = getNextBirthdayDate(b); // returns Date
-          const delta = nextOcc.getTime() - now.getTime();
-          let countText = "";
-          if (isSameMonthDay(now, nextOcc)) {
-            countText = "Today — 🎉 Happy Birthday!";
-          } else {
-            if (delta > 0) {
-              const d = Math.floor(delta / 86400000),
-                h = Math.floor((delta % 86400000) / 3600000);
-              countText = `in ${d}d ${h}h`;
-            } else {
-              const passed = Math.abs(delta);
-              const d = Math.floor(passed / 86400000);
-              countText = `${d}d ago`;
-            }
-          }
-          const count = document.createElement("div");
-          count.className = "bd-count";
-          count.textContent = countText;
-          card.appendChild(name);
-          card.appendChild(date);
-          card.appendChild(count);
+          }</div><div class="countdown" id="bd-${b.name.replace(
+            /\s+/g,
+            "_"
+          )}">${sinceOrUntil}</div>`;
+          // make non-interactive (read-only)
+          card.style.pointerEvents = "none";
           grid.appendChild(card);
         });
+        // update countdown every 30s
+        setInterval(() => {
+          document.querySelectorAll(".birth-card").forEach((c, idx) => {
+            const data = BIRTHDAYS[idx];
+            const el = c.querySelector(".countdown");
+            if (el) {
+              el.textContent = timeDeltaText(
+                nextBirthdayDate(data.day, data.month),
+                new Date()
+              );
+            }
+          });
+        }, 30000);
       }
 
-      /* compute next birthday date (this year or next) */
-      function getNextBirthdayDate(b) {
+      /* compute next birthday date for given day/month relative to today */
+      function nextBirthdayDate(day, month) {
         const now = new Date();
-        const thisYear = now.getFullYear();
-        let candidate = new Date(thisYear, b.month - 1, b.day, 12, 0, 0);
-        if (
-          candidate.getTime() < now.getTime() &&
-          !isSameMonthDay(now, candidate)
-        ) {
-          candidate = new Date(thisYear + 1, b.month - 1, b.day, 12, 0, 0);
+        const year = now.getFullYear();
+        const candidate = new Date(year, month - 1, day, 0, 0, 0, 0);
+        if (candidate.getTime() < now.getTime()) {
+          candidate.setFullYear(year + 1);
         }
         return candidate;
       }
-      function isSameMonthDay(a, b) {
-        return a.getDate() === b.getDate() && a.getMonth() === b.getMonth();
+      function timeDeltaText(target, now) {
+        const diff = target.getTime() - now.getTime();
+        if (diff >= 0) {
+          const d = Math.floor(diff / 86400000),
+            h = Math.floor((diff % 86400000) / 3600000),
+            m = Math.floor((diff % 3600000) / 60000);
+          return `${d}d ${h}h ${m}m to next`;
+        } else {
+          const diff2 = -diff;
+          const d = Math.floor(diff2 / 86400000);
+          const h = Math.floor((diff2 % 86400000) / 3600000);
+          return `${d}d ${h}h since`;
+        }
       }
 
-      /* birthday popup sequence: show each name with confetti and shake for 2s */
-      async function runBirthdayPopupsIfAny() {
-        const today = new Date(),
-          m = today.getMonth() + 1,
-          d = today.getDate();
-        const todays = BIRTHDAYS.filter((b) => b.month === m && b.day === d);
+      /* On-load birthday popup sequence for birthdays that match today's month/day */
+      async function runBirthdayPopups() {
+        // find birthdays matching today's month/day (server time uses user's clock)
+        const now = new Date();
+        const todays = BIRTHDAYS.filter(
+          (b) => b.month === now.getMonth() + 1 && b.day === now.getDate()
+        );
         if (!todays || todays.length === 0) return;
-        // Show sequential 2s popups
+        // sequential popups (2s each)
         for (const b of todays) {
           await showBirthdayPopup(b.name, 2000);
-          await new Promise((r) => setTimeout(r, 250)); // small gap between popups
         }
       }
 
-      /* popup UI + confetti animation */
-      function showBirthdayPopup(name, ms = 2000) {
+      /* show centered white popup with confetti/fireworks for duration (ms) */
+      function showBirthdayPopup(name, duration = 2000) {
         return new Promise((resolve) => {
-          const popup = $("bdPopup"),
-            text = $("bdPopupText"),
-            canvas = $("confettiCanvas");
-          text.textContent = `🎉 Happy Birthday ${name} 🎉`;
-          popup.style.display = "flex";
-          popup.classList.add("bd-shake");
-          // show confetti canvas
-          canvas.style.display = "block";
-          canvas.width = innerWidth;
-          canvas.height = innerHeight;
-          // start confetti
-          const confetti = startConfetti(canvas, 120);
-          // animation
+          const pop = $("bdPopup");
+          const title = $("bdName");
+          const line = $("bdLine");
+          title.textContent = name;
+          line.textContent = "🎉 Happy Birthday!";
+          pop.classList.add("show", "shake");
+          pop.setAttribute("aria-hidden", "false");
+          startConfetti(duration);
           setTimeout(() => {
-            // stop confetti and hide text
-            confetti.stop();
-            popup.style.display = "none";
-            popup.classList.remove("bd-shake");
-            canvas.style.display = "none";
+            pop.classList.remove("shake");
+          }, 700);
+          const hide = () => {
+            pop.classList.remove("show");
+            pop.setAttribute("aria-hidden", "true");
+            stopConfetti();
             resolve();
-          }, ms);
+          };
+          setTimeout(hide, duration);
         });
       }
 
-      /* simple confetti particle system */
-      function startConfetti(canvas, count = 80) {
-        const ctx = canvas.getContext("2d");
-        let active = true;
-        const colors = [
-          "#ffd24a",
-          "#ff8a65",
-          "#66a3ff",
-          "#7bdbdb",
-          "#9b59b6",
-          "#6ab04c",
-          "#ffb84d",
-        ];
-        const w = () => (canvas.width = window.innerWidth);
-        const h = () => (canvas.height = window.innerHeight);
-        w();
-        h();
-        window.addEventListener("resize", () => {
-          w();
-          h();
-        });
-        const pieces = [];
+      /* -------------------------
+   Confetti / Fireworks animation (smooth & subtle)
+   - lightweight canvas particle system that runs for given ms
+   ------------------------- */
+      const confettiCanvas = $("confetti");
+      let confCtx,
+        confW = 0,
+        confH = 0,
+        confettiParticles = [],
+        confettiRAF = null,
+        confettiEndTimeout = null;
+      function resizeConfetti() {
+        confettiCanvas.width = window.innerWidth;
+        confettiCanvas.height = window.innerHeight;
+        confW = confettiCanvas.width;
+        confH = confettiCanvas.height;
+        confCtx = confettiCanvas.getContext("2d");
+      }
+      window.addEventListener("resize", resizeConfetti);
+      resizeConfetti();
+
+      function spawnFirework(x, y) {
+        const count = 26 + Math.floor(Math.random() * 18);
         for (let i = 0; i < count; i++) {
-          pieces.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height * 0.6,
-            vx: (Math.random() - 0.5) * 6,
-            vy: Math.random() * 4 + 2,
-            r: Math.random() * 6 + 4,
-            col: colors[Math.floor(Math.random() * colors.length)],
-            rot: Math.random() * 360,
-            speed: Math.random() * 0.02 + 0.01,
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 2 + Math.random() * 4;
+          const vx = Math.cos(angle) * speed;
+          const vy = Math.sin(angle) * speed;
+          confettiParticles.push({
+            x,
+            y,
+            vx,
+            vy,
+            life: 0,
+            ttl: 60 + Math.floor(Math.random() * 40),
+            color: `hsl(${Math.floor(
+              Math.random() * 50 + 20
+            )}, 90%, ${Math.floor(Math.random() * 20 + 40)}%)`,
+            size: 2 + Math.random() * 3,
+            gravity: 0.03 + Math.random() * 0.06,
           });
         }
-        let raf;
-        function tick() {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          for (const p of pieces) {
-            p.x += p.vx;
-            p.y += p.vy;
-            p.vy += 0.08;
-            p.rot += p.speed * 20;
-            ctx.save();
-            ctx.translate(p.x, p.y);
-            ctx.rotate((p.rot * Math.PI) / 180);
-            ctx.fillStyle = p.col;
-            ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 0.6);
-            ctx.restore();
-          }
-          raf = requestAnimationFrame(tick);
+      }
+      function spawnConfettiBurst() {
+        for (let i = 0; i < 18; i++) {
+          const x = Math.random() * confW;
+          const y = confH * (0.15 + Math.random() * 0.65);
+          spawnFirework(x, y);
         }
-        tick();
-        return {
-          stop() {
-            active = false;
-            cancelAnimationFrame(raf);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            canvas.style.display = "none";
-          },
-        };
       }
 
-      /* ----------------------
-   Month buttons generation
-   ---------------------- */
-      function generateMonthButtons() {
-        const container = $("monthButtons");
-        if (!container) return;
-        const months = new Map();
-        EVENTS.forEach((ev) => {
-          const s = parseStart(ev.start);
-          const key = `${s.getFullYear()}-${pad(s.getMonth() + 1)}`;
-          if (!months.has(key))
-            months.set(key, {
-              label: `${s.toLocaleString("en", {
-                month: "short",
-              })} ${s.getFullYear()}`,
-              month: pad(s.getMonth() + 1),
-            });
+      function confettiTick() {
+        confCtx.clearRect(0, 0, confW, confH);
+        for (let i = confettiParticles.length - 1; i >= 0; i--) {
+          const p = confettiParticles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += p.gravity;
+          p.vx *= 0.995;
+          p.vy *= 0.995;
+          p.life++;
+          const alpha = 1 - p.life / p.ttl;
+          confCtx.globalAlpha = Math.max(0, alpha);
+          confCtx.fillStyle = p.color;
+          confCtx.beginPath();
+          confCtx.ellipse(p.x, p.y, p.size, p.size * 1.6, 0, 0, Math.PI * 2);
+          confCtx.fill();
+          if (p.life > p.ttl || p.y > confH + 30)
+            confettiParticles.splice(i, 1);
+        }
+        confCtx.globalAlpha = 1;
+        if (confettiParticles.length > 0) {
+          confettiRAF = requestAnimationFrame(confettiTick);
+        } else {
+          // stop when empty
+          confettiRAF = null;
+        }
+      }
+
+      function startConfetti(ms = 2000) {
+        // spawn repeated bursts for the duration
+        spawnConfettiBurst();
+        if (!confettiRAF) confettiTick();
+        const interval = setInterval(spawnConfettiBurst, 350);
+        confettiEndTimeout = setTimeout(() => {
+          clearInterval(interval);
+        }, ms);
+      }
+
+      function stopConfetti() {
+        if (confettiEndTimeout) {
+          clearTimeout(confettiEndTimeout);
+          confettiEndTimeout = null;
+        }
+        // will naturally stop when particles die; but we can accelerate removal
+        // leave to natural fade for nicer look
+      }
+
+      /* -------------------------
+   PRESENT Mode (slideshow)
+   ------------------------- */
+      let presentIndex = 0,
+        presentTimer = null,
+        presentPlaying = true;
+      function renderPresent() {
+        const stage = $("presentStage");
+        stage.innerHTML = "";
+        // create cards array from EVENTS (filtered by search/month if any)
+        const q = $("search").value.trim().toLowerCase();
+        const monthFilter = $("monthFilter").value;
+        const pool = EVENTS.filter((ev, i) => {
+          if (q && !ev.name.toLowerCase().includes(q)) return false;
+          if (monthFilter && ev.start.slice(5, 7) !== monthFilter) return false;
+          return true;
         });
-        container.innerHTML = "";
-        Array.from(months.entries())
-          .sort()
-          .forEach(([k, v]) => {
-            const b = document.createElement("button");
-            b.className = "month-btn";
-            b.textContent = v.label;
-            b.dataset.month = v.month;
-            b.addEventListener("click", () => {
-              const mf = $("monthFilter");
-              if (mf.value === v.month) {
-                mf.value = "";
-                b.classList.remove("active");
-              } else {
-                mf.value = v.month;
-                highlightMonthButton(v.month);
-              }
-              renderAll();
-            });
-            container.appendChild(b);
-          });
+        if (pool.length === 0) {
+          stage.innerHTML =
+            '<div style="color:#fff">No events to present</div>';
+          return;
+        }
+        // show the current index as a large card
+        const ev = pool[presentIndex % pool.length];
+        const start = parseDate(ev.start),
+          end = parseEnd(ev.end, start);
+        const card = document.createElement("div");
+        card.className = "present-card";
+        card.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;width:100%"><div style="font-weight:900;font-size:20px">${
+          ev.name
+        }</div><div style="color:var(--accent);font-weight:900">${formatDateBadge(
+          ev.start,
+          ev.end
+        )}</div></div>
+    <div style="font-size:14px;color:#27506b">${
+      ev.end
+        ? `${formatISO(start)} → ${formatISO(parseDate(ev.end))}`
+        : formatISO(start)
+    }</div>
+    <div id="presentCountdown" style="font-weight:900;color:var(--accent);font-size:18px">—</div>
+    <div style="margin-top:10px;color:#16344f;font-weight:700" id="presentStatus">—</div>`;
+        stage.appendChild(card);
+        updatePresentCountdown(ev, card);
+        // auto-advance
+        if (presentTimer) clearInterval(presentTimer);
+        if (presentPlaying)
+          presentTimer = setInterval(() => {
+            presentIndex = (presentIndex + 1) % pool.length;
+            renderPresent();
+          }, 6000);
       }
-      function highlightMonthButton(month) {
-        const btns = document.querySelectorAll(".month-btn");
-        btns.forEach((b) =>
-          b.classList.toggle("active", b.dataset.month === month)
-        );
+      function updatePresentCountdown(ev, card) {
+        const cd = card.querySelector("#presentCountdown"),
+          st = card.querySelector("#presentStatus");
+        const now = new Date();
+        const start = parseDate(ev.start),
+          end = parseEnd(ev.end, start);
+        if (now.getTime() < start.getTime()) {
+          const diff = start.getTime() - now.getTime();
+          const d = Math.floor(diff / 86400000),
+            h = Math.floor((diff % 86400000) / 3600000),
+            m = Math.floor((diff % 3600000) / 60000);
+          cd.textContent = `${d}d ${h}h ${m}m to start`;
+          st.textContent = "⏳ Coming soon";
+        } else if (now.getTime() > end.getTime()) {
+          cd.textContent = `Finished on ${formatISO(end)}`;
+          st.textContent = "✅ Finished";
+        } else {
+          const diff = end.getTime() - now.getTime();
+          const d = Math.floor(diff / 86400000),
+            h = Math.floor((diff % 86400000) / 3600000),
+            m = Math.floor((diff % 3600000) / 60000);
+          cd.textContent = `${d}d ${h}h ${m}m remaining`;
+          st.textContent = "🔴 Happening now";
+        }
       }
 
-      /* ----------------------
-   Year progress
-   ---------------------- */
+      /* -------------------------
+   UI wiring / tab switching / boot
+   ------------------------- */
+      function setActiveTab(tab) {
+        // hide all sections
+        [
+          "sectionGrid",
+          "sectionGallery",
+          "sectionBirthdays",
+          "sectionPresent",
+        ].forEach((id) => ($(id).style.display = "none"));
+        ["tabGrid", "tabGallery", "tabBirthdays", "tabPresent"].forEach((b) =>
+          $(b).classList.remove("active")
+        );
+        // show selected
+        if (tab === "grid") {
+          $("sectionGrid").style.display = "block";
+          $("tabGrid").classList.add("active");
+        }
+        if (tab === "gallery") {
+          $("sectionGallery").style.display = "block";
+          $("tabGallery").classList.add("active");
+        }
+        if (tab === "birthdays") {
+          $("sectionBirthdays").style.display = "block";
+          $("tabBirthdays").classList.add("active");
+        }
+        if (tab === "present") {
+          $("sectionPresent").style.display = "block";
+          $("tabPresent").classList.add("active");
+        }
+      }
+
+      $("tabGrid").addEventListener("click", () => {
+        setActiveTab("grid");
+        $("btnGrid").classList.add("primary");
+        $("btnGallery").classList.remove("primary");
+      });
+      $("tabGallery").addEventListener("click", () => {
+        setActiveTab("gallery");
+        $("btnGallery").classList.add("primary");
+        $("btnGrid").classList.remove("primary");
+      });
+      $("tabBirthdays").addEventListener("click", () => {
+        setActiveTab("birthdays");
+        $("btnBirths").classList.add("primary");
+      });
+      $("tabPresent").addEventListener("click", () => {
+        setActiveTab("present");
+        $("btnPresent").classList.add("primary");
+        renderPresent();
+      });
+
+      $("btnGrid").addEventListener("click", () => {
+        setActiveTab("grid");
+      });
+      $("btnGallery").addEventListener("click", () => {
+        setActiveTab("gallery");
+        renderGallery();
+      });
+      $("btnBirths").addEventListener("click", () => {
+        setActiveTab("birthdays");
+      });
+      $("btnPresent").addEventListener("click", () => {
+        setActiveTab("present");
+        renderPresent();
+      });
+
+      // search / month filter wiring
+      $("search").addEventListener("input", () => {
+        // rerender grid & present
+        renderedItems = [];
+        renderEvents();
+        renderPresent();
+      });
+      $("monthFilter").addEventListener("change", () => {
+        renderedItems = [];
+        renderEvents();
+        renderGallery();
+        renderPresent();
+      });
+
+      // pinned panel toggle & clear
+      $("pinnedToggle").addEventListener("click", () => {
+        $("pinnedPanel").classList.toggle("hidden");
+      });
+      $("hidePins").addEventListener("click", () => {
+        $("pinnedPanel").classList.add("hidden");
+      });
+      $("clearPins").addEventListener("click", () => {
+        setPins([]);
+      });
+      $("exportPins").addEventListener("click", () => {
+        const pins = getPins();
+        const rows = [["name", "start", "end"]];
+        pins.forEach((i) => {
+          const ev = EVENTS[i];
+          if (ev) rows.push([ev.name, ev.start || "", ev.end || ""]);
+        });
+        const csv = rows
+          .map((r) =>
+            r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")
+          )
+          .join("\n");
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "pinned.csv";
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      // keyboard quick toggle P to show/hide pinned
+      document.addEventListener("keydown", (e) => {
+        if (e.key.toLowerCase() === "p" && !e.ctrlKey && !e.metaKey) {
+          const p = $("pinnedPanel");
+          if (p) p.classList.toggle("hidden");
+        }
+      });
+
+      // present controls
+      $("enterFs").addEventListener("click", () => {
+        document.documentElement.requestFullscreen?.();
+      });
+      $("pauseSlideshow").addEventListener("click", () => {
+        presentPlaying = !presentPlaying;
+        if (presentPlaying) {
+          renderPresent();
+          $("pauseSlideshow").textContent = "Pause";
+        } else {
+          if (presentTimer) clearInterval(presentTimer);
+          $("pauseSlideshow").textContent = "Play";
+        }
+      });
+
+      /* -------------------------
+   Year progress (from first event start to last event end)
+   ------------------------- */
       function updateYearProgress() {
         if (EVENTS.length === 0) return;
-        const start = parseStart(EVENTS[0].start);
+        const start = parseDate(EVENTS[0].start);
         const last = EVENTS[EVENTS.length - 1];
-        const end = parseEnd(last.end, parseStart(last.start));
+        const end = parseEnd(last.end, parseDate(last.start));
         const now = new Date();
         const total = end.getTime() - start.getTime();
         const passed = Math.max(
@@ -1836,12 +1862,12 @@
           Math.min(total, now.getTime() - start.getTime())
         );
         const pct = Math.round((passed / total) * 100);
-        $("yearProgressBar").style.width = pct + "%";
+        $("yearProgress").style.width = pct + "%";
       }
 
-      /* ----------------------
-   Accent sampling (hero)
-   ---------------------- */
+      /* -------------------------
+   Accent sample from hero or fallback
+   ------------------------- */
       async function sampleAccent() {
         const img = $("heroImg");
         if (!img) return;
@@ -1858,17 +1884,17 @@
           c.height = h;
           const ctx = c.getContext("2d");
           ctx.drawImage(img, 0, 0, w, h);
-          const d = ctx.getImageData(0, 0, w, h).data;
+          const data = ctx.getImageData(0, 0, w, h).data;
           let r = 0,
             g = 0,
             b = 0,
             count = 0;
-          for (let i = 0; i < d.length; i += 4) {
-            const a = d[i + 3];
+          for (let i = 0; i < data.length; i += 4) {
+            const a = data[i + 3];
             if (a < 80) continue;
-            r += d[i];
-            g += d[i + 1];
-            b += d[i + 2];
+            r += data[i];
+            g += data[i + 1];
+            b += data[i + 2];
             count++;
           }
           if (count === 0) throw new Error("no pixels");
@@ -1883,9 +1909,13 @@
             lum > 0.6 ? "#072238" : "#fff"
           );
         } catch (e) {
-          const next = findNext();
+          // fallback using next upcoming event month color
+          const next = EVENTS.find(
+            (ev) =>
+              parseEnd(ev.end, parseDate(ev.start)).getTime() >= Date.now()
+          );
           if (next) {
-            const m = pad(parseStart(next.start).getMonth() + 1);
+            const m = pad(parseDate(next.start).getMonth() + 1);
             const col = MONTH_COLORS[m] || "#ffd24a";
             document.documentElement.style.setProperty("--accent", col);
             document.documentElement.style.setProperty(
@@ -1896,210 +1926,24 @@
         }
       }
 
-      /* ----------------------
-   Mode switching & present mode
-   ---------------------- */
-      function applyMode() {
-        const gridSection = $("stage"),
-          gallery = $("gallerySection"),
-          birthdays = $("birthdaysSection");
-        if (mode === "museum") {
-          gallery.style.display = "";
-          gallery.setAttribute("aria-hidden", "false");
-          gridSection.style.display = "none";
-          birthdays.style.display = "none";
-          $("museumBtn").classList.add("primary");
-          $("gridBtn").classList.remove("primary");
-          $("birthBtn").classList.remove("primary");
-          renderGallery();
-        } else if (mode === "birthdays") {
-          gallery.style.display = "none";
-          gridSection.style.display = "none";
-          birthdays.style.display = "";
-          $("birthBtn").classList.add("primary");
-          $("museumBtn").classList.remove("primary");
-          $("gridBtn").classList.remove("primary");
-        } else {
-          gallery.style.display = "none";
-          gridSection.style.display = "";
-          birthdays.style.display = "none";
-          $("gridBtn").classList.add("primary");
-          $("museumBtn").classList.remove("primary");
-          $("birthBtn").classList.remove("primary");
-        }
-      }
-
-      /* present mode (fullscreen-ish) */
-      function enterPresent() {
-        document.documentElement.requestFullscreen?.().catch(() => {});
-        document.body.classList.add("present-mode");
-      }
-      function exitPresent() {
-        document.exitFullscreen?.().catch(() => {});
-        document.body.classList.remove("present-mode");
-      }
-
-      /* ----------------------
-   Wiring UI
-   ---------------------- */
-      function wireUI() {
-        // hero image
-        $("heroImg").crossOrigin = "anonymous";
-
-        // buttons
-        $("gridBtn").addEventListener("click", () => {
-          mode = "grid";
-          applyMode();
-        });
-        $("museumBtn").addEventListener("click", () => {
-          mode = "museum";
-          applyMode();
-        });
-        $("birthBtn").addEventListener("click", () => {
-          mode = "birthdays";
-          applyMode();
-        });
-        $("presentBtn").addEventListener("click", () => enterPresent());
-
-        // gallery toggles
-        $("galleryAll").addEventListener("click", () => {
-          galleryMode = "all";
-          $("galleryAll").classList.add("primary");
-          $("galleryCampus").classList.remove("primary");
-          renderGallery();
-        });
-        $("galleryCampus").addEventListener("click", () => {
-          galleryMode = "campus";
-          $("galleryCampus").classList.add("primary");
-          $("galleryAll").classList.remove("primary");
-          renderGallery();
-        });
-
-        // search / filter
-        $("searchBox").addEventListener("input", () => renderAll());
-        $("monthFilter").addEventListener("change", () => {
-          highlightMonthButton($("monthFilter").value);
-          renderAll();
-          renderGallery();
-          renderBirthdays();
-        });
-
-        // pinned toggles
-        $("pinnedToggle").addEventListener("click", () => {
-          const p = $("pinnedColumn");
-          if (!p) return;
-          p.classList.toggle("hidden");
-        });
-        $("hidePins").addEventListener("click", () => {
-          const p = $("pinnedColumn");
-          if (!p) return;
-          p.classList.add("hidden");
-        });
-        $("clearPins").addEventListener("click", () => setPinned([]));
-        $("exportPins").addEventListener("click", () => {
-          const pins = getPinned();
-          const rows = [["name", "start", "end"]];
-          for (const i of pins) {
-            if (EVENTS[i])
-              rows.push([
-                EVENTS[i].name,
-                EVENTS[i].start || "",
-                EVENTS[i].end || "",
-              ]);
-          }
-          const csv = rows
-            .map((r) =>
-              r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")
-            )
-            .join("\n");
-          const blob = new Blob([csv], { type: "text/csv" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "pinned-events.csv";
-          a.click();
-          URL.revokeObjectURL(url);
-        });
-
-        // lightbox wiring
-        $("lbClose").addEventListener("click", closeLightbox);
-        $("lbNext").addEventListener("click", lbNext);
-        $("lbPrev").addEventListener("click", lbPrev);
-        $("lightbox").addEventListener("click", (e) => {
-          if (e.target === $("lightbox")) closeLightbox();
-        });
-
-        // keyboard lightbox
-        document.addEventListener("keydown", (e) => {
-          const lb = $("lightbox");
-          if (lb.classList.contains("open")) {
-            if (e.key === "ArrowRight") lbNext();
-            if (e.key === "ArrowLeft") lbPrev();
-            if (e.key === "Escape") closeLightbox();
-          }
-          // quick pinned toggle (p)
-          if (e.key.toLowerCase() === "p" && !e.metaKey && !e.ctrlKey) {
-            const p = $("pinnedColumn");
-            if (!p) return;
-            if (getPinned().length === 0) return;
-            p.classList.toggle("hidden");
-          }
-          // exit present with escape
-          if (e.key === "Escape" && document.fullscreenElement) exitPresent();
-        });
-
-        // clicking outside pinned closes panel on desktop (but keep toggle)
-        document.addEventListener("click", (ev) => {
-          const p = $("pinnedColumn");
-          if (!p || p.classList.contains("hidden")) return;
-          if (window.innerWidth <= 900) return;
-          const target = ev.target;
-          if (!p.contains(target) && !$("pinnedToggle").contains(target))
-            p.classList.add("hidden");
-        });
-
-        // lightbox swipe for mobile
-        (function () {
-          let sx = 0;
-          const wrap = $("lightbox");
-          wrap.addEventListener(
-            "touchstart",
-            (e) => {
-              sx = e.touches[0].clientX;
-            },
-            { passive: true }
-          );
-          wrap.addEventListener(
-            "touchend",
-            (e) => {
-              const dx = e.changedTouches[0].clientX - sx;
-              if (Math.abs(dx) > 50) {
-                if (dx < 0) lbNext();
-                else lbPrev();
-              }
-            },
-            { passive: true }
-          );
-        })();
-      }
-
-      /* ----------------------
-   Boot
-   ---------------------- */
-      async function init() {
-        wireUI();
-        generateMonthButtons();
-        await sampleAccent();
-        renderAll();
+      /* -------------------------
+   On startup: render everything and run birthday popups if needed
+   ------------------------- */
+      document.addEventListener("DOMContentLoaded", async () => {
+        renderEvents();
         renderGallery();
         renderBirthdays();
-        // show pinned if any exist
-        renderPinnedPanel();
-        // run birthday popups first if today matches any birthdays (sequential)
-        setTimeout(() => runBirthdayPopupsIfAny(), 300); // slight delay so page loads
-      }
+        updateYearProgress();
+        await sampleAccent(); // sets --accent
+        // show birthday popups (sequential) if today matches
+        await runBirthdayPopups();
+      });
 
-      document.addEventListener("DOMContentLoaded", init);
+      /* ensure confetti canvas sized properly */
+      window.addEventListener("resize", () => {
+        confettiCanvas.width = window.innerWidth;
+        confettiCanvas.height = window.innerHeight;
+      });
     </script>
   </body>
 </html>
