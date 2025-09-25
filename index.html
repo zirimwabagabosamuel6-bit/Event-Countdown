@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Maxwell Events — 2025–2026</title>
+    <title>Maxwell Events — 2025–2026 (with Birthdays)</title>
     <style>
       :root {
         --accent: #ffd24a;
@@ -31,7 +31,7 @@
         -webkit-font-smoothing: antialiased;
       }
 
-      /* Page grid (main + optional right pinned panel) */
+      /* Layout */
       .page {
         max-width: 1200px;
         margin: 0 auto;
@@ -39,12 +39,11 @@
         grid-template-columns: 1fr var(--panel-width);
         gap: 20px;
         align-items: start;
-        transition: all 0.2s ease;
+        transition: all 0.2s;
       }
       .page.pinned-hidden {
         grid-template-columns: 1fr;
       }
-
       header {
         grid-column: 1/-1;
         display: flex;
@@ -52,9 +51,6 @@
         align-items: flex-start;
         gap: 12px;
         margin-bottom: 12px;
-      }
-      .left {
-        max-width: 820px;
       }
       h1 {
         font-size: 1.5rem;
@@ -112,11 +108,6 @@
         object-position: center top;
         transition: transform 0.6s ease;
         display: block;
-      }
-      @media (max-width: 999px) {
-        .hero img {
-          object-position: center center;
-        }
       }
       .hero::after {
         content: "";
@@ -284,7 +275,7 @@
         border: 1px solid rgba(255, 120, 80, 0.03);
       }
 
-      /* Present mode (fullscreen, big centered card view) */
+      /* Present mode */
       body.present-mode {
         background: #000;
         overflow: hidden;
@@ -322,7 +313,7 @@
         display: none;
       }
 
-      /* Present slide overlay (images/captions) */
+      /* Present slide area */
       .present-slide {
         position: fixed;
         inset: 0;
@@ -339,16 +330,6 @@
       .present-slide.open {
         display: flex;
       }
-      .present-slide .slide-inner {
-        max-width: 1400px;
-        width: 100%;
-        max-height: 90vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-        gap: 12px;
-      }
       .present-slide img {
         max-width: 100%;
         max-height: 90vh;
@@ -364,25 +345,6 @@
         background: rgba(0, 0, 0, 0.35);
         padding: 10px 14px;
         border-radius: 10px;
-        font-weight: 800;
-      }
-      .present-slide .controls {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 24px;
-        pointer-events: none;
-      }
-      .present-slide button {
-        pointer-events: auto;
-        background: rgba(255, 255, 255, 0.06);
-        border: none;
-        color: #fff;
-        padding: 10px 12px;
-        border-radius: 8px;
-        cursor: pointer;
         font-weight: 800;
       }
 
@@ -468,7 +430,7 @@
         font-size: 14px;
       }
 
-      /* pinned toggle floating button (when panel hidden but pins exist) */
+      /* pinned floating toggle */
       #pinnedToggleBtn {
         position: fixed;
         right: 18px;
@@ -537,7 +499,150 @@
         font-weight: 800;
       }
 
-      /* Responsive tweaks */
+      /* Birthday popup */
+      .birthday-overlay {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 3000;
+        background: linear-gradient(
+          180deg,
+          rgba(0, 0, 0, 0.6),
+          rgba(0, 0, 0, 0.9)
+        );
+      }
+      .birthday-overlay.open {
+        display: flex;
+      }
+      .birthday-card {
+        width: calc(100% - 40px);
+        max-width: 900px;
+        background: linear-gradient(180deg, #fff, #fef9f0);
+        color: var(--text-dark);
+        border-radius: 14px;
+        padding: 28px;
+        box-shadow: 0 40px 140px rgba(0, 0, 0, 0.6);
+        text-align: center;
+        position: relative;
+        transform-origin: center;
+      }
+      .birthday-card.shake {
+        animation: shake 0.9s ease both;
+      }
+      @keyframes shake {
+        0% {
+          transform: translateX(0);
+        }
+        10% {
+          transform: translateX(-12px) rotate(-1.5deg);
+        }
+        20% {
+          transform: translateX(8px) rotate(1.2deg);
+        }
+        30% {
+          transform: translateX(-6px) rotate(-0.6deg);
+        }
+        40% {
+          transform: translateX(4px) rotate(0.6deg);
+        }
+        50% {
+          transform: translateX(-2px) rotate(-0.2deg);
+        }
+        100% {
+          transform: none;
+        }
+      }
+
+      .birthday-name {
+        font-size: 48px;
+        font-weight: 900;
+        margin-bottom: 10px;
+      }
+      .birthday-sub {
+        color: #6b7b8d;
+        margin-bottom: 12px;
+        font-weight: 700;
+      }
+      .birthday-count {
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--accent);
+        margin-top: 8px;
+      }
+      .birthday-close {
+        position: absolute;
+        right: 12px;
+        top: 12px;
+        background: rgba(0, 0, 0, 0.06);
+        border: none;
+        padding: 8px 10px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      .birthday-options {
+        margin-top: 12px;
+        font-size: 13px;
+        color: #516c7f;
+      }
+
+      /* Fireworks/confetti canvas covers */
+      #fxCanvas,
+      #confettiCanvas {
+        position: fixed;
+        inset: 0;
+        z-index: 2999;
+        pointer-events: none;
+        display: none;
+      }
+
+      /* birthdays list */
+      .birthdays-section {
+        margin-top: 20px;
+        color: #fff;
+      }
+      .birthdays-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 12px;
+        margin-top: 12px;
+      }
+      .birthday-item {
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.03),
+          rgba(255, 255, 255, 0.01)
+        );
+        border-radius: 12px;
+        padding: 12px;
+        min-height: 80px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 6px;
+        cursor: pointer;
+      }
+      .birthday-item:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 18px 46px rgba(0, 0, 0, 0.25);
+      }
+
+      /* small animations */
+      .fade-in {
+        animation: fadeIn 0.36s ease both;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
       @media (max-width: 900px) {
         .page {
           grid-template-columns: 1fr;
@@ -563,21 +668,6 @@
         }
       }
 
-      /* small animations */
-      .fade-in {
-        animation: fadeIn 0.36s ease both;
-      }
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(6px);
-        }
-        to {
-          opacity: 1;
-          transform: none;
-        }
-      }
-
       :focus {
         outline: 3px solid rgba(255, 255, 255, 0.06);
         outline-offset: 4px;
@@ -587,7 +677,7 @@
   <body>
     <div class="page pinned-hidden" id="root">
       <header>
-        <div class="left">
+        <div style="max-width: 820px">
           <h1>
             Maxwell Events Countdown —
             <span style="font-weight: 900">2025–2026</span>
@@ -650,7 +740,7 @@
             School Events Countdown
           </div>
           <div style="color: var(--muted); margin-top: 4px">
-            Interactive schedule • gallery • pinned events
+            Interactive schedule • gallery • birthdays
           </div>
         </div>
       </div>
@@ -660,12 +750,10 @@
           <div>
             <h1 id="pageTitle" style="color: #fff">School Events Countdown</h1>
             <div id="subtitle">2025-2026 schedule</div>
-
             <div class="year-progress" aria-hidden="true">
               <i id="yearProgressBar" style="width: 0%"></i>
             </div>
           </div>
-
           <div
             style="
               display: flex;
@@ -703,20 +791,34 @@
           <div id="eventsGrid" class="grid" aria-live="polite"></div>
         </section>
 
+        <!-- Birthdays -->
         <section
-          id="galleryControls"
-          style="margin-top: 18px; display: flex; gap: 8px; align-items: center"
+          class="birthdays-section"
+          id="birthdaysSection"
+          aria-label="Birthdays"
         >
-          <div style="font-weight: 900; color: #fff">Gallery:</div>
-          <button class="btn" id="galleryByMonthBtn">By Month</button>
-          <button class="btn" id="galleryCampusBtn">Campus</button>
-          <button class="btn" id="galleryAllBtn">All</button>
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+            "
+          >
+            <div style="font-weight: 900; color: #fff">
+              Birthdays — September
+            </div>
+            <div
+              id="nextBirthdaySmall"
+              style="color: var(--muted); font-weight: 700"
+            ></div>
+          </div>
+          <div class="birthdays-grid" id="birthdaysGrid"></div>
         </section>
 
         <section
           id="gallerySection"
           class="gallery-wrap"
-          style="display: none; margin-top: 12px"
+          style="display: none; margin-top: 18px"
         >
           <div
             style="
@@ -774,7 +876,7 @@
       Exit Present
     </button>
 
-    <!-- Present slide area (fullscreen slideshow) -->
+    <!-- Present slide area -->
     <div id="presentSlide" class="present-slide" aria-hidden="true">
       <div class="slide-inner">
         <button
@@ -836,14 +938,47 @@
       </div>
     </div>
 
+    <!-- Birthday overlay & canvases -->
+    <canvas id="confettiCanvas"></canvas>
+    <canvas id="fxCanvas"></canvas>
+
+    <div
+      id="birthdayOverlay"
+      class="birthday-overlay"
+      aria-hidden="true"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="birthday-card fade-in" id="birthdayCard" role="document">
+        <button class="birthday-close" id="birthdayClose" aria-label="Close">
+          ✕
+        </button>
+        <div class="birthday-name" id="birthdayName"></div>
+        <div class="birthday-sub" id="birthdaySub">Happy birthday! 🎉</div>
+        <div class="birthday-count" id="birthdayCountdown"></div>
+
+        <div class="birthday-options">
+          <label style="cursor: pointer"
+            ><input
+              id="birthdayAutoToggle"
+              type="checkbox"
+              style="margin-right: 8px"
+            />
+            Don't auto-show birthday popup on load</label
+          >
+        </div>
+
+        <div style="margin-top: 12px; font-size: 13px; color: #6b7b8d">
+          Enjoy the confetti and fireworks — this will auto-dismiss soon.
+        </div>
+      </div>
+    </div>
+
     <script>
-      /* =========================
-   Data & assets
-   ========================= */
+      /* ---------------- Data (events and birthdays) ---------------- */
       const HERO =
         "https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/04/VideoCover-1.jpeg?resize=767%2C500&ssl=1";
 
-      /* Events list (kept complete) */
       const EVENTS = [
         { name: "Summer Holiday", start: "2025-08-01", end: "2025-08-09" },
         {
@@ -938,7 +1073,7 @@
         12: "#7bdbdb",
       };
 
-      /* museum photos (monthly) */
+      /* Museum & Campus photos (kept short for demo) */
       const MUSEUM_PHOTOS = [
         {
           src: HERO,
@@ -958,27 +1093,8 @@
           month: "10",
           year: 2025,
         },
-        {
-          src: "https://images.unsplash.com/photo-1503264116251-35a269479413?w=1600&q=80&auto=format&fit=crop",
-          caption: "Foggy Ridge",
-          month: "12",
-          year: 2025,
-        },
-        {
-          src: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1600&q=80&auto=format&fit=crop",
-          caption: "Mountain Trail",
-          month: "03",
-          year: 2026,
-        },
-        {
-          src: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1600&q=80&auto=format&fit=crop",
-          caption: "Sunset Camp",
-          month: "05",
-          year: 2026,
-        },
       ];
 
-      /* CAMPUS photos - replaced first 4 with the URLs you gave */
       const CAMPUS_PHOTOS = [
         {
           src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmV27Af6dGvJoR-LVUGmkCauwQepWKLwi7Zw&s",
@@ -996,29 +1112,25 @@
           src: "https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/03/EsoPheb.jpeg?fit=1400%2C1400&ssl=1",
           caption: "Campus 4",
         },
-        {
-          src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQwjR3VnDRD6LdSrblZYVliJaRRigcs-tRg1A&s",
-          caption: "Campus 5",
-        },
-        {
-          src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_UAdf79fDLKoBvHdkMag3M7D2yQ_LqeaMfEHAc2SL3tjaM2YgYv7lnp03azSa0QtDdfs&usqp=CAU",
-          caption: "Campus 6",
-        },
-        {
-          src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRSf7j4BoCP9Y4wsnOAPCmjaGtQ--w7biBxRWvnQXHA2_Jo0WCWdGmEeX5rB87zfhaWHQo&usqp=CAU",
-          caption: "Campus 7",
-        },
-        {
-          src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQF4CttDiXRUIEdVk0US158Ob3-siokVF2RSppthCTBNSNtkbNshzNTVMTK0UxNVIqfpVc&usqp=CAU",
-          caption: "Campus 8",
-        },
-        {
-          src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTLWlAao-P3ibqUPD9n0AmP5nHL0BzwrYsPMRD7yNfh0To0pjm4gfLZkDMCY2OoesrqEXo&usqp=CAU",
-          caption: "Campus 9",
-        },
       ];
 
-      /* ---------------- helpers ---------------- */
+      /* ---------------- Birthdays (only September entries you provided) ---------------- */
+      const BIRTHDAYS = [
+        { day: 11, month: 9, name: "Tereza Poniatovska" },
+        { day: 20, month: 9, name: "Tendai Castroe" },
+        { day: 25, month: 9, name: "Arcella Ineza" },
+        { day: 25, month: 9, name: "Salome Lwanzo" },
+        { day: 2, month: 9, name: "Adrian Ochieng" },
+        { day: 25, month: 9, name: "Julian Tito Omonte" },
+        { day: 25, month: 9, name: "Jael Tito Omonte" },
+        { day: 4, month: 9, name: "Ethan Wenyika" },
+        { day: 14, month: 9, name: "Michael Nyange" },
+        { day: 17, month: 9, name: "Daniela, Daniel" },
+        { day: 6, month: 9, name: "Kris Koome" },
+        { day: 24, month: 9, name: "Betty Kamawu" },
+      ];
+
+      /* ---------------- Helpers ---------------- */
       const $ = (id) => document.getElementById(id);
       const pad = (n) => (n < 10 ? "0" + n : String(n));
       const parseStart = (s) =>
@@ -1069,8 +1181,13 @@
         })} ${e.getDate()}`;
       }
 
-      /* ---------------- pinned storage ---------------- */
+      /* ---------------- State & Pinned ---------------- */
+      let items = [],
+        tickHandle = null,
+        mode = "grid",
+        galleryFilter = "byMonth";
       const PIN_KEY = "maxwell_pinned_v4";
+      const BIRTHDAY_AUTO_KEY = "maxwell_bday_auto_show_v1";
       function getPinned() {
         try {
           return JSON.parse(localStorage.getItem(PIN_KEY) || "[]");
@@ -1092,11 +1209,25 @@
       function isPinned(i) {
         return getPinned().includes(i);
       }
+      function getBirthdayAutoShow() {
+        try {
+          const v = localStorage.getItem(BIRTHDAY_AUTO_KEY);
+          if (v === null) return true;
+          return v === "1";
+        } catch (e) {
+          return true;
+        }
+      }
+      function setBirthdayAutoShow(val) {
+        try {
+          localStorage.setItem(BIRTHDAY_AUTO_KEY, val ? "1" : "0");
+        } catch (e) {}
+      }
 
-      /* ---------------- starfield ---------------- */
+      /* ---------------- Starfield (ambient) ---------------- */
       (function initStars() {
         const c = document.createElement("canvas");
-        c.id = "starsCanvas";
+        c.id = "stars";
         c.style.position = "fixed";
         c.style.inset = "0";
         c.style.zIndex = "-1";
@@ -1109,7 +1240,7 @@
         }
         window.addEventListener("resize", r);
         r();
-        const stars = Array.from({ length: 120 }, () => ({
+        const stars = Array.from({ length: 100 }, () => ({
           x: Math.random() * c.width,
           y: Math.random() * c.height,
           r: Math.random() * 1.6 + 0.2,
@@ -1136,11 +1267,7 @@
         tick();
       })();
 
-      /* ---------------- rendering grid ---------------- */
-      let items = [],
-        tickHandle = null,
-        mode = "grid",
-        galleryFilter = "byMonth";
+      /* ---------------- Render events grid ---------------- */
       function sortEvents() {
         EVENTS.sort((a, b) => parseStart(a.start) - parseStart(b.start));
       }
@@ -1169,44 +1296,52 @@
           : `On ${formatISO(parseStart(n.start))}`;
       }
 
-      /* update countdown/status for items array */
-      function updateAllCountdowns(now) {
-        if (!now) now = new Date();
-        items.forEach((item) => {
-          const { start, end, el } = item;
-          const cd = el.querySelector(".countdown");
-          const st = el.querySelector(".status");
-          if (now.getTime() < start.getTime()) {
-            el.classList.remove("happening", "finished");
-            el.classList.add("upcoming");
-            const diff = start.getTime() - now.getTime();
-            const d = Math.floor(diff / 86400000);
-            const h = Math.floor((diff % 86400000) / 3600000);
-            const m = Math.floor((diff % 3600000) / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
-            if (cd) cd.textContent = `${d}d ${h}h ${m}m ${s}s left`;
-            if (st) st.textContent = "⏳ Coming soon";
-          } else if (now.getTime() > end.getTime()) {
-            el.classList.remove("upcoming", "happening");
-            el.classList.add("finished");
-            if (cd) cd.textContent = `Ended on ${formatISO(end)}`;
-            if (st) st.textContent = "✅ Finished";
-          } else {
-            el.classList.remove("upcoming", "finished");
-            el.classList.add("happening");
-            const diff = end.getTime() - now.getTime();
-            const d = Math.floor(diff / 86400000);
-            const h = Math.floor((diff % 86400000) / 3600000);
-            const m = Math.floor((diff % 3600000) / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
-            if (cd) cd.textContent = `${d}d ${h}h ${m}m ${s}s remaining`;
-            if (st) st.textContent = "🔴 Happening now";
-          }
-        });
-        updatePinnedCounts(now);
+      function enableSwipeToPin(card, idx, pinBtn) {
+        let down = false,
+          sx = 0,
+          sy = 0,
+          moved = false;
+        function onDown(e) {
+          down = true;
+          sx = e.clientX;
+          sy = e.clientY;
+          moved = false;
+          card.style.transition = "none";
+        }
+        function onMove(e) {
+          if (!down) return;
+          const dx = e.clientX - sx;
+          const dy = e.clientY - sy;
+          if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) moved = true;
+          if (moved)
+            card.style.transform = `translateX(${Math.min(
+              Math.max(dx, -80),
+              80
+            )}px)`;
+        }
+        function onUp(e) {
+          if (!down) return;
+          down = false;
+          card.style.transition = "transform .18s";
+          if (moved) {
+            const dx = e.clientX - sx;
+            if (dx > 60) {
+              togglePin(idx);
+              if (pinBtn) pinBtn.classList.add("active");
+            } else if (dx < -60) {
+              togglePin(idx);
+              if (pinBtn) pinBtn.classList.remove("active");
+            }
+            setTimeout(() => (card.style.transform = ""), 200);
+          } else card.style.transform = "";
+          moved = false;
+        }
+        card.addEventListener("pointerdown", onDown);
+        card.addEventListener("pointermove", onMove);
+        card.addEventListener("pointerup", onUp);
+        card.addEventListener("pointercancel", onUp);
       }
 
-      /* render all events (grouped by month) */
       function renderAll() {
         if (tickHandle) clearInterval(tickHandle);
         items = [];
@@ -1218,7 +1353,6 @@
         const q = ($("searchBox").value || "").toLowerCase();
         const monthFilter = $("monthFilter").value || "";
         let currentGroup = "";
-
         EVENTS.forEach((ev, idx) => {
           if (q && !ev.name.toLowerCase().includes(q)) return;
           if (monthFilter && ev.start.slice(5, 7) !== monthFilter) return;
@@ -1245,7 +1379,6 @@
           const id = idx;
           const monthColor =
             MONTH_COLORS[pad(startDate.getMonth() + 1)] || "#ccc";
-
           const card = document.createElement("article");
           card.className = "card fade-in";
           card.dataset.idx = String(id);
@@ -1266,7 +1399,6 @@
       <div class="date-badge">${formatDateBadge(ev.start, ev.end)}</div>
     `;
           grid.appendChild(card);
-
           items.push({
             id,
             name: ev.name,
@@ -1276,7 +1408,6 @@
             idx,
           });
 
-          // pin button wiring
           const pb = card.querySelector(".pin-btn");
           const refreshPin = () => pb.classList.toggle("active", isPinned(id));
           pb.addEventListener("click", (e) => {
@@ -1328,7 +1459,6 @@
         pinnedToggle.style.display = container.classList.contains("hidden")
           ? "block"
           : "none";
-
         pins.forEach((i) => {
           const ev = EVENTS[i];
           if (!ev) return;
@@ -1364,18 +1494,16 @@
           });
           list.appendChild(chip);
         });
-
         updatePinnedCounts(new Date());
       }
 
-      /* update pinned chips mini counts/progress and pinnedToggle visibility */
       function updatePinnedCounts(now) {
         if (!now) now = new Date();
         const chips = Array.from(document.querySelectorAll(".pinned-chip"));
         chips.forEach((chip) => {
           const title = chip.querySelector("div > div > div").textContent;
-          const pinned = getPinned();
-          const idx = pinned.find((i) => EVENTS[i] && EVENTS[i].name === title);
+          const pins = getPinned();
+          const idx = pins.find((i) => EVENTS[i] && EVENTS[i].name === title);
           if (idx == null) return;
           const ev = EVENTS[idx];
           const start = parseStart(ev.start);
@@ -1404,7 +1532,6 @@
             if (bar) bar.style.width = pct + "%";
           }
         });
-
         const pinnedToggle = $("pinnedToggleBtn");
         const panel = $("pinnedColumn");
         if (
@@ -1416,53 +1543,41 @@
         else pinnedToggle.style.display = "none";
       }
 
-      /* ----------------- touch swipe to pin ----------------- */
-      function enableSwipeToPin(card, idx, pinBtn) {
-        let down = false,
-          sx = 0,
-          sy = 0,
-          moved = false;
-        function onDown(e) {
-          down = true;
-          sx = e.clientX;
-          sy = e.clientY;
-          moved = false;
-          card.style.transition = "none";
-        }
-        function onMove(e) {
-          if (!down) return;
-          const dx = e.clientX - sx;
-          const dy = e.clientY - sy;
-          if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) moved = true;
-          if (moved)
-            card.style.transform = `translateX(${Math.min(
-              Math.max(dx, -80),
-              80
-            )}px)`;
-        }
-        function onUp(e) {
-          if (!down) return;
-          down = false;
-          card.style.transition = "transform .18s";
-          if (moved) {
-            const dx = e.clientX - sx;
-            if (dx > 60) {
-              togglePin(idx);
-              if (pinBtn) pinBtn.classList.add("active");
-            } else if (dx < -60) {
-              togglePin(idx);
-              if (pinBtn) pinBtn.classList.remove("active");
-            }
-            setTimeout(() => (card.style.transform = ""), 200);
+      /* ---------------- countdowns for cards ---------------- */
+      function updateAllCountdowns(now) {
+        if (!now) now = new Date();
+        items.forEach((item) => {
+          const { start, end, el } = item;
+          const cd = el.querySelector(".countdown");
+          const st = el.querySelector(".status");
+          if (now.getTime() < start.getTime()) {
+            el.classList.remove("happening", "finished");
+            el.classList.add("upcoming");
+            const diff = start.getTime() - now.getTime();
+            const d = Math.floor(diff / 86400000);
+            const h = Math.floor((diff % 86400000) / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            if (cd) cd.textContent = `${d}d ${h}h ${m}m ${s}s left`;
+            if (st) st.textContent = "⏳ Coming soon";
+          } else if (now.getTime() > end.getTime()) {
+            el.classList.remove("upcoming", "happening");
+            el.classList.add("finished");
+            if (cd) cd.textContent = `Ended on ${formatISO(end)}`;
+            if (st) st.textContent = "✅ Finished";
           } else {
-            card.style.transform = "";
+            el.classList.remove("upcoming", "finished");
+            el.classList.add("happening");
+            const diff = end.getTime() - now.getTime();
+            const d = Math.floor(diff / 86400000);
+            const h = Math.floor((diff % 86400000) / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            if (cd) cd.textContent = `${d}d ${h}h ${m}m ${s}s remaining`;
+            if (st) st.textContent = "🔴 Happening now";
           }
-          moved = false;
-        }
-        card.addEventListener("pointerdown", onDown);
-        card.addEventListener("pointermove", onMove);
-        card.addEventListener("pointerup", onUp);
-        card.addEventListener("pointercancel", onUp);
+        });
+        updatePinnedCounts(now);
       }
 
       /* ---------------- Gallery rendering ---------------- */
@@ -1583,32 +1698,23 @@
         if (e.target === $("lightbox")) closeLightbox();
       });
 
-      /* ---------------- Present slideshow (auto-play) ---------------- */
+      /* ---------------- Present slideshow (lighter) ---------------- */
       let slideshowTimer = null,
         slideshowIndex = 0,
-        slideshowArray = [],
-        slideshowMode = "gallery"; // 'gallery' or 'pinned'
+        slideshowArray = [];
       const SLIDE_DELAY = 3500;
-
       function buildSlideshowArray() {
         if (mode === "museum") {
           if (galleryFilter === "campus") return CAMPUS_PHOTOS.slice();
           if (galleryFilter === "all")
             return [...MUSEUM_PHOTOS, ...CAMPUS_PHOTOS];
-          // byMonth
           return MUSEUM_PHOTOS.slice();
         } else {
-          // grid mode: build array from pinned events if any
           const pins = getPinned();
-          if (pins.length === 0) {
-            // fallback to museum images
-            return MUSEUM_PHOTOS.slice();
-          }
-          // create pseudo-photo objects representing pinned events
+          if (pins.length === 0) return MUSEUM_PHOTOS.slice();
           return pins.map((i) => ({ title: EVENTS[i].name, idx: i }));
         }
       }
-
       function showSlide(idx) {
         const container = $("psContent");
         const caption = $("psCaption");
@@ -1616,7 +1722,6 @@
         caption.textContent = "";
         const item = slideshowArray[idx];
         if (!item) return;
-        // if image-like object (has src) show img; else show a big event card for pinned events
         if (item.src) {
           const img = document.createElement("img");
           img.src = item.src;
@@ -1624,7 +1729,6 @@
           container.appendChild(img);
           caption.textContent = item.caption || "";
         } else if (item.title) {
-          // pinned event pseudo-slide
           const ev = EVENTS[item.idx];
           const big = document.createElement("div");
           big.style.width = "820px";
@@ -1655,7 +1759,6 @@
           const status = document.createElement("div");
           status.style.fontSize = "16px";
           status.style.fontWeight = "800";
-          // compute live status
           const now = new Date();
           const end = parseEnd(ev.end, s);
           if (now.getTime() < s.getTime())
@@ -1669,75 +1772,30 @@
           container.appendChild(big);
           caption.textContent = ev.name;
         } else {
-          // fallback show hero image
           const img = document.createElement("img");
           img.src = HERO;
           container.appendChild(img);
         }
       }
-
-      function startSlideshow(source = "gallery") {
-        // build array based on current mode and galleryFilter or pinned
-        slideshowMode = source;
-        if (source === "pinned") {
-          const pins = getPinned();
-          if (!pins || pins.length === 0) {
-            // fallback to gallery
-            slideshowArray = buildSlideshowArray();
-          } else {
-            slideshowArray = pins.map((i) => ({
-              title: EVENTS[i].name,
-              idx: i,
-            }));
-          }
-        } else {
-          slideshowArray = buildSlideshowArray();
-        }
+      function startSlideshow() {
+        slideshowArray = buildSlideshowArray();
         if (slideshowArray.length === 0) return;
         slideshowIndex = 0;
         showSlide(slideshowIndex);
         $("presentSlide").classList.add("open");
         $("presentSlide").setAttribute("aria-hidden", "false");
-        // auto advance
         stopSlideshow();
         slideshowTimer = setInterval(() => {
           slideshowIndex = (slideshowIndex + 1) % slideshowArray.length;
           showSlide(slideshowIndex);
         }, SLIDE_DELAY);
       }
-
       function stopSlideshow() {
-        if (slideshowTimer) {
-          clearInterval(slideshowTimer);
-          slideshowTimer = null;
-        }
+        if (slideshowTimer) clearInterval(slideshowTimer);
+        slideshowTimer = null;
         $("presentSlide").classList.remove("open");
         $("presentSlide").setAttribute("aria-hidden", "true");
       }
-
-      /* present enter/exit */
-      function enterPresent() {
-        // if already present, do nothing
-        if (document.body.classList.contains("present-mode")) return;
-        document.body.classList.add("present-mode");
-        $("presentExit").style.display = "";
-        // choose slideshow source: if in museum, show gallery; if in grid and there are pins, use pinned
-        const source =
-          mode === "museum"
-            ? "gallery"
-            : getPinned().length
-            ? "pinned"
-            : "gallery";
-        startSlideshow(source);
-      }
-
-      function exitPresent() {
-        document.body.classList.remove("present-mode");
-        $("presentExit").style.display = "none";
-        stopSlideshow();
-      }
-
-      /* slideshow controls */
       $("psNext").addEventListener("click", () => {
         if (slideshowArray.length === 0) return;
         slideshowIndex = (slideshowIndex + 1) % slideshowArray.length;
@@ -1760,86 +1818,419 @@
           }, SLIDE_DELAY);
         }
       }
-
-      /* pause on hover */
-      $("presentSlide").addEventListener("mouseenter", () => {
-        if (slideshowTimer) clearInterval(slideshowTimer);
+      $("presentBtn").addEventListener("click", () => {
+        document.body.classList.add("present-mode");
+        $("presentExit").style.display = "";
+        startSlideshow();
       });
-      $("presentSlide").addEventListener("mouseleave", () => {
-        if (slideshowArray.length)
-          slideshowTimer = setInterval(() => {
-            slideshowIndex = (slideshowIndex + 1) % slideshowArray.length;
-            showSlide(slideshowIndex);
-          }, SLIDE_DELAY);
+      $("presentExit").addEventListener("click", () => {
+        document.body.classList.remove("present-mode");
+        $("presentExit").style.display = "none";
+        stopSlideshow();
       });
 
-      /* keyboard for slideshow */
-      document.addEventListener("keydown", (e) => {
-        if (document.body.classList.contains("present-mode")) {
-          if (e.key === "ArrowRight") {
-            slideshowIndex = (slideshowIndex + 1) % slideshowArray.length;
-            showSlide(slideshowIndex);
-            resetSlideshowTimer();
-          }
-          if (e.key === "ArrowLeft") {
-            slideshowIndex =
-              (slideshowIndex - 1 + slideshowArray.length) %
-              slideshowArray.length;
-            showSlide(slideshowIndex);
-            resetSlideshowTimer();
-          }
-          if (e.key === "Escape") exitPresent();
-        }
-      });
+      /* ---------------- Birthday UI & Effects ---------------- */
 
-      /* ---------------- modes & UI wiring ---------------- */
-      function applyMode() {
-        // style buttons
-        $("gridBtn").classList.toggle("primary", mode === "grid");
-        $("museumBtn").classList.toggle("primary", mode === "museum");
-        // show/hide gallery area
-        const gallerySection = $("gallerySection"),
-          stage = $("stage");
-        if (mode === "museum") {
-          gallerySection.style.display = "";
-          stage.style.display = "none";
-          renderGallery();
-        } else {
-          gallerySection.style.display = "none";
-          stage.style.display = "";
-          stopSlideshow();
+      /* Utility: find today's birthdays (month/day) and next birthday in September */
+      function birthdaysOnDate(date) {
+        const month = date.getMonth() + 1,
+          day = date.getDate();
+        return BIRTHDAYS.filter((b) => b.month === month && b.day === day);
+      }
+      function nextSeptemberBirthday(fromDate = new Date()) {
+        const candidates = BIRTHDAYS.map((b) => {
+          let year = fromDate.getFullYear();
+          let d = new Date(year, b.month - 1, b.day);
+          if (d < fromDate) d = new Date(year + 1, b.month - 1, b.day);
+          return { d, name: b.name };
+        });
+        candidates.sort((a, b) => a.d - b.d);
+        return candidates[0] || null;
+      }
+
+      /* Confetti particles and fireworks engine (canvas) */
+      const confettiCanvas = $("confettiCanvas");
+      const fxCanvas = $("fxCanvas");
+      function resizeFx() {
+        [confettiCanvas, fxCanvas].forEach((c) => {
+          if (!c) return;
+          c.width = window.innerWidth;
+          c.height = window.innerHeight;
+        });
+      }
+      window.addEventListener("resize", resizeFx);
+      resizeFx();
+
+      const confettiPieces = [];
+      const fireworks = [];
+      let confettiAnim = null,
+        fireworksAnim = null;
+
+      function rand(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      /* Create confetti burst — scaled by peopleCount (intensity) */
+      function spawnConfettiBurst(count = 60) {
+        for (let i = 0; i < count; i++) {
+          confettiPieces.push({
+            x: rand(window.innerWidth * 0.2, window.innerWidth * 0.8),
+            y: rand(-50, -10),
+            vx: rand(-1.5, 1.5),
+            vy: rand(2, 6),
+            size: Math.floor(rand(6, 14)),
+            rot: rand(0, Math.PI * 2),
+            rotSpeed: rand(-0.15, 0.15),
+            color: `hsl(${Math.floor(rand(0, 360))}deg ${Math.floor(
+              rand(60, 90)
+            )}% ${Math.floor(rand(45, 65))}%)`,
+            ttl: rand(2000, 5000),
+            born: Date.now(),
+          });
         }
       }
 
-      /* gallery mode buttons */
-      $("galleryByMonthBtn").addEventListener("click", () => {
-        galleryFilter = "byMonth";
-        if (mode !== "museum") mode = "museum";
-        applyMode();
-        renderGallery();
-      });
-      $("galleryCampusBtn").addEventListener("click", () => {
-        galleryFilter = "campus";
-        if (mode !== "museum") mode = "museum";
-        applyMode();
-        renderGallery();
-      });
-      $("galleryAllBtn").addEventListener("click", () => {
-        galleryFilter = "all";
-        if (mode !== "museum") mode = "museum";
-        applyMode();
-        renderGallery();
+      /* Fireworks burst — single burst at x,y */
+      function spawnFirework(x, y, count) {
+        const particles = [];
+        const hue = Math.floor(rand(0, 360));
+        const n = Math.max(12, Math.min(64, count));
+        for (let i = 0; i < n; i++) {
+          const angle = rand(0, Math.PI * 2);
+          const speed = rand(2, 7);
+          particles.push({
+            x,
+            y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: rand(800, 1600),
+            born: Date.now(),
+            size: rand(2, 4),
+            hue,
+          });
+        }
+        fireworks.push({ particles, born: Date.now() });
+      }
+
+      /* confetti animation */
+      function runConfetti() {
+        confettiCanvas.style.display = "block";
+        const ctx = confettiCanvas.getContext("2d");
+        function tick() {
+          ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+          const now = Date.now();
+          for (let i = confettiPieces.length - 1; i >= 0; i--) {
+            const p = confettiPieces[i];
+            const age = now - p.born;
+            if (age > p.ttl) {
+              confettiPieces.splice(i, 1);
+              continue;
+            }
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.06;
+            p.rot += p.rotSpeed;
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rot);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+            ctx.restore();
+          }
+          if (confettiPieces.length > 0)
+            confettiAnim = requestAnimationFrame(tick);
+          else {
+            cancelAnimationFrame(confettiAnim);
+            confettiAnim = null;
+            confettiCanvas.style.display = "none";
+          }
+        }
+        if (!confettiAnim) confettiAnim = requestAnimationFrame(tick);
+      }
+
+      /* fireworks animation */
+      function runFireworks() {
+        fxCanvas.style.display = "block";
+        const ctx = fxCanvas.getContext("2d");
+        function tick() {
+          ctx.globalCompositeOperation = "source-over";
+          ctx.fillStyle = "rgba(0,0,0,0.15)";
+          ctx.fillRect(0, 0, fxCanvas.width, fxCanvas.height);
+          const now = Date.now();
+          for (let i = fireworks.length - 1; i >= 0; i--) {
+            const fw = fireworks[i];
+            for (let j = fw.particles.length - 1; j >= 0; j--) {
+              const p = fw.particles[j];
+              const age = now - p.born;
+              if (age > p.life) {
+                fw.particles.splice(j, 1);
+                continue;
+              }
+              p.x += p.vx;
+              p.y += p.vy;
+              p.vy += 0.06;
+              const t = 1 - age / p.life;
+              ctx.beginPath();
+              ctx.globalAlpha = Math.max(0.05, t);
+              ctx.fillStyle = `hsl(${p.hue}deg 80% 60%)`;
+              ctx.arc(p.x, p.y, p.size * (0.6 + (1 - t)), 0, Math.PI * 2);
+              ctx.fill();
+            }
+            if (fw.particles.length === 0) fireworks.splice(i, 1);
+          }
+          if (fireworks.length > 0) fireworksAnim = requestAnimationFrame(tick);
+          else {
+            cancelAnimationFrame(fireworksAnim);
+            fireworksAnim = null;
+            fxCanvas.style.display = "none";
+          }
+        }
+        if (!fireworksAnim) fireworksAnim = requestAnimationFrame(tick);
+      }
+
+      /* Composite celebratory sequence: intensity scales with namesCount
+   - namesCount influences confetti burst size and number of fireworks
+*/
+      function celebrate(namesList) {
+        const n = Math.max(1, Array.isArray(namesList) ? namesList.length : 1);
+        // scale confetti: base 80, +40 per person, cap 700
+        const confettiCount = Math.min(700, 80 + 40 * n);
+        spawnConfettiBurst(confettiCount);
+        runConfetti();
+
+        // fireworks: spawn bursts proportional to n (1-10)
+        const fwCount = Math.min(10, 1 + Math.floor(n / 2));
+        for (let i = 0; i < fwCount; i++) {
+          setTimeout(() => {
+            const x = rand(window.innerWidth * 0.15, window.innerWidth * 0.85);
+            const y = rand(
+              window.innerHeight * 0.12,
+              window.innerHeight * 0.45
+            );
+            spawnFirework(x, y, 12 + n * 6); // particle count per firework scales with n
+          }, i * 300);
+        }
+        runFireworks();
+
+        // shake the card a few times
+        const card = $("birthdayCard");
+        card.classList.add("shake");
+        setTimeout(() => card.classList.remove("shake"), 1200);
+
+        // auto-dismiss after a duration that grows slightly with n (min 6s, +0.8s per person)
+        const dismissAfter = Math.min(15000, 6000 + n * 800);
+        setTimeout(() => {
+          stopCelebration();
+          closeBirthdayOverlay();
+        }, dismissAfter);
+      }
+
+      function stopCelebration() {
+        confettiPieces.length = 0;
+        fireworks.length = 0;
+        if (confettiAnim) {
+          cancelAnimationFrame(confettiAnim);
+          confettiAnim = null;
+          confettiCanvas.style.display = "none";
+        }
+        if (fireworksAnim) {
+          cancelAnimationFrame(fireworksAnim);
+          fireworksAnim = null;
+          fxCanvas.style.display = "none";
+        }
+      }
+
+      /* ---------------- Birthday overlay handling ---------------- */
+      const birthdayOverlay = $("birthdayOverlay");
+      const birthdayName = $("birthdayName");
+      const birthdaySub = $("birthdaySub");
+      const birthdayCountdown = $("birthdayCountdown");
+      const birthdayCard = $("birthdayCard");
+      const birthdayClose = $("birthdayClose");
+      const birthdayAutoToggle = $("birthdayAutoToggle");
+
+      birthdayClose.addEventListener("click", () => {
+        stopCelebration();
+        closeBirthdayOverlay();
       });
 
-      /* present button & exit */
-      $("presentBtn").addEventListener("click", () => {
-        enterPresent();
-      });
-      $("presentExit").addEventListener("click", () => {
-        exitPresent();
+      birthdayAutoToggle.addEventListener("change", () => {
+        const val = !birthdayAutoToggle.checked; // label says "Don't auto-show" -> checked=true means disable auto-show
+        setBirthdayAutoShow(!birthdayAutoToggle.checked);
       });
 
-      /* other UI wiring */
+      /* Open/close overlay */
+      function openBirthdayOverlay(names) {
+        const title = Array.isArray(names) ? names.join(", ") : names;
+        birthdayName.textContent = title;
+        birthdaySub.textContent = `Happy birthday ${title.split(",")[0]}! 🎉`;
+        birthdayOverlay.classList.add("open");
+        birthdayOverlay.setAttribute("aria-hidden", "false");
+
+        // set checkbox UI to reflect saved preference
+        const auto = getBirthdayAutoShow();
+        birthdayAutoToggle.checked = !auto; // if auto-show is true -> checkbox (Don't auto-show) should be unchecked
+
+        // celebrate with scaled intensity
+        celebrate(Array.isArray(names) ? names : [names]);
+
+        // start countdown to midnight
+        startBirthdayCountdown();
+      }
+
+      function closeBirthdayOverlay() {
+        birthdayOverlay.classList.remove("open");
+        birthdayOverlay.setAttribute("aria-hidden", "true");
+        birthdayName.textContent = "";
+        birthdaySub.textContent = "";
+        birthdayCountdown.textContent = "";
+        stopCelebration();
+        if (bCountTimer) clearInterval(bCountTimer), (bCountTimer = null);
+        // ensure pinned update etc
+        updatePinnedCounts(new Date());
+      }
+
+      /* countdown displayed in overlay: time until midnight of that day */
+      let bCountTimer = null;
+      function startBirthdayCountdown() {
+        if (bCountTimer) clearInterval(bCountTimer);
+        function tick() {
+          const now = new Date();
+          const end = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+            23,
+            59,
+            59,
+            999
+          );
+          const diff = end.getTime() - now.getTime();
+          if (diff <= 0) {
+            birthdayCountdown.textContent = `Ends in 0s`;
+            clearInterval(bCountTimer);
+            bCountTimer = null;
+            return;
+          }
+          const h = Math.floor(diff / 3600000);
+          const m = Math.floor((diff % 3600000) / 60000);
+          const s = Math.floor((diff % 60000) / 1000);
+          birthdayCountdown.textContent = `Time left today: ${h}h ${m}m ${s}s`;
+        }
+        tick();
+        bCountTimer = setInterval(tick, 1000);
+      }
+
+      /* Build birthdays UI (grid) */
+      function renderBirthdays() {
+        const grid = $("birthdaysGrid");
+        if (!grid) return;
+        grid.innerHTML = "";
+        const sept = BIRTHDAYS.filter((b) => b.month === 9).sort(
+          (a, b) => a.day - b.day
+        );
+        sept.forEach((b) => {
+          const item = document.createElement("div");
+          item.className = "birthday-item fade-in";
+          item.innerHTML = `<div style="font-weight:900;font-size:18px">${
+            b.day
+          } Sep</div><div style="font-weight:800;color:var(--muted)">${escapeHtml(
+            b.name
+          )}</div>`;
+          item.addEventListener("click", () => {
+            openBirthdayOverlay(b.name);
+          });
+          grid.appendChild(item);
+        });
+        updateNextBirthdaySmall();
+      }
+
+      /* show small next birthday on the page */
+      let nextBirthdayTimer = null;
+      function updateNextBirthdaySmall() {
+        const el = $("nextBirthdaySmall");
+        if (!el) return;
+        const now = new Date();
+        const next = nextSeptemberBirthday(now);
+        if (!next) {
+          el.textContent = "";
+          return;
+        }
+        const diff = next.d.getTime() - now.getTime();
+        const days = Math.floor(diff / 86400000);
+        const hours = Math.floor((diff % 86400000) / 3600000);
+        el.textContent = `Next Sep birthday in ${days}d ${hours}h`;
+        if (nextBirthdayTimer) clearTimeout(nextBirthdayTimer);
+        nextBirthdayTimer = setTimeout(updateNextBirthdaySmall, 3600000);
+      }
+
+      /* On load — if today matches any Sep birthdays: show overlay immediately unless user disabled auto-show */
+      function checkAndShowTodayBirthdays() {
+        const today = new Date();
+        const todays = birthdaysOnDate(today);
+        const auto = getBirthdayAutoShow();
+        if (todays && todays.length && auto) {
+          const names = todays.map((b) => b.name);
+          setTimeout(() => openBirthdayOverlay(names), 250);
+        }
+      }
+
+      /* ---------------- small misc: year progress & accent sampling ---------------- */
+      function updateYearProgress() {
+        if (EVENTS.length === 0) return;
+        const start = parseStart(EVENTS[0].start);
+        const last = EVENTS[EVENTS.length - 1];
+        const end = parseEnd(last.end, parseStart(last.start));
+        const now = new Date();
+        const total = end.getTime() - start.getTime();
+        const passed = Math.max(
+          0,
+          Math.min(total, now.getTime() - start.getTime())
+        );
+        const pct = Math.round((passed / total) * 100);
+        $("yearProgressBar").style.width = pct + "%";
+      }
+      async function sampleAccent() {
+        const img = $("heroImg");
+        if (!img) return;
+        await new Promise((r) => {
+          if (img.complete) return r();
+          img.addEventListener("load", r, { once: true });
+          img.addEventListener("error", r, { once: true });
+        });
+        try {
+          const w = Math.min(img.naturalWidth || 200, 160),
+            h = Math.min(img.naturalHeight || 120, 120);
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, w, h);
+          const data = ctx.getImageData(0, 0, w, h).data;
+          let r = 0,
+            g = 0,
+            b = 0,
+            c = 0;
+          for (let i = 0; i < data.length; i += 4) {
+            const a = data[i + 3];
+            if (a < 80) continue;
+            r += data[i];
+            g += data[i + 1];
+            b += data[i + 2];
+            c++;
+          }
+          if (c === 0) throw new Error("no pixels");
+          r = Math.round(r / c);
+          g = Math.round(g / c);
+          b = Math.round(b / c);
+          document.documentElement.style.setProperty(
+            "--accent",
+            `rgb(${r},${g},${b})`
+          );
+        } catch (e) {}
+      }
+
+      /* ---------------- UI wiring ---------------- */
       function wireUI() {
         $("heroImg").src = HERO;
         $("heroImg").crossOrigin = "anonymous";
@@ -1890,7 +2281,6 @@
             .classList.toggle("pinned-hidden", p.classList.contains("hidden"));
           updatePinnedCounts(new Date());
         });
-
         $("pinnedToggleBtn").addEventListener("click", () => {
           const p = $("pinnedColumn");
           if (!p) return;
@@ -1898,13 +2288,20 @@
           document.querySelector(".page").classList.remove("pinned-hidden");
           $("pinnedToggleBtn").style.display = "none";
         });
-        // show pinned toggle when appropriate handled in updatePinnedCounts
 
-        // lightbox controls already wired earlier
-        $("lbNext").addEventListener("click", () => lbNext());
-        $("lbPrev").addEventListener("click", () => lbPrev());
+        // present controls
+        $("presentBtn").addEventListener("click", () => {
+          document.body.classList.add("present-mode");
+          $("presentExit").style.display = "";
+          startSlideshow();
+        });
+        $("presentExit").addEventListener("click", () => {
+          document.body.classList.remove("present-mode");
+          $("presentExit").style.display = "none";
+          stopSlideshow();
+        });
 
-        // keyboard shortcuts
+        // keyboard toggles
         document.addEventListener("keydown", (e) => {
           if (e.key.toLowerCase() === "p" && !e.ctrlKey && !e.metaKey) {
             const p = $("pinnedColumn");
@@ -1920,7 +2317,13 @@
             updatePinnedCounts(new Date());
           }
           if (e.key === "Escape") {
-            if (document.body.classList.contains("present-mode")) exitPresent();
+            if (document.body.classList.contains("present-mode")) {
+              document.body.classList.remove("present-mode");
+              $("presentExit").style.display = "none";
+              stopSlideshow();
+            }
+            if ($("birthdayOverlay").classList.contains("open"))
+              closeBirthdayOverlay();
           }
         });
 
@@ -1944,89 +2347,43 @@
         });
       }
 
-      /* ---------------- small helpers ---------------- */
-      function updateYearProgress() {
-        if (EVENTS.length === 0) return;
-        const start = parseStart(EVENTS[0].start);
-        const last = EVENTS[EVENTS.length - 1];
-        const end = parseEnd(last.end, parseStart(last.start));
-        const now = new Date();
-        const total = end.getTime() - start.getTime();
-        const passed = Math.max(
-          0,
-          Math.min(total, now.getTime() - start.getTime())
-        );
-        const pct = Math.round((passed / total) * 100);
-        $("yearProgressBar").style.width = pct + "%";
+      /* ---------------- Modes ---------------- */
+      function applyMode() {
+        const gallery = $("gallerySection"),
+          stage = $("stage");
+        if (mode === "museum") {
+          gallery.style.display = "";
+          gallery.setAttribute("aria-hidden", "false");
+          stage.style.display = "none";
+          renderGallery();
+          // visually mark museum button
+          document
+            .querySelectorAll(".btn")
+            .forEach((b) => b.classList.remove("primary"));
+          document.getElementById("museumBtn").classList.add("primary");
+        } else {
+          gallery.style.display = "none";
+          gallery.setAttribute("aria-hidden", "true");
+          stage.style.display = "";
+          document
+            .querySelectorAll(".btn")
+            .forEach((b) => b.classList.remove("primary"));
+          document.getElementById("gridBtn").classList.add("primary");
+        }
       }
 
-      /* accent sampling (optional) */
-      async function sampleAccent() {
-        const img = $("heroImg");
-        if (!img) return;
-        await new Promise((r) => {
-          if (img.complete) return r();
-          img.addEventListener("load", r, { once: true });
-          img.addEventListener("error", r, { once: true });
-        });
-        try {
-          const w = Math.min(img.naturalWidth || 200, 160),
-            h = Math.min(img.naturalHeight || 120, 120);
-          const canvas = document.createElement("canvas");
-          canvas.width = w;
-          canvas.height = h;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0, w, h);
-          const data = ctx.getImageData(0, 0, w, h).data;
-          let r = 0,
-            g = 0,
-            b = 0,
-            c = 0;
-          for (let i = 0; i < data.length; i += 4) {
-            const a = data[i + 3];
-            if (a < 80) continue;
-            r += data[i];
-            g += data[i + 1];
-            b += data[i + 2];
-            c++;
-          }
-          if (c === 0) throw new Error("no pixels");
-          r = Math.round(r / c);
-          g = Math.round(g / c);
-          b = Math.round(b / c);
-          document.documentElement.style.setProperty(
-            "--accent",
-            `rgb(${r},${g},${b})`
-          );
-        } catch (e) {}
-      }
-
-      /* ---------------- bootstrap ---------------- */
+      /* ---------------- Bootstrap ---------------- */
       function init() {
         wireUI();
         sampleAccent();
         renderAll();
+        renderBirthdays();
+        checkAndShowTodayBirthdays();
         updatePinnedCounts(new Date());
+
+        // wire birthday auto-show UI (initial state)
+        birthdayAutoToggle.checked = !getBirthdayAutoShow();
       }
-
-      /* quick utilities for slideshow source selection in present mode (exposed via keyboard) */
-      document.addEventListener("keydown", (e) => {
-        if (document.body.classList.contains("present-mode")) {
-          if (e.key === "g") {
-            // switch to gallery slides (g)
-            startSlideshow("gallery");
-          }
-          if (e.key === "i") {
-            // switch to pinned slides (i)
-            startSlideshow("pinned");
-          }
-        }
-      });
-
-      /* hook presentSlide next/prev to also reset timer */
-      $("psNext").addEventListener("click", () => resetSlideshowTimer());
-      $("psPrev").addEventListener("click", () => resetSlideshowTimer());
-
       document.addEventListener("DOMContentLoaded", init);
     </script>
   </body>
