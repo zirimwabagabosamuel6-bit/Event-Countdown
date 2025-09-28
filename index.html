@@ -1,4 +1,18 @@
 <!DOCTYPE html>
+<!--
+  Maxwell Events — single-file HTML
+  Features:
+  - Grid (events), Museum (gallery with square thumbnails), Birthdays (separate section), Present mode
+  - Right-side pinned panel (hidden when empty). Pins persist in localStorage.
+  - Hero image (desktop-cropped to top), sampled accent color, year progress
+  - Gallery "square cubicles" via aspect-ratio; month grouping remains
+  - Birthdays: ordered by next upcoming (closest first). On load, shows centered white popup(s)
+    with "Happy Birthday" and smooth confetti/fireworks for each birthday today (2s each).
+  - Countdown to next occurrence (always shows time until next birthday)
+  - Accessible lightbox for gallery images
+  - Touch + keyboard niceties, swipe-to-pin, reorder pinned chips, export/clear pins
+  - Many UX polish details requested
+-->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -7,12 +21,11 @@
     <style>
       :root {
         --accent: #ffd24a;
-        --accent-2: #ffb84d;
-        --bg-dark: #031018;
+        --accent-text: #072238;
+        --bg-dark: #041018;
         --muted: #072238;
         --panel-width: 360px;
         --card-radius: 12px;
-        --glass: rgba(255, 255, 255, 0.06);
       }
       * {
         box-sizing: border-box;
@@ -22,45 +35,41 @@
       html,
       body {
         height: 100%;
-        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-        background: linear-gradient(180deg, var(--bg-dark) 0%, #07131a 70%);
-        color: #e9f6ff;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+          Roboto, Arial;
+        color: #eaf6ff;
+        background: linear-gradient(180deg, var(--bg-dark) 0%, #07131a 80%);
       }
       a {
         color: inherit;
+        text-decoration: none;
       }
+
       /* HERO */
       .hero {
+        position: relative;
         max-width: 1200px;
-        margin: 14px auto;
-        height: 360px;
+        margin: 18px auto;
+        height: 380px;
         border-radius: 14px;
         overflow: hidden;
-        position: relative;
-        box-shadow: 0 16px 60px rgba(0, 0, 0, 0.35);
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
       }
-      .hero-media {
+      .hero img {
         width: 100%;
         height: 100%;
+        display: block;
         object-fit: cover;
         object-position: center top;
-        display: block;
-        transition: transform 0.6s;
+        transition: transform 0.6s ease;
       }
-      @media (max-width: 900px) {
-        .hero {
-          height: 220px;
-        }
-        .hero-media {
-          object-position: center center;
-        }
-      }
-      .hero-overlay {
+      .hero::after {
+        content: "";
         position: absolute;
         inset: 0;
         background: linear-gradient(
           180deg,
-          rgba(0, 0, 0, 0) 28%,
+          rgba(0, 0, 0, 0) 36%,
           rgba(0, 0, 0, 0.82) 100%
         );
         pointer-events: none;
@@ -70,7 +79,7 @@
         left: 22px;
         right: 22px;
         bottom: 18px;
-        z-index: 6;
+        z-index: 3;
         display: flex;
         justify-content: space-between;
         align-items: flex-end;
@@ -81,6 +90,7 @@
       .hero-title {
         font-weight: 900;
         font-size: 1.6rem;
+        letter-spacing: 0.2px;
         text-shadow: 0 8px 26px rgba(0, 0, 0, 0.35);
       }
       .hero-sub {
@@ -89,7 +99,7 @@
         font-weight: 700;
       }
 
-      /* controls */
+      /* top controls */
       .controls {
         display: flex;
         gap: 8px;
@@ -102,22 +112,22 @@
         padding: 9px 12px;
         border-radius: 10px;
         border: 1px solid rgba(255, 255, 255, 0.06);
-        background: transparent;
+        background: rgba(255, 255, 255, 0.03);
         color: #fff;
-        min-width: 150px;
+        min-width: 160px;
       }
       .btn {
-        background: transparent;
-        border: 1px solid rgba(255, 255, 255, 0.06);
         padding: 8px 12px;
         border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: transparent;
         color: #fff;
         font-weight: 700;
         cursor: pointer;
       }
       .btn.primary {
-        background: linear-gradient(90deg, var(--accent), var(--accent-2));
-        color: var(--muted);
+        background: linear-gradient(90deg, var(--accent), #ffb84d);
+        color: var(--accent-text);
         border: none;
       }
       .mode-btn {
@@ -130,10 +140,10 @@
         font-weight: 800;
       }
       .mode-btn.active {
-        background: linear-gradient(90deg, var(--accent), var(--accent-2));
-        color: var(--muted);
-        transform: translateY(-3px);
+        background: linear-gradient(90deg, var(--accent), #ffb84d);
+        color: var(--accent-text);
         box-shadow: 0 14px 40px rgba(255, 180, 40, 0.12);
+        transform: translateY(-3px);
       }
 
       /* month buttons */
@@ -153,8 +163,12 @@
         font-size: 13px;
       }
       .month-btn.active {
-        background: linear-gradient(90deg, var(--accent), var(--accent-2));
-        color: var(--muted);
+        background: linear-gradient(90deg, var(--accent), #ffb84d);
+        color: var(--accent-text);
+      }
+      .month-btn.current {
+        box-shadow: 0 8px 30px rgba(255, 180, 40, 0.07);
+        border-color: rgba(255, 180, 40, 0.25);
       }
 
       /* layout */
@@ -168,9 +182,9 @@
         justify-content: space-between;
         align-items: flex-start;
         gap: 16px;
-        margin-bottom: 8px;
+        margin-bottom: 12px;
       }
-      #pageTitle {
+      h1#pageTitle {
         font-size: 1.35rem;
         color: #fff;
       }
@@ -180,7 +194,7 @@
         font-weight: 600;
       }
 
-      /* progress */
+      /* year progress */
       .year-progress {
         height: 8px;
         background: rgba(255, 255, 255, 0.04);
@@ -192,8 +206,7 @@
         display: block;
         height: 100%;
         width: 0%;
-        background: linear-gradient(90deg, var(--accent), var(--accent-2));
-        transition: width 0.4s;
+        background: linear-gradient(90deg, var(--accent), #ffb84d);
       }
 
       /* grid */
@@ -204,9 +217,10 @@
       }
       .month-heading {
         grid-column: 1/-1;
-        padding: 10px 0;
+        padding: 8px 0;
         font-weight: 900;
         color: #fff;
+        opacity: 0.95;
         border-bottom: 1px solid rgba(255, 255, 255, 0.04);
         cursor: pointer;
       }
@@ -215,73 +229,63 @@
       .card {
         position: relative;
         border-radius: var(--card-radius);
-        background: linear-gradient(180deg, #ffffff, #fbfbfb);
-        color: var(--muted);
-        padding: 14px;
-        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12);
+        background: linear-gradient(180deg, #ffffff, #fafafa);
+        padding: 16px;
+        box-shadow: 0 10px 30px rgba(2, 8, 23, 0.08);
         display: flex;
         flex-direction: column;
-        min-height: 200px;
-        transition: transform 0.15s, box-shadow 0.15s, filter 0.3s;
-      }
-      .pin-btn {
-        position: absolute;
-        right: 12px;
-        top: 12px;
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
-        border: none;
-        background: var(--glass);
-        cursor: pointer;
-        font-weight: 800;
-      }
-      .pin-btn.active {
-        background: linear-gradient(90deg, var(--accent), var(--accent-2));
+        min-height: 170px;
+        transition: transform 0.18s, box-shadow 0.18s;
       }
       .month-strip {
         position: absolute;
         left: 0;
         top: 0;
         bottom: 0;
-        width: 8px;
+        width: 6px;
         border-top-left-radius: var(--card-radius);
         border-bottom-left-radius: var(--card-radius);
       }
-      .card-image {
-        width: 100%;
-        height: 120px;
-        border-radius: 10px;
-        overflow: hidden;
-        margin-bottom: 10px;
-        background: #ddd;
+      .pin-btn {
+        position: absolute;
+        right: 12px;
+        top: 12px;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: none;
+        background: rgba(7, 18, 43, 0.04);
+        cursor: pointer;
+      }
+      .pin-btn.active {
+        background: linear-gradient(90deg, #ffd24a, #ffecb5);
+      }
+      .card-content {
         display: flex;
-        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+        flex: 1;
       }
-      .card-image img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-        object-position: top center;
-      }
-      @media (max-width: 900px) {
-        .card-image img {
-          object-position: center center;
-        }
-      }
-
       .title {
-        min-height: 52px;
+        min-height: 48px;
       }
-      .title .name {
-        font-weight: 900;
+      .fill {
+        display: inline-block;
+        background-clip: text;
+        color: transparent;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 800;
         font-size: 18px;
-        color: var(--muted);
+      }
+      .fallback {
+        font-weight: 800;
+        font-size: 18px;
+        color: #072238;
       }
       .meta {
         font-size: 13px;
-        color: #37566a;
+        color: #27506b;
         min-height: 18px;
       }
       .countdown {
@@ -293,18 +297,16 @@
       .status {
         font-size: 13px;
         color: #16344f;
-        font-weight: 700;
+        font-weight: 600;
         min-height: 20px;
       }
       .date-badge {
         align-self: flex-start;
         padding: 6px 8px;
         border-radius: 9px;
-        background: rgba(0, 0, 0, 0.04);
+        background: rgba(7, 18, 43, 0.04);
         font-weight: 800;
-        color: var(--muted);
       }
-
       .big-letter {
         position: absolute;
         right: -12px;
@@ -314,130 +316,28 @@
         color: rgba(7, 18, 43, 0.06);
         pointer-events: none;
       }
+
       .card.finished {
-        opacity: 0.55;
-        filter: grayscale(60%);
+        opacity: 0.66;
+        filter: grayscale(40%);
       }
       .card.happening {
-        box-shadow: 0 24px 70px rgba(255, 120, 70, 0.08);
-        animation: lift 2.6s infinite;
+        box-shadow: 0 20px 60px rgba(255, 90, 70, 0.1);
+        animation: glow 2.6s infinite;
       }
-      @keyframes lift {
+      @keyframes glow {
         0% {
           transform: translateY(0);
         }
         50% {
-          transform: translateY(-3px);
+          transform: translateY(-4px);
         }
         100% {
           transform: translateY(0);
         }
       }
 
-      /* pinned */
-      .pinned-column {
-        position: fixed;
-        right: 18px;
-        top: 110px;
-        width: var(--panel-width);
-        max-height: calc(100vh - 140px);
-        overflow: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        padding: 12px;
-        z-index: 999;
-        background: #fff;
-        border-radius: 12px;
-        color: var(--muted);
-        box-shadow: 0 26px 80px rgba(0, 0, 0, 0.36);
-        transition: transform 0.35s, opacity 0.35s;
-      }
-      .pinned-column.hidden {
-        transform: translateX(24px);
-        opacity: 0;
-        pointer-events: none;
-      }
-      .pinned-top {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      .pinned-chip {
-        background: #fff;
-        padding: 12px;
-        border-radius: 10px;
-        border: 1px solid rgba(0, 0, 0, 0.04);
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-      .pinned-title {
-        font-weight: 900;
-        color: var(--muted);
-      }
-      .pinned-sub {
-        font-size: 13px;
-        color: #3b566e;
-      }
-      .pinned-count {
-        font-weight: 800;
-        color: var(--accent);
-      }
-      .pinned-progress {
-        height: 8px;
-        background: rgba(0, 0, 0, 0.06);
-        border-radius: 8px;
-        overflow: hidden;
-      }
-      .pinned-progress > i {
-        display: block;
-        height: 100%;
-        background: linear-gradient(90deg, var(--accent), var(--accent-2));
-        width: 0%;
-      }
-      #pinnedToggleBtn {
-        position: fixed;
-        right: 18px;
-        top: 60%;
-        transform: translateY(-50%);
-        z-index: 1000;
-        width: 56px;
-        height: 56px;
-        border-radius: 999px;
-        border: none;
-        background: linear-gradient(180deg, var(--accent), var(--accent-2));
-        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.18);
-        cursor: pointer;
-        font-weight: 900;
-      }
-      #pinnedToggleBtn.hidden {
-        display: none;
-      }
-
-      @media (max-width: 900px) {
-        .pinned-column {
-          right: 12px;
-          left: 12px;
-          bottom: 18px;
-          top: auto;
-          display: flex;
-          flex-direction: row;
-          max-height: 140px;
-          padding: 8px;
-          overflow: auto;
-          border-radius: 14px;
-        }
-        .pinned-column.hidden {
-          transform: translateY(24px);
-          opacity: 0;
-        }
-        #pinnedToggleBtn {
-          display: none;
-        }
-      }
-
-      /* gallery squares */
+      /* gallery / museum (square) */
       .gallery-wrap {
         max-width: 1200px;
         margin: 18px auto;
@@ -452,65 +352,31 @@
         gap: 10px;
       }
       .gallery-thumb {
-        aspect-ratio: 1/1;
+        position: relative;
         border-radius: 10px;
         overflow: hidden;
-        background: #ddd;
-        display: block;
-        position: relative;
         cursor: pointer;
+        background: #ddd;
+        aspect-ratio: 1/1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       .gallery-thumb img {
         width: 100%;
         height: 100%;
         object-fit: cover;
         display: block;
-        transition: transform 0.35s;
-      }
-      .gallery-thumb:hover img {
-        transform: scale(1.06);
       }
       .gallery-caption {
         position: absolute;
         left: 8px;
         bottom: 8px;
-        padding: 6px 10px;
+        padding: 6px 8px;
         background: rgba(0, 0, 0, 0.45);
         color: #fff;
-        border-radius: 8px;
-        font-weight: 700;
-        font-size: 13px;
-      }
-
-      /* birthdays */
-      .bd-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 12px;
-        margin-top: 8px;
-      }
-      .bd-card {
-        background: linear-gradient(180deg, #fff, #fbfbfb);
-        color: var(--muted);
-        padding: 14px;
-        border-radius: 12px;
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.06);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-      }
-      .bd-name {
-        font-weight: 900;
-        font-size: 16px;
-      }
-      .bd-date {
-        color: #37566a;
-        font-weight: 700;
-      }
-      .bd-countdown {
-        font-weight: 800;
-        color: var(--accent);
+        border-radius: 6px;
+        font-size: 12px;
       }
 
       /* lightbox */
@@ -530,7 +396,7 @@
         max-width: 92%;
         max-height: 82%;
         object-fit: contain;
-        border-radius: 10px;
+        border-radius: 8px;
       }
       .lightbox .caption {
         color: #fff;
@@ -545,77 +411,243 @@
         justify-content: space-between;
         padding: 24px;
       }
-      .lightbox .thumbs {
-        position: absolute;
-        left: 50%;
-        bottom: 20px;
-        transform: translateX(-50%);
-        display: flex;
-        gap: 8px;
+      .lightbox button {
+        background: rgba(255, 255, 255, 0.06);
+        border: none;
+        color: #fff;
+        padding: 10px;
+        border-radius: 10px;
+        cursor: pointer;
       }
 
-      /* birthday popup (centered white box) */
+      /* pinned panel */
+      .pinned-column {
+        position: fixed;
+        right: 18px;
+        top: 110px;
+        width: var(--panel-width);
+        max-height: calc(100vh - 140px);
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 12px;
+        z-index: 999;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(2, 8, 23, 0.18);
+        transform: translateX(0);
+        transition: transform 0.35s, opacity 0.35s;
+      }
+      .pinned-column.hidden {
+        transform: translateX(20px);
+        opacity: 0;
+        pointer-events: none;
+      }
+      .pinned-column .panel-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .pinned-chip {
+        background: #fff;
+        padding: 10px;
+        border-radius: 10px;
+        min-width: 200px;
+        border: 1px solid rgba(2, 8, 23, 0.04);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .pinned-row-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .clear-btn {
+        background: #ffecb5;
+        border: none;
+        padding: 6px 8px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 700;
+      }
+      #pinnedToggleBtn {
+        position: fixed;
+        right: 18px;
+        top: 60%;
+        transform: translateY(-50%);
+        z-index: 1000;
+        width: 52px;
+        height: 52px;
+        border-radius: 999px;
+        border: none;
+        background: linear-gradient(180deg, var(--accent), #ffecb5);
+        box-shadow: 0 10px 30px rgba(2, 8, 23, 0.16);
+        cursor: pointer;
+        font-weight: 900;
+      }
+      #pinnedToggleBtn.hidden {
+        display: none;
+      }
+
+      /* birthdays section */
+      .birthdays-wrap {
+        max-width: 1200px;
+        margin: 18px auto;
+        padding: 0 12px;
+      }
+      .birth-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 14px;
+      }
+      .bd-card {
+        background: linear-gradient(180deg, #fff, #fafafa);
+        padding: 12px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(2, 8, 23, 0.08);
+        color: #072238;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+      }
+      .bd-name {
+        font-weight: 900;
+      }
+      .bd-date {
+        font-weight: 700;
+        color: #27506b;
+      }
+      .bd-count {
+        font-weight: 800;
+        color: var(--accent);
+      }
+
+      /* birthday announcement popup (centered) */
       .bd-popup-wrap {
         position: fixed;
         inset: 0;
-        display: none;
+        display: flex;
         align-items: center;
         justify-content: center;
         z-index: 3000;
         pointer-events: none;
       }
-      .bd-popup-wrap.show {
-        display: flex;
+      .bd-popup {
+        min-width: 320px;
+        max-width: 80%;
+        padding: 18px 22px;
+        border-radius: 12px;
+        background: #ffffff;
+        color: #072238;
+        text-align: center;
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+        transform-origin: center;
         pointer-events: auto;
       }
-      .bd-popup {
-        min-width: 280px;
-        max-width: 88%;
-        padding: 18px 24px;
-        border-radius: 12px;
-        background: #fff;
-        color: var(--muted);
-        font-weight: 900;
-        text-align: center;
-        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.35);
-        transform-origin: center;
-        animation: bdIn 0.45s cubic-bezier(0.2, 0.9, 0.2, 1);
+      .bd-popup h2 {
+        font-size: 1.5rem;
+        margin-bottom: 6px;
       }
-      .bd-popup .small {
-        font-size: 14px;
-        font-weight: 800;
-        margin-top: 8px;
+      .bd-popup p {
+        opacity: 0.9;
       }
-      @keyframes bdIn {
+      .bd-popup.shake {
+        animation: shake 0.9s ease;
+      }
+      @keyframes shake {
         0% {
-          transform: scale(0.92) translateY(-8px);
-          opacity: 0;
+          transform: translateY(0);
+        }
+        20% {
+          transform: translateY(-6px) rotate(-1.2deg);
+        }
+        40% {
+          transform: translateY(3px) rotate(0.8deg);
         }
         60% {
-          transform: scale(1.03);
-          opacity: 1;
+          transform: translateY(-2px) rotate(-0.6deg);
+        }
+        80% {
+          transform: translateY(1px) rotate(0.2deg);
         }
         100% {
-          transform: scale(1);
+          transform: translateY(0);
         }
       }
 
-      /* confetti/fireworks canvases */
-      #confettiCanvas,
-      #fireCanvas {
+      /* confetti canvas overlay inside popup */
+      .bd-confetti-canvas {
         position: fixed;
         left: 0;
         top: 0;
-        width: 100%;
-        height: 100%;
+        right: 0;
+        bottom: 0;
         pointer-events: none;
-        z-index: 2850;
+        z-index: 2999;
       }
 
-      /* small helpers */
-      .muted-small {
-        font-size: 13px;
-        color: rgba(255, 255, 255, 0.6);
+      /* present mode */
+      .present-mode header,
+      .present-mode .controls,
+      .present-mode .month-buttons,
+      .present-mode #subtitle,
+      .present-mode #nextUp {
+        display: none !important;
+      }
+      .present-mode .wrap {
+        margin-top: 10px;
+      }
+      .present-card {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 28px;
+        border-radius: 18px;
+        background: linear-gradient(180deg, #fff, #fcfcfd);
+        color: #072238;
+        font-weight: 900;
+        font-size: 2.2rem;
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.4);
+      }
+
+      /* responsiveness */
+      @media (max-width: 900px) {
+        .pinned-column {
+          right: 12px;
+          left: 12px;
+          bottom: 18px;
+          top: auto;
+          display: flex;
+          flex-direction: row;
+          max-height: 120px;
+          padding: 8px;
+          overflow: auto;
+        }
+        #pinnedToggleBtn {
+          display: none;
+        }
+        .hero {
+          height: 260px;
+        }
+        .big-letter {
+          font-size: 48px;
+        }
+        .gallery-grid {
+          grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        }
+        .bd-popup {
+          min-width: 260px;
+        }
+      }
+
+      /* accessibility focus */
+      :focus {
+        outline: 3px solid rgba(255, 255, 255, 0.06);
+        outline-offset: 3px;
       }
     </style>
   </head>
@@ -623,19 +655,22 @@
     <!-- HERO -->
     <section class="hero" aria-label="Hero">
       <img
-        id="heroMedia"
-        class="hero-media"
+        id="heroImg"
         alt="Maxwell banner"
         src="https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/04/VideoCover-1.jpeg?resize=767%2C500&ssl=1"
         crossorigin="anonymous"
       />
-      <div class="hero-overlay"></div>
       <div class="hero-header">
         <div class="hero-left">
           <div class="hero-title">Maxwell Events Countdown</div>
           <div class="hero-sub" id="heroSubtitle">2025-2026 schedule</div>
 
-          <div class="controls" role="region" aria-label="Search and filters">
+          <div
+            class="controls"
+            role="region"
+            aria-label="Search and filters"
+            style="margin-top: 12px"
+          >
             <input
               id="searchBox"
               type="search"
@@ -664,100 +699,62 @@
               aria-hidden="false"
             ></div>
 
-            <div style="display: flex; align-items: center; gap: 8px">
+            <div style="display: flex; gap: 8px; align-items: center">
               <button id="gridBtn" class="mode-btn active" title="Grid view">
                 Grid
               </button>
               <button id="museumBtn" class="mode-btn" title="Gallery (Museum)">
                 Museum
               </button>
-              <button id="birthBtn" class="mode-btn" title="Birthdays">
+              <button id="birthdaysBtn" class="mode-btn" title="Birthdays">
                 Birthdays
               </button>
-              <button id="presentBtn" class="mode-btn" title="Present">
+              <button id="presentBtn" class="mode-btn" title="Present mode">
                 Present
               </button>
-              <select
-                id="themeSelect"
-                title="Theme"
-                style="margin-left: 8px; padding: 6px; border-radius: 8px"
-              >
-                <option value="dark">Dark</option>
-                <option value="light">Light</option>
-              </select>
-              <button id="savePrefs" class="btn">Save</button>
             </div>
           </div>
         </div>
 
-        <div style="text-align: right; font-weight: 800; color: #fff">
+        <div style="color: #fff; font-weight: 700; text-align: right">
           Maxwell • 2025–26
         </div>
       </div>
     </section>
 
-    <!-- confetti/fireworks canvases -->
-    <canvas id="confettiCanvas" aria-hidden="true"></canvas>
-    <canvas id="fireCanvas" aria-hidden="true"></canvas>
-
-    <!-- ambient -->
+    <!-- confetti canvas global (used by birthday popups) -->
     <canvas
-      id="stars"
+      id="popupConfetti"
+      class="bd-confetti-canvas"
       aria-hidden="true"
-      style="position: fixed; inset: 0; z-index: -1; pointer-events: none"
     ></canvas>
 
-    <!-- nextUp -->
-    <section
-      id="nextUp"
-      style="
-        display: none;
-        max-width: 1200px;
-        margin: 12px auto;
-        padding: 12px 16px;
-        border-left: 6px solid var(--accent);
-        border-radius: 10px;
-        background: rgba(255, 255, 255, 0.96);
-        color: var(--muted);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      "
-    >
-      <div>
-        <div style="font-weight: 800; color: #0b4b6f">Next Up</div>
-        <div class="detail">
-          <strong id="nextUpName">—</strong> <span id="nextUpDetail"></span>
-        </div>
-      </div>
-      <div style="text-align: right">
-        <div style="font-size: 12px; color: #37566a">Tip</div>
-        <div style="font-size: 12px; color: #37566a">
-          Pin events using the 📌 on cards. Pinned area appears on the right.
-        </div>
-      </div>
-    </section>
-
-    <!-- pinned -->
+    <!-- pinned panel -->
     <aside
       id="pinnedColumn"
       class="pinned-column hidden"
       aria-label="Pinned events"
     >
-      <div class="pinned-top">
-        <div style="font-weight: 900">Pinned</div>
-        <div style="display: flex; gap: 8px">
+      <div class="panel-top">
+        <strong style="font-size: 14px; color: #072238">Pinned</strong>
+        <div>
           <button id="exportPins" class="btn" title="Export pinned">
             Export
           </button>
-          <button id="clearPins" class="btn" title="Clear pins">Clear</button>
-          <button id="pinCollapseBtn" class="btn" title="Hide panel">
+          <button id="clearPins" class="clear-btn" title="Clear pins">
+            Clear
+          </button>
+          <button
+            id="pinCollapseBtn"
+            class="btn"
+            aria-pressed="false"
+            title="Collapse panel"
+          >
             Hide
           </button>
         </div>
       </div>
-      <!-- pinned items inserted here -->
+      <!-- chips injected here -->
     </aside>
     <button id="pinnedToggleBtn" class="hidden" title="Open pinned panel">
       📌
@@ -786,79 +783,38 @@
         </div>
       </div>
 
-      <!-- small uploader and google drive helper -->
-      <section
-        style="
-          max-width: 1200px;
-          margin: 6px auto 18px;
-          padding: 12px;
-          border-radius: 10px;
-          background: rgba(255, 255, 255, 0.02);
-        "
-      >
-        <div
-          style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap"
-        >
-          <input id="uploadInput" type="file" accept="image/*" multiple />
-          <button id="uploadBtn" class="btn">Upload images</button>
-          <button id="clearUploads" class="btn">Clear uploads</button>
-          <input
-            id="gdriveInput"
-            type="text"
-            placeholder="Paste Drive links / IDs (comma separated)"
-            style="
-              min-width: 320px;
-              padding: 8px;
-              border-radius: 8px;
-              border: 1px solid rgba(255, 255, 255, 0.06);
-              background: transparent;
-              color: #fff;
-            "
-          />
-          <button id="importDriveBtn" class="btn">Import Drive (public)</button>
-          <div style="margin-left: auto; color: #fff; font-weight: 700">
-            Browser uploads stored locally
-          </div>
-        </div>
-        <div
-          id="uploadsPreview"
-          style="
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-            gap: 8px;
-            margin-top: 12px;
-          "
-        ></div>
-      </section>
-
-      <!-- Gallery (museum) -->
+      <!-- gallery (museum) -->
       <section
         id="gallerySection"
         class="gallery-wrap"
         style="display: none"
+        aria-hidden="true"
       ></section>
 
-      <!-- Birthdays -->
-      <section id="birthdaySection" style="display: none">
+      <!-- birthdays -->
+      <section
+        id="birthdaysSection"
+        class="birthdays-wrap"
+        style="display: none"
+        aria-hidden="true"
+      >
         <div
           style="
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
           "
         >
-          <div>
-            <strong style="color: #fff">Birthdays</strong>
-            <div style="color: rgba(255, 255, 255, 0.75)">
-              Countdowns to upcoming birthdays
-            </div>
+          <div style="font-weight: 900; color: #fff">Student Birthdays</div>
+          <div style="color: rgba(255, 255, 255, 0.9)">
+            Shown by next upcoming
           </div>
         </div>
-        <div id="bdGrid" class="bd-grid"></div>
+        <div id="birthGrid" class="birth-grid" aria-live="polite"></div>
       </section>
 
-      <!-- Event grid -->
+      <!-- events grid -->
       <section id="stage">
         <div id="eventsGrid" class="grid" aria-live="polite"></div>
       </section>
@@ -872,49 +828,35 @@
       role="dialog"
       aria-modal="true"
     >
-      <div
-        class="controls"
-        style="
-          position: absolute;
-          inset: 0;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 24px;
-        "
-      >
-        <button id="lbPrev" class="btn">◀</button>
-        <button id="lbNext" class="btn">▶</button>
+      <div class="controls" aria-hidden="false">
+        <button id="lbPrev" aria-label="Previous">◀</button>
+        <button id="lbNext" aria-label="Next">▶</button>
       </div>
       <div style="text-align: center; max-width: 95%">
         <img id="lbImage" alt="" />
-        <div
-          class="caption"
-          id="lbCaption"
-          style="color: #fff; font-weight: 800; margin-top: 12px"
-        ></div>
+        <div class="caption" id="lbCaption"></div>
         <div style="margin-top: 12px">
           <button id="lbClose" class="btn">Close</button>
         </div>
       </div>
-      <div class="thumbs" id="lbThumbs"></div>
     </div>
 
-    <!-- birthday popup -->
-    <div id="bdPopupWrap" class="bd-popup-wrap" aria-hidden="true">
-      <div
-        id="bdPopup"
-        class="bd-popup"
-        role="status"
-        aria-live="assertive"
-      ></div>
-    </div>
+    <!-- birthday popup container (invisible until used) -->
+    <div
+      id="bdPopupWrap"
+      class="bd-popup-wrap"
+      aria-hidden="true"
+      style="display: none"
+    ></div>
 
     <script>
-      /* ---------------- Data (events, default gallery, birthdays) ---------------- */
+      /* -------------------------
+   Data
+   ------------------------- */
       const HERO =
         "https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/04/VideoCover-1.jpeg?resize=767%2C500&ssl=1";
 
+      /* Full EVENTS (from your earlier list; ensure nothing missing) */
       const EVENTS = [
         { name: "Summer Holiday", start: "2025-08-01", end: "2025-08-09" },
         {
@@ -994,6 +936,7 @@
         { name: "GRADDDDD!!!!", start: "2026-06-05", end: "2026-06-07" },
       ];
 
+      /* MONTH COLORS */
       const MONTH_COLORS = {
         "01": "#e74c3c",
         "02": "#ff8a65",
@@ -1009,91 +952,358 @@
         12: "#7bdbdb",
       };
 
-      const DEFAULT_GALLERY = [
-        // campus images (replacements you supplied)
+      /* MUSEUM / gallery photos — replaced first 4 campus pics as requested */
+      const MUSEUM_PHOTOS = [
         {
           src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmV27Af6dGvJoR-LVUGmkCauwQepWKLwi7Zw&s",
-          caption: "Campus 1",
-          section: "Campus",
+          caption: "Campus View 1",
           month: "08",
           year: 2025,
         },
         {
           src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTHDr-_KeMgIf8tN3PHxytKFN7lbUhaLuPpkQ&s",
-          caption: "Campus 2",
-          section: "Campus",
+          caption: "Campus View 2",
           month: "08",
           year: 2025,
         },
         {
-          src: "https://static.wixstatic.com/media/b62f56_ce88667acf42430fbea4c12175730dd3.jpg",
-          caption: "Campus 3",
-          section: "Campus",
+          src: "https://static.wixstatic.com/media/b62f56_ce88667acf42430fbea4c12175730dd3.jpg/v1/fill/w_960,h_640,al_c,q_85,enc_avif,quality_auto/b62f56_ce88667acf42430fbea4c12175730dd3.jpg",
+          caption: "Campus View 3",
           month: "08",
           year: 2025,
         },
         {
           src: "https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/03/EsoPheb.jpeg?fit=1400%2C1400&ssl=1",
-          caption: "Campus 4",
-          section: "Campus",
+          caption: "Campus View 4",
           month: "08",
           year: 2025,
         },
-        // more images (fallbacks)
+        // extras
+        { src: HERO, caption: "Maxwell — Banner", month: "08", year: 2025 },
         {
-          src: HERO,
-          caption: "Banner",
-          section: "Monthly",
+          src: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1600&q=80&auto=format&fit=crop",
+          caption: "Forest Path",
           month: "09",
           year: 2025,
         },
+        {
+          src: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1600&q=80&auto=format&fit=crop",
+          caption: "Lake at Dawn",
+          month: "10",
+          year: 2025,
+        },
+        {
+          src: "https://images.unsplash.com/photo-1503264116251-35a269479413?w=1600&q=80&auto=format&fit=crop",
+          caption: "Foggy Ridge",
+          month: "12",
+          year: 2025,
+        },
+        {
+          src: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1600&q=80&auto=format&fit=crop",
+          caption: "Mountain Trail",
+          month: "03",
+          year: 2026,
+        },
+        {
+          src: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1600&q=80&auto=format&fit=crop",
+          caption: "Sunset Camp",
+          month: "05",
+          year: 2026,
+        },
       ];
 
-      const BIRTHDAYS = [
-        { name: "Tereza Poniatovska", month: 9, day: 11 },
-        { name: "Tendai Castroe", month: 9, day: 20 },
-        { name: "Arcella Ineza", month: 9, day: 25 }, // removed comma
-        { name: "Salome Lwanzo", month: 9, day: 25 },
-        { name: "Adrian Ochieng", month: 9, day: 2 },
-        { name: "Julian Tito Omonte", month: 9, day: 25 },
-        { name: "Jael Tito Omonte", month: 9, day: 25 },
-        { name: "Ethan Wenyika", month: 9, day: 4 },
-        { name: "Michael Nyange", month: 9, day: 14 },
-        { name: "Daniela Daniel", month: 9, day: 17 },
-        { name: "Kris Koome", month: 9, day: 6 },
-        { name: "Betty Kamawu", month: 9, day: 24 },
+      /* STUDENT BIRTHDAYS (full dataset you provided) — format: name — MM/DD/YYYY
+   Note: some entries in source had commas in names; user asked to remove comma after Arcella — included accordingly.
+*/
+      const BIRTHDAYS_RAW = [
+        ["Clerick Blessing Duke", "01/05/2013"],
+        ["Bonde Joseph", "01/09/2012"],
+        ["Njaaga Alvar-Joe", "01/09/2008"],
+        ["Kiswaa Natalie", "01/11/2012"],
+        ["Kyanja Ezra", "01/11/2009"],
+        ["Rutambuka Lyndzie", "01/13/2010"],
+        ["Kazembe Tanya", "01/14/2009"],
+        ["Mbanza Gisa", "01/14/2009"],
+        ["Kimori Trinah", "01/26/2008"],
+        ["Mlacha Ishal", "01/27/2012"],
+
+        ["Iganze Eva", "02/03/2010"],
+        ["Mwarekwa Alvin", "02/04/2009"],
+        ["Mwarekwa Calvin", "02/04/2009"],
+        ["Shingiro Junior Caleb", "02/05/2009"],
+        ["Mhishi Munotidaishe", "02/08/2012"],
+        ["Silva Margarida", "02/13/2010"],
+        ["John Alyssa", "02/14/2011"],
+        ["Kamawu Christian", "02/19/2017"],
+        ["Karasi Jayda", "02/20/2012"],
+        ["Kemoabe Ofile", "02/23/2023"],
+        ["Sam-Nwaomah Umanu", "02/28/2009"],
+
+        ["Fares Farena", "03/01/2012"],
+        ["Kazoya Muhezagiro", "03/01/2013"],
+        ["Mulama Ian", "03/03/2009"],
+        ["Mwinuka Nathaniel", "03/11/2012"],
+        ["Ombaso Alexina", "03/12/2012"],
+        ["Samwel Samwel", "03/14/2010"],
+        ["Moyo Uyanaka", "03/17/2010"],
+        ["Bett Cristiano", "03/21/2009"],
+        ["Onyekachi Peniel", "03/24/2009"],
+        ["Gwatiringa Shekainah", "03/27/2013"],
+        ["Musi Meloy", "03/28/2008"],
+        ["Mutangana Mariam", "03/30/2009"],
+
+        ["Obse Gelila", "04/01/2007"],
+        ["Gichana Bernice", "04/04/2008"],
+        ["Mandela Teddy", "04/04/2012"],
+        ["Bahizire Yadah", "04/05/2012"],
+        ["Kigongo Grace", "04/09/2007"],
+        ["Mokotedi Sesha", "04/10/2013"],
+        ["Ochieng Adina", "04/10/2008"],
+        ["Wangui Esther", "04/13/2008"],
+        ["Golooba-Mutebi Kizza", "04/23/2009"],
+        ["Shange Neserian", "04/28/2010"],
+        ["Muhune Glodi", "04/29/2025"],
+        ["Remir Nathan", "04/30/2013"],
+
+        ["Galgao Eleon Ythan", "05/02/2019"],
+        ["Oriko Breanna", "05/03/2009"],
+        ["Ganza Keza", "05/05/2008"],
+        ["Koros Edlyn", "05/10/2011"],
+        ["Shange Nasieku", "05/14/2009"],
+        ["Okotoh Ryan", "05/23/2010"],
+        ["Ogenche Martha", "05/25/2009"],
+        ["Kedas Arnav", "05/26/2010"],
+        ["Neza Shevaun", "05/29/2012"],
+        ["Wasilwa Aneesa", "05/30/2011"],
+
+        ["Githinji Abigail", "06/05/2009"],
+        ["Lugembe Sallyrose louise", "06/06/2008"],
+        ["Ombaba Enock", "06/06/2010"],
+        ["Omare Justin", "06/09/2011"],
+        ["Ninziza Prince", "06/11/2008"],
+        ["Ninziza Shammah", "06/11/2008"],
+        ["Birasa Alan", "06/12/2008"],
+        ["Bakuru Elkanah", "06/13/2011"],
+        ["Njine Paola", "06/13/2009"],
+        ["Galava Rubie", "06/17/2007"],
+        ["Kabeja Larina", "06/18/2008"],
+        ["Noullia Tuyisenge", "06/20/2008"],
+        ["Muhumuza Elaine", "06/22/2017"],
+        ["Mugisha Divine", "06/23/2007"],
+        ["Guvi Michael", "06/26/2009"],
+        ["Silva Ana", "06/26/2007"],
+        ["Jackson Edward-Ebenezer", "06/29/2012"],
+
+        ["Onserio Angel", "07/03/2009"],
+        ["Javaid Nathan", "07/04/2008"],
+        ["Mugisha Ines", "07/07/2009"],
+        ["Kimori Daniella", "07/15/2011"],
+        ["Kweka Mathew", "07/16/2011"],
+        ["Mwakilembe Jadah-Elice", "07/17/2013"],
+        ["Mwinuka Claver", "07/17/2010"],
+        ["Tarpeh Mearaf", "07/23/2009"],
+        ["Alemayehu Paulos", "07/24/2010"],
+        ["Gilliam Danson Hirwa", "07/25/2006"],
+
+        ["Sivako Oleyo", "08/01/2013"],
+        ["Ombaba Orel", "08/03/2012"],
+        ["Hope Haeven Ajeneza", "08/12/2012"],
+        ["Mpingasa Tadala", "08/14/2010"],
+        ["Mpingasa Takondwa", "08/14/2010"],
+        ["Wenyika Jonathan", "08/15/2013"],
+        ["Galgao Jedrie Jess", "08/16/2015"],
+        ["Anokye-Larbey David", "08/17/2008"],
+        ["Manento Rodney", "08/17/2009"],
+        ["Ntimbwa Esther", "08/17/2010"],
+        ["Villagomez Matthew Christian", "08/17/2007"],
+        ["Riziki Mycah", "08/25/2009"],
+        ["Javaid Jayson", "08/27/2016"],
+        ["Kamau Cungu", "08/29/2008"],
+
+        /* September (user previously emphasized these names) */
+        ["Ochieng Adrian", "09/02/2011"],
+        ["Wenyika Ethan", "09/04/2009"],
+        ["Koome Kris", "09/06/2007"],
+        ["Poniatovska Tereza", "09/11/2017"],
+        ["Mphinyane Serwalo", "09/13/2013"],
+        ["Nyange Michael", "09/14/2009"],
+        ["Daniel Daniela", "09/17/2008"],
+        ["Castroe Tendai", "09/20/2013"],
+        ["Masasabi Olive", "09/24/2012"],
+        [
+          "Ineza Arcella",
+          "09/25/2011",
+        ] /* removed comma after Arcella per request */,
+        ["Lwanzo Salome", "09/25/2011"],
+        ["Omonte Tito Jael", "09/25/2011"],
+        ["Omonte Tito Julian", "09/25/2011"],
+
+        ["Gadi Charissa", "10/03/2012"],
+        ["Katongo Joshua", "10/03/2011"],
+        ["Rampart Esolwazi", "10/03/2008"],
+        ["Alihamdoulillah Ntakirutimana", "10/04/2012"],
+        ["Psenjen Annie", "10/07/2011"],
+        ["Tianah Elyon", "10/07/2011"],
+        ["Ruzibiza Soa", "10/09/2011"],
+        ["Zirimwabagabo Samuel", "10/09/2008"],
+        ["Shange Neriah", "10/12/2011"],
+        ["Javaid Michelle", "10/13/2010"],
+        ["Kyalo Sherlyne", "10/16/2012"],
+        ["Mkandawire Zawadi", "10/18/2011"],
+        ["Mfura Arnaud", "10/20/2008"],
+        ["Okiya Saha", "10/25/2011"],
+        ["Mahamba Furaha", "10/26/2007"],
+        ["Rumiti Neslie", "10/26/2007"],
+
+        ["Omare Chantelle", "11/03/2009"],
+        ["Nyabuga Maya", "11/05/2010"],
+        ["Both Ruot", "11/16/2007"],
+        ["Koech Padon", "11/17/2007"],
+        ["Kariuki Ryan", "11/20/2009"],
+        ["Lwanzo Grace", "11/20/2008"],
+        ["Moyo Musawakhe", "11/21/2012"],
+        ["Mpomabiva Harleen", "11/21/2009"],
+        ["Alemayehu Pheben", "11/22/2008"],
+        ["Uwikunda Shami", "11/25/2011"],
+        ["Sheja Daniel", "11/27/2009"],
+        ["Ineza Andrea", "11/29/2007"],
+        ["Mugisha Kamugisha", "11/30/2008"],
+
+        ["Mwasumbi Lupakisyo", "12/03/2007"],
+        ["Simankane Taelo", "12/05/2010"],
+        ["Igiraneza Betha-Claudia", "12/06/2010"],
+        ["Kamawu Carla", "12/07/2018"],
+        ["Mbucho Elvis Eddie", "12/12/2012"],
+        ["John Jathniel", "12/13/2008"],
+        ["Bakuru Elgin", "12/14/2012"],
+        ["Sivako Tiffany", "12/18/2007"],
+        ["Simankane Tsaone", "12/25/2008"],
+        ["Sekabaraga Adriano Sheja", "12/26/2008"],
+        ["Hosea Precious", "12/30/2008"],
       ];
 
-      /* ---------------- helpers ---------------- */
+      /* -------------------------
+   Helpers
+   ------------------------- */
       const $ = (id) => document.getElementById(id);
       const pad = (n) => (n < 10 ? "0" + n : String(n));
-      const parseStart = (s) =>
-        s.includes("T") ? new Date(s) : new Date(s + "T00:00:00");
+      const parseDate = (s) => {
+        // input forms "YYYY-MM-DD" or "MM/DD/YYYY"
+        if (/\d{4}-\d{2}-\d{2}/.test(s)) return new Date(s + "T00:00:00");
+        const [m, d, y] = s.split("/").map(Number);
+        return new Date(y, m - 1, d, 0, 0, 0, 0);
+      };
+      const parseStart = (s) => parseDate(s);
       const parseEnd = (e, start) => {
         if (!e) {
           const d = new Date(start);
           d.setHours(23, 59, 59, 999);
           return d;
         }
-        return e.includes("T") ? new Date(e) : new Date(e + "T23:59:59.999");
+        return parseDate(e);
       };
-      function shortMonth(n) {
-        return new Date(2000, n - 1, 1).toLocaleString("en", {
-          month: "short",
-        });
+      const formatISO = (d) =>
+        `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      const daysBetween = (a, b) => Math.ceil((b - a) / 86400000);
+
+      /* compute next occurrence of month/day relative to today */
+      function nextOccurrence(month, day, from = new Date()) {
+        const year = from.getFullYear();
+        let candidate = new Date(year, month - 1, day, 0, 0, 0, 0);
+        if (
+          candidate <
+          new Date(
+            from.getFullYear(),
+            from.getMonth(),
+            from.getDate(),
+            0,
+            0,
+            0,
+            0
+          )
+        ) {
+          candidate = new Date(year + 1, month - 1, day, 0, 0, 0, 0);
+        }
+        return candidate;
       }
-      function slugify(name, idx) {
+
+      /* format countdown */
+      function formatUntil(date) {
+        const now = new Date();
+        let diff = Math.max(0, date - now);
+        const days = Math.floor(diff / 86400000);
+        diff -= days * 86400000;
+        const hours = Math.floor(diff / 3600000);
+        diff -= hours * 3600000;
+        const mins = Math.floor(diff / 60000);
+        return `${days}d ${hours}h ${mins}m`;
+      }
+
+      /* -------------------------
+   State & persistence
+   ------------------------- */
+      let items = [],
+        tickHandle = null,
+        mode = "grid";
+      const STORAGE_KEY = "maxwell_positions_v3";
+      const PINNED_KEY = "maxwell_pinned_v3";
+      const PIN_LIMIT = 12;
+
+      function getPinned() {
+        try {
+          return JSON.parse(localStorage.getItem(PINNED_KEY) || "[]");
+        } catch (e) {
+          return [];
+        }
+      }
+      function setPinned(arr) {
+        localStorage.setItem(PINNED_KEY, JSON.stringify(arr));
+        renderPinnedPanel();
+      }
+      function isPinned(i) {
+        return getPinned().includes(i);
+      }
+      function togglePin(i) {
+        const arr = getPinned();
+        const p = arr.indexOf(i);
+        if (p === -1) {
+          arr.unshift(i);
+          while (arr.length > 100) arr.pop();
+        } else arr.splice(p, 1);
+        setPinned(arr);
+      }
+
+      /* -------------------------
+   Event rendering (grid)
+   ------------------------- */
+      function sortEvents() {
+        EVENTS.sort((a, b) => parseStart(a.start) - parseStart(b.start));
+      }
+      function findNext() {
+        const now = Date.now();
         return (
-          String(name)
-            .toLowerCase()
-            .replace(/[’'"]/g, "")
-            .replace(/[:\/\\(),.!?#\u2013\u2014]/g, "")
-            .replace(/\s+/g, "-")
-            .replace(/[^a-z0-9\-]/g, "") +
-          "-" +
-          idx
+          EVENTS.find(
+            (ev) => parseEnd(ev.end, parseStart(ev.start)).getTime() >= now
+          ) || null
         );
       }
+      function renderNextUp() {
+        const next = findNext();
+        const banner = $("nextUp");
+        if (!banner) return;
+        if (!next) {
+          banner.style.display = "none";
+          return;
+        }
+        banner.style.display = "flex";
+        $("nextUpName").textContent = next.name;
+        $("nextUpDetail").textContent = next.end
+          ? `From ${formatISO(parseStart(next.start))} → ${formatISO(
+              parseStart(next.end)
+            )}`
+          : `On ${formatISO(parseStart(next.start))}`;
+      }
+
       function eventIcon(name) {
         const n = name.toLowerCase();
         if (/exam|final|midterm|test|act|map/.test(n)) return "📝";
@@ -1107,208 +1317,33 @@
         return "📅";
       }
 
-      /* ---------------- simple persistent image store (IndexedDB) ---------------- */
-      const IDB = (function () {
-        const DB_NAME = "maxwell_db_v2",
-          DB_VER = 1;
-        let db = null;
-        function open() {
-          return new Promise((res, rej) => {
-            if (db) return res(db);
-            const rq = indexedDB.open(DB_NAME, DB_VER);
-            rq.onupgradeneeded = (e) => {
-              const d = e.target.result;
-              if (!d.objectStoreNames.contains("uploads"))
-                d.createObjectStore("uploads", {
-                  keyPath: "id",
-                  autoIncrement: true,
-                });
-              if (!d.objectStoreNames.contains("eventImages"))
-                d.createObjectStore("eventImages", {
-                  keyPath: "id",
-                  autoIncrement: true,
-                });
-              if (!d.objectStoreNames.contains("meta"))
-                d.createObjectStore("meta", { keyPath: "k" });
-            };
-            rq.onsuccess = () => {
-              db = rq.result;
-              res(db);
-            };
-            rq.onerror = () => rej(rq.error);
-          });
-        }
-        async function store(storeName, value) {
-          const d = await open();
-          return new Promise((res, rej) => {
-            const tx = d.transaction(storeName, "readwrite");
-            const s = tx.objectStore(storeName);
-            const r = s.add(value);
-            r.onsuccess = () => res(r.result);
-            r.onerror = () => rej(r.error);
-          });
-        }
-        async function getAll(storeName) {
-          const d = await open();
-          return new Promise((res, rej) => {
-            const tx = d.transaction(storeName);
-            const s = tx.objectStore(storeName);
-            const r = s.getAll();
-            r.onsuccess = () => res(r.result);
-            r.onerror = () => rej(r.error);
-          });
-        }
-        async function clear(storeName) {
-          const d = await open();
-          return new Promise((res, rej) => {
-            const tx = d.transaction(storeName, "readwrite");
-            const s = tx.objectStore(storeName);
-            const r = s.clear();
-            r.onsuccess = () => res();
-            r.onerror = () => rej(r.error);
-          });
-        }
-        return {
-          putUpload: (blob, name) =>
-            store("uploads", { blob, name, created: Date.now() }),
-          getAllUploads: () => getAll("uploads"),
-          clearUploads: () => clear("uploads"),
-          putEventImage: (idx, blob, name) =>
-            store("eventImages", {
-              eventIdx: idx,
-              blob,
-              name,
-              created: Date.now(),
-            }),
-          getEventImagesByIdx: async (idx) => {
-            const all = await getAll("eventImages");
-            return all.filter((a) => a.eventIdx === idx);
-          },
-          getAllEventImages: () => getAll("eventImages"),
-        };
-      })();
-
-      /* ---------------- starfield background ---------------- */
-      (function () {
-        const c = $("stars");
-        if (!c) return;
-        const ctx = c.getContext("2d");
-        function resize() {
-          c.width = innerWidth;
-          c.height = innerHeight;
-        }
-        window.addEventListener("resize", resize);
-        resize();
-        const stars = Array.from({ length: 90 }, () => ({
-          x: Math.random() * c.width,
-          y: Math.random() * c.height,
-          r: Math.random() * 1.6 + 0.2,
-          dy: Math.random() * 0.5 + 0.02,
-          alpha: 0.15 + Math.random() * 0.6,
-        }));
-        function frame() {
-          ctx.clearRect(0, 0, c.width, c.height);
-          for (const s of stars) {
-            ctx.globalAlpha =
-              s.alpha * (0.6 + Math.sin(Date.now() / 1000 + s.x) * 0.3);
-            ctx.beginPath();
-            ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-            ctx.fillStyle = "#fff";
-            ctx.fill();
-            s.y += s.dy;
-            if (s.y > c.height + 10) {
-              s.y = -10;
-              s.x = Math.random() * c.width;
-            }
-          }
-          requestAnimationFrame(frame);
-        }
-        frame();
-      })();
-
-      /* ---------------- core rendering ---------------- */
-      let items = [],
-        tickHandle = null;
-
-      function sortEvents() {
-        EVENTS.sort((a, b) => parseStart(a.start) - parseStart(b.start));
-      }
-      function findNext() {
-        const now = Date.now();
+      function slugify(name, idx) {
         return (
-          EVENTS.find(
-            (ev) => parseEnd(ev.end, parseStart(ev.start)).getTime() >= now
-          ) || null
+          String(name)
+            .toLowerCase()
+            .replace(/[’'"]/g, "")
+            .replace(/[:\/\\(),.!?#\u2013\u2014]/g, "")
+            .replace(/\s+/g, "-")
+            .replace(/[^a-z0-9\-]/g, "") +
+          "-" +
+          idx
         );
       }
-      function renderNextUp() {
-        const n = findNext();
-        const b = $("nextUp");
-        if (!b) return;
-        if (!n) {
-          b.style.display = "none";
-          return;
-        }
-        b.style.display = "flex";
-        $("nextUpName").textContent = n.name;
-        $("nextUpDetail").textContent = n.end
-          ? `From ${formatISO(parseStart(n.start))} → ${formatISO(
-              parseStart(n.end)
-            )}`
-          : `On ${formatISO(parseStart(n.start))}`;
-      }
-      function formatISO(d) {
-        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(
-          d.getDate()
-        )}`;
-      }
 
-      function updateOne(item, now) {
-        const { id, start, end, el } = item;
-        const cd = document.getElementById("cd-" + id),
-          st = document.getElementById("st-" + id);
-        if (!cd || !st) return;
-        if (now.getTime() < start.getTime()) {
-          el.classList.remove("happening", "finished");
-          el.classList.add("upcoming");
-          const diff = start.getTime() - now.getTime();
-          const d = Math.floor(diff / 86400000),
-            h = Math.floor((diff % 86400000) / 3600000),
-            m = Math.floor((diff % 3600000) / 60000);
-          cd.textContent = `${d}d ${h}h ${m}m left`;
-          st.textContent = "⏳ Coming soon";
-        } else if (now.getTime() > end.getTime()) {
-          el.classList.remove("upcoming", "happening");
-          el.classList.add("finished");
-          cd.textContent = `Ended ${formatISO(end)}`;
-          st.textContent = "✅ Finished";
-        } else {
-          el.classList.remove("upcoming", "finished");
-          el.classList.add("happening");
-          const diff = end.getTime() - now.getTime();
-          const d = Math.floor(diff / 86400000),
-            h = Math.floor((diff % 86400000) / 3600000),
-            m = Math.floor((diff % 3600000) / 60000);
-          cd.textContent = `${d}d ${h}h ${m}m remaining`;
-          st.textContent = "🔴 Happening now";
-        }
-      }
-
-      /* renderAll - builds grid with consistent spacing and image handling */
-      async function renderAll() {
+      function renderAll() {
+        // clear previous tick
         if (tickHandle) {
           clearInterval(tickHandle);
           tickHandle = null;
         }
         items = [];
+        const grid = $("eventsGrid");
+        if (!grid) return;
+        grid.innerHTML = "";
         sortEvents();
         renderNextUp();
-        const grid = $("eventsGrid");
-        grid.innerHTML = "";
         const q = ($("searchBox").value || "").toLowerCase();
         const monthVal = $("monthFilter").value || "";
-
-        const allEventImages = await IDB.getAllEventImages();
 
         let currentGroup = "";
         EVENTS.forEach((ev, idx) => {
@@ -1316,6 +1351,7 @@
           if (monthVal && ev.start.slice(5, 7) !== monthVal) return;
 
           const start = parseStart(ev.start);
+          const end = parseEnd(ev.end, start);
           const mmKey = `${start.getFullYear()}-${pad(start.getMonth() + 1)}`;
           if (mmKey !== currentGroup) {
             currentGroup = mmKey;
@@ -1333,56 +1369,66 @@
             grid.appendChild(heading);
           }
 
-          const startDate = parseStart(ev.start);
-          const endDate = parseEnd(ev.end, startDate);
           const id = slugify(ev.name, idx);
-          const monthColor =
-            MONTH_COLORS[pad(startDate.getMonth() + 1)] || "#ccc";
-
-          const imgs = allEventImages.filter((i) => i.eventIdx === idx);
-          const firstImgURL = imgs.length
-            ? URL.createObjectURL(imgs[0].blob)
-            : HERO;
-
+          const monthColor = MONTH_COLORS[pad(start.getMonth() + 1)] || "#ccc";
           const card = document.createElement("article");
           card.className = "card";
-          card.setAttribute("data-idx", idx);
           card.setAttribute("data-id", id);
+          card.setAttribute("data-idx", idx);
           card.innerHTML = `
       <div class="month-strip" style="background:${monthColor}"></div>
       <button class="pin-btn" title="Pin event" aria-label="Pin event" data-idx="${idx}">📌</button>
-      <div class="card-image"><img src="${firstImgURL}" alt="${ev.name}"></div>
+      <div class="big-letter" aria-hidden="true">${
+        ev.name && ev.name[0] ? ev.name[0].toUpperCase() : "E"
+      }</div>
       <div class="card-content">
-        <div class="title"><div class="name">${ev.name}</div></div>
+        <div class="title" id="title-wrap-${id}"><span class="fill" id="title-fill-${id}">${
+            ev.name
+          }</span><span class="fallback" id="title-fallback-${id}">${
+            ev.name
+          }</span></div>
         <div class="meta">${eventIcon(ev.name)} ${
             ev.end
-              ? `${formatISO(startDate)} → ${formatISO(parseStart(ev.end))}`
-              : formatISO(startDate)
+              ? `${formatISO(start)} → ${formatISO(parseStart(ev.end))}`
+              : formatISO(start)
           }</div>
         <div class="countdown" id="cd-${id}">—</div>
         <div class="status" id="st-${id}">—</div>
-        <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
-          <div class="date-badge">${dateBadge(ev.start, ev.end)}</div>
-          <div style="margin-left:auto;display:flex;gap:8px">
-            <label style="display:flex;align-items:center;gap:6px">
-              <input type="file" accept="image/*" multiple data-idx="${idx}" style="display:none" class="attach-input">
-              <button class="btn attach-btn">📷 Attach</button>
-            </label>
-            <button class="btn view-gallery-btn">${
-              imgs.length ? imgs.length + " image(s)" : "Open gallery"
-            }</button>
-          </div>
-        </div>
+        <div class="date-badge" id="db-${id}">${formatDateBadge(
+            ev.start,
+            ev.end
+          )}</div>
       </div>
     `;
           grid.appendChild(card);
 
-          items.push({ id, start: startDate, end: endDate, el: card, idx });
+          // preload fill background (use HERO for consistency)
+          (function (iid, url) {
+            const im = new Image();
+            im.crossOrigin = "anonymous";
+            im.onload = () => {
+              const f = document.getElementById("title-fill-" + iid);
+              const fb = document.getElementById("title-fallback-" + iid);
+              if (f) {
+                f.style.backgroundImage = `url('${url}')`;
+                f.style.backgroundSize = "cover";
+                f.style.backgroundPosition = "center";
+                f.style.opacity = "1";
+                if (fb) fb.style.opacity = "0";
+              }
+            };
+            im.onerror = () => {};
+            im.src = url;
+          })(id, HERO);
 
+          items.push({ id, name: ev.name, start, end, el: card, idx });
+
+          // pin button wiring
           const pb = card.querySelector(".pin-btn");
           if (pb) {
-            const refresh = () =>
-              pb.classList.toggle("active", getPinned().includes(idx));
+            function refresh() {
+              pb.classList.toggle("active", isPinned(idx));
+            }
             pb.addEventListener("click", (e) => {
               e.stopPropagation();
               togglePin(idx);
@@ -1391,186 +1437,210 @@
             refresh();
           }
 
-          // attach input
-          const attachBtn = card.querySelector(".attach-btn");
-          const attachInput = card.querySelector(".attach-input");
-          attachBtn.addEventListener("click", () => attachInput.click());
-          attachInput.addEventListener("change", async (ev) => {
-            const files = Array.from(ev.target.files || []);
-            for (const f of files) await IDB.putEventImage(idx, f, f.name);
-            renderAll();
-          });
-
-          const viewBtn = card.querySelector(".view-gallery-btn");
-          viewBtn.addEventListener("click", async () => {
-            const imgs = await IDB.getEventImagesByIdx(idx);
-            const photos = imgs.length
-              ? imgs.map((x) => ({
-                  src: URL.createObjectURL(x.blob),
-                  caption: EVENTS[idx].name,
-                }))
-              : [{ src: HERO, caption: EVENTS[idx].name }];
-            openLightbox(photos, 0);
-          });
-
+          // keyboard
           card.tabIndex = 0;
           card.addEventListener("keydown", (e) => {
             if (e.key === "Enter") card.click();
           });
 
+          // swipe-to-pin for touch
           addSwipeToPin(card, idx);
         });
 
-        // tick
+        // tick updates
         tickHandle = setInterval(() => {
           const now = new Date();
           items.forEach((i) => updateOne(i, now));
           updatePinnedCounts(now);
         }, 1000);
         items.forEach((i) => updateOne(i, new Date()));
+
         renderPinnedPanel();
+        if (mode === "museum") renderGallery();
+        if (mode === "birthdays") renderBirthdays();
         updateYearProgress();
-        applyModeUI(); // ensures gallery/birthdays visibility consistent
+        applyMode();
       }
 
-      /* helper: date badge */
-      function dateBadge(start, end) {
+      function formatDateBadge(start, end) {
         const s = parseStart(start);
-        if (!end) return `${shortMonth(s.getMonth() + 1)} ${s.getDate()}`;
-        const e = parseStart(end);
+        const e = end ? parseStart(end) : null;
+        const shortMon = (d) => d.toLocaleString("en", { month: "short" });
+        if (!e) return `${shortMon(s)} ${s.getDate()}`;
         if (
           s.getFullYear() === e.getFullYear() &&
           s.getMonth() === e.getMonth()
         )
-          return `${shortMonth(
-            s.getMonth() + 1
-          )} ${s.getDate()}–${e.getDate()}`;
-        return `${shortMonth(s.getMonth() + 1)} ${s.getDate()} – ${shortMonth(
-          e.getMonth() + 1
-        )} ${e.getDate()}`;
+          return `${shortMon(s)} ${s.getDate()}–${e.getDate()}`;
+        return `${shortMon(s)} ${s.getDate()} – ${shortMon(e)} ${e.getDate()}`;
       }
 
-      /* ---------------- pinned panel ---------------- */
-      function getPinned() {
-        try {
-          return JSON.parse(localStorage.getItem("maxwell_pinned_v2") || "[]");
-        } catch (e) {
-          return [];
+      function updateOne(item, now) {
+        const { id, start, end, el } = item;
+        const cd = document.getElementById("cd-" + id);
+        const st = document.getElementById("st-" + id);
+        if (!cd || !st) return;
+        if (now.getTime() < start.getTime()) {
+          el.classList.remove("happening", "finished");
+          el.classList.add("upcoming");
+          const diff = start.getTime() - now.getTime();
+          const d = Math.floor(diff / 86400000);
+          const h = Math.floor((diff % 86400000) / 3600000);
+          const m = Math.floor((diff % 3600000) / 60000);
+          const s = Math.floor((diff % 60000) / 1000);
+          cd.textContent = `${d}d ${h}h ${m}m ${s}s left`;
+          st.textContent = "⏳ Coming soon";
+        } else if (now.getTime() > end.getTime()) {
+          el.classList.remove("upcoming", "happening");
+          el.classList.add("finished");
+          cd.textContent = `Ended on ${formatISO(end)}`;
+          st.textContent = "✅ Finished";
+        } else {
+          el.classList.remove("upcoming", "finished");
+          el.classList.add("happening");
+          const diff = end.getTime() - now.getTime();
+          const d = Math.floor(diff / 86400000);
+          const h = Math.floor((diff % 86400000) / 3600000);
+          const m = Math.floor((diff % 3600000) / 60000);
+          const s = Math.floor((diff % 60000) / 1000);
+          cd.textContent = `${d}d ${h}h ${m}m ${s}s remaining`;
+          st.textContent = "🔴 Happening now";
         }
       }
-      function setPinned(arr) {
-        localStorage.setItem("maxwell_pinned_v2", JSON.stringify(arr));
-        renderPinnedPanel();
-      }
-      function togglePin(i) {
-        const arr = getPinned();
-        const p = arr.indexOf(i);
-        if (p === -1) {
-          arr.unshift(i);
-          while (arr.length > 50) arr.pop();
-        } else arr.splice(p, 1);
-        setPinned(arr);
-      }
+
+      /* -------------------------
+   Pinned panel
+   ------------------------- */
       function renderPinnedPanel() {
         const container = $("pinnedColumn");
         if (!container) return;
-        const header = container.querySelector(".pinned-top");
+        const header = container.querySelector(".panel-top");
         container.innerHTML = "";
         if (header) container.appendChild(header);
-        const pins = getPinned();
-        if (!pins || pins.length === 0) {
+
+        const now = new Date();
+        const pinnedIndices = getPinned();
+        const mapped = EVENTS.map((ev, i) => ({
+          ev,
+          i,
+          start: parseStart(ev.start),
+          end: parseEnd(ev.end, parseStart(ev.start)),
+        }));
+        // if no pins hide panel & toggle
+        if (pinnedIndices.length === 0) {
           container.classList.add("hidden");
           $("pinnedToggleBtn").classList.add("hidden");
           return;
+        } else {
+          container.classList.remove("hidden");
+          $("pinnedToggleBtn").classList.remove("hidden");
         }
-        container.classList.remove("hidden");
-        $("pinnedToggleBtn").classList.remove("hidden");
-        const now = new Date();
-        pins.forEach((idx) => {
-          if (EVENTS[idx] === undefined) return;
-          const ev = EVENTS[idx];
-          const s = parseStart(ev.start),
-            e = parseEnd(ev.end, s);
+
+        pinnedIndices.forEach((idx) => {
+          const o = EVENTS[idx];
+          if (!o) return;
+          const start = parseStart(o.start);
+          const end = parseEnd(o.end, start);
+          const id = "pin_" + slugify(o.name + "-" + idx, idx);
           const chip = document.createElement("div");
           chip.className = "pinned-chip";
-          chip.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><div><div class="pinned-title">${
-            ev.name
-          }</div><div class="pinned-sub">${
-            ev.end
-              ? formatISO(s) + " → " + formatISO(parseStart(ev.end))
-              : formatISO(s)
-          }</div></div><div style="text-align:right"><div class="pinned-count" id="count-pin-${idx}">—</div></div></div><div class="pinned-progress"><i style="width:0%"></i></div>`;
+          chip.id = id;
+          chip.dataset.eventIndex = String(idx);
+          chip.innerHTML = `
+      <div class="pinned-row-top">
+        <div style="min-width:0">
+          <div class="pinned-title">${o.name}</div>
+          <div class="pinned-sub">${
+            o.end
+              ? formatISO(start) + " → " + formatISO(parseStart(o.end))
+              : formatISO(start)
+          }</div>
+        </div>
+        <div style="text-align:right"><div class="pinned-count" id="count-${id}">—</div></div>
+      </div>
+      <div class="pinned-progress"><i style="width:0%"></i></div>
+    `;
+          // click scroll to item
           chip.addEventListener("click", () => {
+            const idx = Number(chip.dataset.eventIndex);
             const target = items.find((it) => it.idx === idx);
             if (target && target.el) {
               target.el.scrollIntoView({ behavior: "smooth", block: "center" });
-              target.el.style.boxShadow = "0 30px 80px rgba(255,180,60,0.22)";
-              setTimeout(() => (target.el.style.boxShadow = ""), 1200);
+              target.el.style.boxShadow = "0 20px 60px rgba(255,180,60,0.32)";
+              target.el.style.transform = "translateY(-8px)";
+              setTimeout(() => {
+                target.el.style.boxShadow = "";
+                target.el.style.transform = "";
+              }, 1200);
             }
           });
           container.appendChild(chip);
         });
         updatePinnedCounts(new Date());
       }
+
       function updatePinnedCounts(now) {
         if (!now) now = new Date();
-        const pins = getPinned();
-        pins.forEach((idx) => {
+        const container = $("pinnedColumn");
+        if (!container) return;
+        const chips = Array.from(container.querySelectorAll(".pinned-chip"));
+        chips.forEach((chip) => {
+          const idx = Number(chip.dataset.eventIndex);
           const ev = EVENTS[idx];
           if (!ev) return;
-          const s = parseStart(ev.start),
-            e = parseEnd(ev.end, s);
+          const start = parseStart(ev.start);
+          const end = parseEnd(ev.end, start);
           let txt = "",
-            pct = 0;
-          if (now.getTime() < s.getTime()) {
-            const diff = s.getTime() - now.getTime();
-            const d = Math.floor(diff / 86400000),
-              h = Math.floor((diff % 86400000) / 3600000),
-              m = Math.floor((diff % 3600000) / 60000);
-            txt = `${d}d ${h}h ${m}m left`;
-            pct = 0;
-          } else if (now.getTime() > e.getTime()) {
-            const diff = now.getTime() - e.getTime();
+            percent = 0;
+          if (now.getTime() < start.getTime()) {
+            const diff = start.getTime() - now.getTime();
             const d = Math.floor(diff / 86400000);
-            txt = `Ended ${d}d ago`;
-            pct = 100;
+            const h = Math.floor((diff % 86400000) / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            txt = `${d}d ${h}h ${m}m left`;
+            percent = 0;
+          } else if (now.getTime() > end.getTime()) {
+            txt = `Finished`;
+            percent = 100;
           } else {
-            const total = e.getTime() - s.getTime(),
-              remaining = e.getTime() - now.getTime(),
-              passed = total - remaining;
-            pct = Math.round((passed / total) * 100);
-            const d = Math.floor(remaining / 86400000),
-              h = Math.floor((remaining % 86400000) / 3600000),
-              m = Math.floor((remaining % 3600000) / 60000);
+            const total = end.getTime() - start.getTime();
+            const remaining = end.getTime() - now.getTime();
+            const passed = total - remaining;
+            percent = Math.max(
+              0,
+              Math.min(100, Math.round((passed / total) * 100))
+            );
+            const diff = remaining;
+            const d = Math.floor(diff / 86400000);
+            const h = Math.floor((diff % 86400000) / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
             txt = `${d}d ${h}h ${m}m remaining`;
           }
-          const el = document.getElementById("count-pin-" + idx);
-          if (el) el.textContent = txt;
-          const chip = el && el.closest(".pinned-chip");
-          if (chip) {
-            const bar = chip.querySelector(".pinned-progress i");
-            if (bar) bar.style.width = pct + "%";
-          }
+          const countEl = chip.querySelector(`#count-${chip.id}`);
+          const prog = chip.querySelector(".pinned-progress i");
+          if (countEl) countEl.textContent = txt;
+          if (prog) prog.style.width = percent + "%";
         });
       }
 
-      /* ---------------- swipe-to-pin (mobile) ---------------- */
+      /* -------------------------
+   Swipe to pin (mobile)
+   ------------------------- */
       function addSwipeToPin(card, idx) {
-        if (!card) return;
-        let down = false,
-          sx = 0,
-          sy = 0,
+        let pointerDown = false,
+          startX = 0,
+          startY = 0,
           moved = false;
-        function onDown(e) {
-          down = true;
-          sx = e.clientX;
-          sy = e.clientY;
+        function down(e) {
+          pointerDown = true;
+          startX = e.clientX;
+          startY = e.clientY;
           moved = false;
         }
-        function onMove(e) {
-          if (!down) return;
-          const dx = e.clientX - sx,
-            dy = e.clientY - sy;
+        function move(e) {
+          if (!pointerDown) return;
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
           if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) moved = true;
           if (moved)
             card.style.transform = `translateX(${Math.min(
@@ -1578,414 +1648,325 @@
               60
             )}px)`;
         }
-        function onUp(e) {
-          if (!down) return;
-          down = false;
+        function up(e) {
+          if (!pointerDown) return;
+          pointerDown = false;
           if (moved) {
-            const dx = e.clientX - sx;
+            const dx = e.clientX - startX;
             if (dx > 60) {
               togglePin(idx);
               renderPinnedPanel();
               const pb = card.querySelector(".pin-btn");
               if (pb) pb.classList.add("active");
+              card.style.transform = "";
             } else if (dx < -60) {
               togglePin(idx);
               renderPinnedPanel();
               const pb = card.querySelector(".pin-btn");
               if (pb) pb.classList.remove("active");
-            }
-            card.style.transform = "";
+              card.style.transform = "";
+            } else card.style.transform = "";
           }
         }
-        card.addEventListener("pointerdown", onDown);
-        card.addEventListener("pointermove", onMove);
-        card.addEventListener("pointerup", onUp);
-        card.addEventListener("pointercancel", onUp);
+        card.addEventListener("pointerdown", down);
+        card.addEventListener("pointermove", move);
+        card.addEventListener("pointerup", up);
+        card.addEventListener("pointercancel", up);
       }
 
-      /* ---------------- gallery & lightbox ---------------- */
-      async function renderGallery() {
+      /* -------------------------
+   Gallery (museum)
+   ------------------------- */
+      function renderGallery() {
         const wrap = $("gallerySection");
         if (!wrap) return;
         wrap.innerHTML = "";
-        // Load uploads
-        const uploads = await IDB.getAllUploads();
-        const groups = {};
-        DEFAULT_GALLERY.forEach((p) =>
-          (groups[p.section] = groups[p.section] || []).push(p)
-        );
-        if (uploads && uploads.length)
-          groups["Uploads"] = uploads.map((u) => ({
-            src: URL.createObjectURL(u.blob),
-            caption: u.name || "Upload",
-            section: "Uploads",
-          }));
-        Object.keys(groups).forEach((section) => {
-          const sec = document.createElement("div");
-          sec.className = "gallery-month";
-          const heading = document.createElement("div");
-          heading.className = "month-heading";
-          heading.textContent = section;
-          sec.appendChild(heading);
-          const grid = document.createElement("div");
-          grid.className = "gallery-grid";
-          groups[section].forEach((p, i) => {
-            const t = document.createElement("div");
-            t.className = "gallery-thumb";
-            t.innerHTML = `<img src="${p.src}" alt="${p.caption}"><div class="gallery-caption">${p.caption}</div>`;
-            t.addEventListener("click", () => openLightbox(groups[section], i));
-            grid.appendChild(t);
-          });
-          sec.appendChild(grid);
-          wrap.appendChild(sec);
+        const monthFilter = $("monthFilter").value || "";
+        // group by year-month
+        const months = new Map();
+        MUSEUM_PHOTOS.forEach((photo) => {
+          const key = `${photo.year}-${photo.month}`;
+          if (!months.has(key))
+            months.set(key, {
+              month: photo.month,
+              year: photo.year,
+              photos: [],
+            });
+          months.get(key).photos.push(photo);
         });
+        Array.from(months.entries())
+          .sort()
+          .forEach(([key, group]) => {
+            if (monthFilter && group.month !== monthFilter) return;
+            const section = document.createElement("div");
+            section.className = "gallery-month";
+            const heading = document.createElement("div");
+            heading.className = "month-heading";
+            heading.textContent = `${new Date(
+              group.year + "-" + group.month + "-01"
+            ).toLocaleString("en", { month: "long", year: "numeric" })}`;
+            heading.addEventListener("click", () => {
+              $("monthFilter").value = group.month;
+              highlightMonthButton(group.month);
+              renderGallery();
+            });
+            section.appendChild(heading);
+            const grid = document.createElement("div");
+            grid.className = "gallery-grid";
+            group.photos.forEach((p, i) => {
+              const t = document.createElement("div");
+              t.className = "gallery-thumb";
+              t.tabIndex = 0;
+              t.innerHTML = `<img src="${p.src}" alt="${p.caption}"><div class="gallery-caption">${p.caption}</div>`;
+              t.addEventListener("click", () => openLightbox(group.photos, i));
+              t.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") openLightbox(group.photos, i);
+              });
+              grid.appendChild(t);
+            });
+            section.appendChild(grid);
+            wrap.appendChild(section);
+          });
       }
 
+      /* -------------------------
+   Lightbox
+   ------------------------- */
       let lbPhotos = [],
         lbIndex = 0;
       function openLightbox(photos, idx) {
         lbPhotos = photos;
         lbIndex = idx;
-        $("lbImage").src = photos[idx].src;
-        $("lbCaption").textContent = photos[idx].caption || "";
-        $("lightbox").classList.add("open");
-        $("lightbox").setAttribute("aria-hidden", "false");
-        renderLightboxThumbs();
+        const light = $("lightbox");
+        const img = $("lbImage");
+        const cap = $("lbCaption");
+        img.src = photos[idx].src;
+        img.alt = photos[idx].caption;
+        cap.textContent = photos[idx].caption;
+        light.classList.add("open");
+        light.setAttribute("aria-hidden", "false");
       }
       function closeLightbox() {
-        $("lightbox").classList.remove("open");
-        $("lightbox").setAttribute("aria-hidden", "true");
+        const light = $("lightbox");
+        light.classList.remove("open");
+        light.setAttribute("aria-hidden", "true");
       }
       function lbNext() {
         if (!lbPhotos.length) return;
         lbIndex = (lbIndex + 1) % lbPhotos.length;
         $("lbImage").src = lbPhotos[lbIndex].src;
-        $("lbCaption").textContent = lbPhotos[lbIndex].caption || "";
-        renderLightboxThumbs();
+        $("lbCaption").textContent = lbPhotos[lbIndex].caption;
       }
       function lbPrev() {
         if (!lbPhotos.length) return;
         lbIndex = (lbIndex - 1 + lbPhotos.length) % lbPhotos.length;
         $("lbImage").src = lbPhotos[lbIndex].src;
-        $("lbCaption").textContent = lbPhotos[lbIndex].caption || "";
-        renderLightboxThumbs();
-      }
-      function renderLightboxThumbs() {
-        const wrap = $("lbThumbs");
-        wrap.innerHTML = "";
-        lbPhotos.forEach((p, i) => {
-          const img = document.createElement("img");
-          img.src = p.src;
-          img.style.width = "48px";
-          img.style.height = "48px";
-          img.style.objectFit = "cover";
-          img.style.borderRadius = "6px";
-          img.style.cursor = "pointer";
-          img.style.opacity = i === lbIndex ? "1" : "0.6";
-          img.addEventListener("click", () => {
-            lbIndex = i;
-            $("lbImage").src = p.src;
-            $("lbCaption").textContent = p.caption || "";
-            renderLightboxThumbs();
-          });
-          wrap.appendChild(img);
-        });
+        $("lbCaption").textContent = lbPhotos[lbIndex].caption;
       }
       $("lbClose").addEventListener("click", closeLightbox);
       $("lbNext").addEventListener("click", lbNext);
       $("lbPrev").addEventListener("click", lbPrev);
       document.addEventListener("keydown", (e) => {
-        const l = $("lightbox");
-        if (l.classList.contains("open")) {
+        const light = $("lightbox");
+        if (light.classList.contains("open")) {
           if (e.key === "ArrowRight") lbNext();
           if (e.key === "ArrowLeft") lbPrev();
           if (e.key === "Escape") closeLightbox();
         }
       });
 
-      /* ---------------- birthdays: render grid + popups ---------------- */
-      function renderBirthdays() {
-        const grid = $("bdGrid");
-        grid.innerHTML = "";
+      /* -------------------------
+   Birthdays rendering & popup
+   ------------------------- */
+      function buildBirthdayList() {
+        return BIRTHDAYS_RAW.map(([name, mmddyyyy]) => {
+          // mm/dd/yyyy -> extract month/day/year
+          const [mm, dd, yyyy] = mmddyyyy.split("/").map(Number);
+          const dob = new Date(yyyy, mm - 1, dd, 0, 0, 0, 0);
+          return { name, dob, month: pad(mm), day: pad(dd), year: yyyy };
+        });
+      }
+
+      const BIRTHDAYS = buildBirthdayList();
+
+      function daysUntilNext(birth) {
         const now = new Date();
-        BIRTHDAYS.forEach((bd, i) => {
-          // next occurrence
-          const y = now.getFullYear();
-          let occ = new Date(y, bd.month - 1, bd.day);
-          if (occ < new Date(now.getFullYear(), now.getMonth(), now.getDate()))
-            occ = new Date(y + 1, bd.month - 1, bd.day);
-          const diff = occ.getTime() - now.getTime();
-          const days = Math.floor(Math.abs(diff) / 86400000);
+        const mm = Number(birth.month),
+          dd = Number(birth.day);
+        const nxt = nextOccurrence(mm, dd, now);
+        const diff = Math.ceil(
+          (nxt -
+            new Date(
+              now.getFullYear(),
+              now.getMonth(),
+              now.getDate(),
+              0,
+              0,
+              0,
+              0
+            )) /
+            86400000
+        );
+        return diff;
+      }
+      function ageAtNext(birth) {
+        const now = new Date();
+        const mm = Number(birth.month),
+          dd = Number(birth.day);
+        const nxt = nextOccurrence(mm, dd, now);
+        return nxt.getFullYear() - birth.year;
+      }
+
+      /* show birthdays section sorted by closest upcoming */
+      function renderBirthdays() {
+        const wrap = $("birthGrid");
+        if (!wrap) return;
+        wrap.innerHTML = "";
+        // compute next occurrence for each and sort by days until next
+        const enriched = BIRTHDAYS.map((b) => ({
+          ...b,
+          daysUntil: daysUntilNext(b),
+          ageNext: ageAtNext(b),
+        })).sort((a, b) => a.daysUntil - b.daysUntil);
+        enriched.forEach((b) => {
           const card = document.createElement("div");
           card.className = "bd-card";
-          card.innerHTML = `<div class="bd-name">${
-            bd.name
-          }</div><div class="bd-date">${shortMonth(bd.month)} ${
-            bd.day
-          }</div><div class="bd-countdown" id="bdcount-${i}">${
-            diff >= 0 ? days + "d left" : days + "d ago"
-          }</div>`;
-          // non-clickable per request:
-          card.style.pointerEvents = "none";
-          grid.appendChild(card);
+          const name = document.createElement("div");
+          name.className = "bd-name";
+          name.textContent = b.name;
+          const dob = document.createElement("div");
+          dob.className = "bd-date";
+          dob.textContent = `${b.month}/${b.day}/${b.year} • Turning ${b.ageNext}`;
+          const count = document.createElement("div");
+          count.className = "bd-count";
+          if (b.daysUntil === 0) count.textContent = `Today! 🎉`;
+          else count.textContent = `In ${b.daysUntil} day(s)`;
+          card.appendChild(name);
+          card.appendChild(dob);
+          card.appendChild(count);
+          wrap.appendChild(card);
         });
       }
 
-      /* show birthday popups for today's birthdays (centered white box, confetti) */
-      async function showBirthdayPopupsIfToday() {
+      /* Birthday popup sequence on page load (for any birthdays that are today)
+   - Shows a centered white box with name + "Happy Birthday"
+   - 2 seconds each (customizable)
+   - confetti/fireworks canvas animation during each popup
+*/
+      async function runBirthdayPopups() {
         const today = new Date();
-        const matches = BIRTHDAYS.filter(
-          (b) => b.month === today.getMonth() + 1 && b.day === today.getDate()
-        );
-        if (!matches.length) return;
-        for (const bd of matches) {
-          await showBirthdayPopup(bd);
-          // small pause between multiple persons on same day
-          await new Promise((r) => setTimeout(r, 250));
-        }
-      }
-      function showBirthdayPopup(bd) {
-        return new Promise((resolve) => {
-          const wrap = $("bdPopupWrap");
-          const box = $("bdPopup");
-          box.innerHTML = `<div style="font-size:20px">${bd.name}</div><div class="small">Happy Birthday!</div>`;
-          wrap.classList.add("show");
-          startConfetti(140);
-          startFireworksBurst();
-          // shake effect
-          box.animate(
-            [
-              { transform: "translateY(0)" },
-              { transform: "translateY(-6px)" },
-              { transform: "translateY(0)" },
-            ],
-            { duration: 600, iterations: 3 }
-          );
-          setTimeout(() => {
-            stopConfetti();
-            stopFireworks();
-            wrap.classList.remove("show");
-            resolve();
-          }, 2600);
-        });
-      }
-
-      /* ---------------- Confetti & Fireworks ---------------- */
-      let confRAF = null,
-        confActive = false;
-      function startConfetti(count = 120) {
-        const canvas = $("confettiCanvas");
-        if (!canvas) return;
-        canvas.width = innerWidth;
-        canvas.height = innerHeight;
+        const mm = pad(today.getMonth() + 1),
+          dd = pad(today.getDate());
+        // find all birthdays matching today
+        const todays = BIRTHDAYS.filter((b) => b.month === mm && b.day === dd);
+        if (!todays.length) return;
+        const wrap = $("bdPopupWrap");
+        wrap.innerHTML = "";
+        wrap.style.display = "flex";
+        wrap.setAttribute("aria-hidden", "false");
+        const canvas = $("popupConfetti");
         const ctx = canvas.getContext("2d");
-        const parts = Array.from({ length: count }, () => ({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height * 0.6,
-          w: 6 + Math.random() * 10,
-          h: 6 + Math.random() * 10,
-          vx: (Math.random() - 0.5) * 3,
-          vy: 2 + Math.random() * 4,
-          rot: Math.random() * 360,
-          vr: Math.random() * 8,
-          color: `hsl(${Math.random() * 60 + 30},90%,60%)`,
-        }));
-        confActive = true;
-        function frame() {
-          if (!confActive) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            return;
-          }
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          for (const p of parts) {
-            ctx.save();
-            ctx.translate(p.x, p.y);
-            ctx.rotate((p.rot * Math.PI) / 180);
-            ctx.fillStyle = p.color;
-            ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-            ctx.restore();
-            p.x += p.vx;
-            p.y += p.vy;
-            p.rot += p.vr;
-            if (p.y > canvas.height + 40) {
-              p.y = -20;
-              p.x = Math.random() * canvas.width;
+        function resize() {
+          canvas.width = innerWidth;
+          canvas.height = innerHeight;
+        }
+        resize();
+        window.addEventListener("resize", resize);
+        // simple confetti/fireworks system
+        function playParticlesFor(seconds) {
+          const particles = [];
+          const now = Date.now();
+          let running = true;
+          const colors = [
+            "#ffb84d",
+            "#ffd24a",
+            "#ff7aa2",
+            "#66a3ff",
+            "#9b59b6",
+            "#6ab04c",
+          ];
+          function spawnBurst() {
+            const cx = innerWidth / 2;
+            const cy = innerHeight / 2 - 20;
+            const count = 36;
+            for (let i = 0; i < count; i++) {
+              const angle =
+                Math.PI * 2 * (i / count) + (Math.random() * 0.4 - 0.2);
+              const speed = 2 + Math.random() * 4;
+              particles.push({
+                x: cx,
+                y: cy,
+                vx: Math.cos(angle) * speed * (0.8 + Math.random()),
+                vy:
+                  Math.sin(angle) * speed * (0.8 + Math.random()) -
+                  1.6 -
+                  Math.random(),
+                life: 60 + Math.random() * 40,
+                age: 0,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                size: 3 + Math.random() * 4,
+              });
             }
           }
-          confRAF = requestAnimationFrame(frame);
-        }
-        frame();
-      }
-      function stopConfetti() {
-        confActive = false;
-        if (confRAF) cancelAnimationFrame(confRAF);
-        const c = $("confettiCanvas");
-        if (c) {
-          const ctx = c.getContext("2d");
-          ctx.clearRect(0, 0, c.width, c.height);
-        }
-      }
-
-      let fireRAF = null,
-        fireActive = false;
-      function startFireworksBurst() {
-        const canvas = $("fireCanvas");
-        if (!canvas) return;
-        canvas.width = innerWidth;
-        canvas.height = innerHeight;
-        const ctx = canvas.getContext("2d");
-        fireActive = true;
-        const bursts = [];
-        function spawn() {
-          const cx = innerWidth * (0.2 + Math.random() * 0.6);
-          const cy = innerHeight * (0.12 + Math.random() * 0.45);
-          const color = ["#ffd24a", "#ffb84d", "#ff7b7b", "#9b59b6", "#66a3ff"][
-            Math.floor(Math.random() * 5)
-          ];
-          const count = 20 + Math.floor(Math.random() * 30);
-          const parts = [];
-          for (let i = 0; i < count; i++) {
-            const ang = Math.random() * Math.PI * 2,
-              speed = 1.8 + Math.random() * 3.4;
-            parts.push({
-              x: cx,
-              y: cy,
-              vx: Math.cos(ang) * speed,
-              vy: Math.sin(ang) * speed,
-              life: Math.random() * 80 + 40,
-              color,
-              alpha: 1,
-            });
-          }
-          bursts.push({ parts, ttl: 120 });
-        }
-        function frame() {
-          if (!fireActive) {
+          spawnBurst();
+          let raf;
+          function step() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            return;
-          }
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          if (Math.random() < 0.08) spawn();
-          bursts.forEach((b) => {
-            b.parts.forEach((p) => {
-              ctx.beginPath();
-              ctx.fillStyle = p.color;
-              ctx.globalAlpha = p.alpha;
-              ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
-              ctx.fill();
+            for (let i = particles.length - 1; i >= 0; i--) {
+              const p = particles[i];
+              p.age++;
+              p.vy += 0.06;
+              p.vx *= 0.996;
+              p.vy *= 0.998;
               p.x += p.vx;
               p.y += p.vy;
-              p.vy += 0.03;
-              p.life -= 1;
-              p.alpha = Math.max(0, p.life / 120);
-            });
-            b.ttl -= 1;
-          });
-          for (let i = bursts.length - 1; i >= 0; i--)
-            if (bursts[i].ttl <= 0) bursts.splice(i, 1);
-          ctx.globalAlpha = 1;
-          fireRAF = requestAnimationFrame(frame);
-        }
-        frame();
-      }
-      function stopFireworks() {
-        fireActive = false;
-        if (fireRAF) cancelAnimationFrame(fireRAF);
-        const c = $("fireCanvas");
-        if (c) {
-          const ctx = c.getContext("2d");
-          ctx.clearRect(0, 0, c.width, c.height);
-        }
-      }
-
-      /* ---------------- Uploads + Drive import (best-effort) ---------------- */
-      $("uploadBtn").addEventListener("click", async () => {
-        const inp = $("uploadInput");
-        if (!inp.files.length) return alert("Choose files to upload");
-        for (const f of Array.from(inp.files)) await IDB.putUpload(f, f.name);
-        inp.value = "";
-        renderUploadsPreview();
-        renderGallery();
-      });
-      $("clearUploads").addEventListener("click", async () => {
-        if (confirm("Clear all uploaded images?")) {
-          await IDB.clearUploads();
-          renderUploadsPreview();
-          renderGallery();
-        }
-      });
-      async function renderUploadsPreview() {
-        const cont = $("uploadsPreview");
-        cont.innerHTML = "";
-        const list = await IDB.getAllUploads();
-        list.forEach((item) => {
-          const d = document.createElement("div");
-          d.style.position = "relative";
-          d.innerHTML = `<img src="${URL.createObjectURL(
-            item.blob
-          )}" style="width:100%;height:80px;object-fit:cover;border-radius:8px">`;
-          cont.appendChild(d);
-        });
-      }
-
-      /* Drive helper - accept links or IDs, attempt fetch to public 'uc?export=view&id=ID' */
-      $("importDriveBtn").addEventListener("click", async () => {
-        const raw = $("gdriveInput").value.trim();
-        if (!raw)
-          return alert(
-            "Paste Drive file links or IDs (comma separated), make files public."
-          );
-        const parts = raw
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean);
-        let imported = 0,
-          failed = 0;
-        for (const p of parts) {
-          let id = null;
-          let url = p;
-          // extract id if link
-          const m1 = p.match(/\/file\/d\/([a-zA-Z0-9_-]{10,})/);
-          const m2 = p.match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
-          const m3 = p.match(/\/folders\/([a-zA-Z0-9_-]{10,})/);
-          if (m1) id = m1[1];
-          else if (m2) id = m2[1];
-          else if (m3) id = m3[1];
-          if (id) url = `https://drive.google.com/uc?export=view&id=${id}`;
-          try {
-            const resp = await fetch(url);
-            if (!resp.ok) {
-              failed++;
-              continue;
+              ctx.globalAlpha = Math.max(0, 1 - p.age / p.life);
+              ctx.fillStyle = p.color;
+              ctx.beginPath();
+              ctx.ellipse(p.x, p.y, p.size, p.size, 0, 0, Math.PI * 2);
+              ctx.fill();
+              if (p.age > p.life) particles.splice(i, 1);
             }
-            const ct = resp.headers.get("content-type") || "";
-            if (!ct.startsWith("image/")) {
-              failed++;
-              continue;
+            if (Date.now() - now < seconds * 1000) {
+              if (Math.random() < 0.05) spawnBurst();
+              raf = requestAnimationFrame(step);
+            } else {
+              running = false;
+              cancelAnimationFrame(raf);
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
-            const blob = await resp.blob();
-            await IDB.putUpload(blob, id || url);
-            imported++;
-          } catch (e) {
-            failed++;
           }
+          step();
+          return new Promise((r) => setTimeout(r, seconds * 1000 + 120));
         }
-        alert(
-          `Imported ${imported}, failed ${failed}. If many failed ensure files are public.`
-        );
-        $("gdriveInput").value = "";
-        renderUploadsPreview();
-        renderGallery();
-      });
 
-      /* ---------------- month buttons + progress ---------------- */
+        for (const person of todays) {
+          // create popup box (centered)
+          const box = document.createElement("div");
+          box.className = "bd-popup shake";
+          box.innerHTML = `<h2>Happy Birthday</h2><p style="font-size:1.2rem;font-weight:900">${person.name}</p>`;
+          wrap.appendChild(box);
+          // animate scale & confetti
+          box.style.transform = "scale(.95)";
+          setTimeout(() => (box.style.transform = "scale(1)"), 50);
+          await playParticlesFor(2.0); // 2 seconds per user
+          box.remove();
+        }
+        wrap.style.display = "none";
+        wrap.setAttribute("aria-hidden", "true");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+
+      /* -------------------------
+   Month buttons generation & utilities
+   ------------------------- */
       function generateMonthButtons() {
         const container = $("monthButtons");
-        container.innerHTML = "";
+        if (!container) return;
         const months = new Map();
         EVENTS.forEach((ev) => {
-          const s = parseStart(ev.start),
-            key = `${s.getFullYear()}-${pad(s.getMonth() + 1)}`;
+          const s = parseStart(ev.start);
+          const key = `${s.getFullYear()}-${pad(s.getMonth() + 1)}`;
           if (!months.has(key))
             months.set(key, {
               label: `${s.toLocaleString("en", {
@@ -1994,6 +1975,7 @@
               month: pad(s.getMonth() + 1),
             });
         });
+        container.innerHTML = "";
         Array.from(months.entries())
           .sort()
           .forEach(([k, val]) => {
@@ -2003,6 +1985,7 @@
             btn.dataset.month = val.month;
             btn.addEventListener("click", () => {
               const mf = $("monthFilter");
+              if (!mf) return;
               if (mf.value === val.month) {
                 mf.value = "";
                 btn.classList.remove("active");
@@ -2014,185 +1997,23 @@
             });
             container.appendChild(btn);
           });
-      }
-      function highlightMonthButton(month) {
-        document
-          .querySelectorAll(".month-btn")
-          .forEach((b) =>
-            b.classList.toggle("active", b.dataset.month === month)
-          );
-      }
-      function updateYearProgress() {
-        if (!EVENTS.length) return;
-        const start = parseStart(EVENTS[0].start);
-        const last = EVENTS[EVENTS.length - 1];
-        const end = parseEnd(last.end, parseStart(last.start));
-        const now = new Date();
-        const total = end.getTime() - start.getTime();
-        const passed = Math.max(
-          0,
-          Math.min(total, now.getTime() - start.getTime())
-        );
-        const pct = Math.round((passed / total) * 100);
-        $("yearProgressBar").style.width = pct + "%";
-      }
 
-      /* ---------------- modes, prefs, UI wiring ---------------- */
-      let mode = "grid";
-      function applyModeUI() {
-        document
-          .querySelectorAll(".mode-btn")
-          .forEach((b) => b.classList.remove("active"));
-        if (mode === "grid") {
-          $("gridBtn").classList.add("active");
-          $("stage").style.display = "";
-          $("gallerySection").style.display = "none";
-          $("birthdaySection").style.display = "none";
-        } else if (mode === "museum") {
-          $("museumBtn").classList.add("active");
-          $("gallerySection").style.display = "";
-          $("stage").style.display = "none";
-          $("birthdaySection").style.display = "none";
-          renderGallery();
-        } else if (mode === "birthdays") {
-          $("birthBtn").classList.add("active");
-          $("birthdaySection").style.display = "";
-          $("gallerySection").style.display = "none";
-          $("stage").style.display = "none";
-          renderBirthdays();
-        } else if (mode === "present") {
-          $("presentBtn").classList.add("active");
-          $("stage").style.display = "";
-          $("gallerySection").style.display = "none";
-          $("birthdaySection").style.display = "none";
-          try {
-            document.documentElement.requestFullscreen?.();
-          } catch (e) {}
-        }
-        localStorage.setItem(
-          "maxwell_ui_prefs",
-          JSON.stringify({ mode, theme: $("themeSelect").value })
-        );
+        // also highlight current month button
+        const curMonth = pad(new Date().getMonth() + 1);
+        highlightMonthButton(curMonth, true);
       }
-      function loadPrefs() {
-        try {
-          const p = JSON.parse(
-            localStorage.getItem("maxwell_ui_prefs") || "null"
-          );
-          if (p) {
-            if (p.theme) document.body.setAttribute("data-theme", p.theme);
-            if (p.mode) mode = p.mode;
-          }
-        } catch (e) {}
-      }
-
-      /* UI wiring */
-      function wireUI() {
-        $("heroMedia").src = HERO;
-        $("gridBtn").addEventListener("click", () => {
-          mode = "grid";
-          applyModeUI();
-        });
-        $("museumBtn").addEventListener("click", () => {
-          mode = "museum";
-          applyModeUI();
-        });
-        $("birthBtn").addEventListener("click", () => {
-          mode = "birthdays";
-          applyModeUI();
-        });
-        $("presentBtn").addEventListener("click", () => {
-          mode = "present";
-          applyModeUI();
-        });
-        $("savePrefs").addEventListener("click", () => {
-          localStorage.setItem(
-            "maxwell_ui_prefs",
-            JSON.stringify({ mode, theme: $("themeSelect").value })
-          );
-          alert("Saved");
-        });
-        $("themeSelect").addEventListener("change", () =>
-          document.body.setAttribute("data-theme", $("themeSelect").value)
-        );
-        $("searchBox").addEventListener("input", () => renderAll());
-        $("monthFilter").addEventListener("change", () => {
-          highlightMonthButton($("monthFilter").value);
-          renderAll();
-        });
-        $("pinnedToggleBtn").addEventListener("click", () => {
-          const p = $("pinnedColumn");
-          if (p) p.classList.toggle("hidden");
-        });
-        $("pinCollapseBtn").addEventListener("click", () => {
-          const p = $("pinnedColumn");
-          if (p) p.classList.toggle("hidden");
-        });
-        $("clearPins").addEventListener("click", () => {
-          if (confirm("Clear pinned events?")) setPinned([]);
-        });
-        $("exportPins").addEventListener("click", () => {
-          const pins = getPinned();
-          const rows = [["name", "start", "end"]];
-          for (const i of pins)
-            if (EVENTS[i])
-              rows.push([
-                EVENTS[i].name,
-                EVENTS[i].start || "",
-                EVENTS[i].end || "",
-              ]);
-          const csv = rows
-            .map((r) =>
-              r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")
-            )
-            .join("\n");
-          const blob = new Blob([csv], { type: "text/csv" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "pinned-events.csv";
-          a.click();
-          URL.revokeObjectURL(url);
+      function highlightMonthButton(month, markCurrent = false) {
+        const btns = Array.from(document.querySelectorAll(".month-btn"));
+        btns.forEach((b) => {
+          b.classList.toggle("active", b.dataset.month === month);
+          if (markCurrent)
+            b.classList.toggle("current", b.dataset.month === month);
         });
       }
 
-      /* ---------------- bootstrapping ---------------- */
-      async function init() {
-        loadPrefs();
-        wireUI();
-        generateMonthButtons();
-        await renderAll();
-        renderGallery();
-        renderBirthdays();
-        renderUploadsPreview();
-        // show birthday popups if today
-        setTimeout(() => showBirthdayPopupsIfToday(), 700);
-        // show pinned toggle if pins exist
-        if (getPinned().length > 0) {
-          $("pinnedToggleBtn").classList.remove("hidden");
-          $("pinnedColumn").classList.remove("hidden");
-        }
-        // periodic pinned count updates
-        setInterval(() => updatePinnedCounts(new Date()), 1000);
-        // resize canvases for confetti/fireworks on window resize
-        window.addEventListener("resize", () => {
-          ["confettiCanvas", "fireCanvas"].forEach((id) => {
-            const c = $(id);
-            if (c) {
-              c.width = innerWidth;
-              c.height = innerHeight;
-            }
-          });
-        });
-      }
-      document.addEventListener("DOMContentLoaded", init);
-
-      /* ---------------- small utility for date formatting used earlier ---------------- */
-      function formatISO(d) {
-        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(
-          d.getDate()
-        )}`;
-      }
+      /* -------------------------
+   Year progress
+   ------------------------- */
       function updateYearProgress() {
         if (EVENTS.length === 0) return;
         const start = parseStart(EVENTS[0].start);
@@ -2207,7 +2028,237 @@
         const pct = Math.round((passed / total) * 100);
         $("yearProgressBar").style.width = pct + "%";
       }
-      updateYearProgress();
+
+      /* -------------------------
+   Color sampling for accent (attempt)
+   ------------------------- */
+      async function sampleAccent() {
+        const img = $("heroImg");
+        if (!img) return;
+        await new Promise((r) => {
+          if (img.complete) return r();
+          img.addEventListener("load", r, { once: true });
+          img.addEventListener("error", r, { once: true });
+        });
+        try {
+          const w = Math.min(img.naturalWidth || 200, 160),
+            h = Math.min(img.naturalHeight || 120, 120);
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, w, h);
+          const data = ctx.getImageData(0, 0, w, h).data;
+          let r = 0,
+            g = 0,
+            b = 0,
+            count = 0;
+          for (let i = 0; i < data.length; i += 4) {
+            const a = data[i + 3];
+            if (a < 80) continue;
+            r += data[i];
+            g += data[i + 1];
+            b += data[i + 2];
+            count++;
+          }
+          if (count === 0) throw new Error("no pixels");
+          r = Math.round(r / count);
+          g = Math.round(g / count);
+          b = Math.round(b / count);
+          const rgb = `rgb(${r},${g},${b})`;
+          document.documentElement.style.setProperty("--accent", rgb);
+          const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+          const accentText = lum > 0.6 ? "#072238" : "#ffffff";
+          document.documentElement.style.setProperty(
+            "--accent-text",
+            accentText
+          );
+        } catch (e) {
+          const next = findNext();
+          if (next) {
+            const m = pad(parseStart(next.start).getMonth() + 1);
+            const col = MONTH_COLORS[m] || "#ffd24a";
+            document.documentElement.style.setProperty("--accent", col);
+            document.documentElement.style.setProperty(
+              "--accent-text",
+              "#072238"
+            );
+          }
+        }
+      }
+
+      /* -------------------------
+   UI wiring & modes
+   ------------------------- */
+      function applyMode() {
+        const gallery = $("gallerySection"),
+          stage = $("stage"),
+          births = $("birthdaysSection");
+        document
+          .querySelectorAll(".mode-btn")
+          .forEach((b) => b.classList.remove("active"));
+        if (mode === "grid") {
+          $("gridBtn").classList.add("active");
+          gallery.style.display = "none";
+          births.style.display = "none";
+          stage.style.display = "";
+        } else if (mode === "museum") {
+          $("museumBtn").classList.add("active");
+          gallery.style.display = "";
+          births.style.display = "none";
+          stage.style.display = "none";
+          renderGallery();
+        } else if (mode === "birthdays") {
+          $("birthdaysBtn").classList.add("active");
+          gallery.style.display = "none";
+          births.style.display = "";
+          stage.style.display = "none";
+          renderBirthdays();
+        } else if (mode === "present") {
+          $("presentBtn").classList.add("active");
+          document.documentElement.requestFullscreen?.();
+          document.body.classList.add("present-mode");
+          stage.style.display = "";
+          gallery.style.display = "none";
+          births.style.display = "none";
+        } else {
+          gallery.style.display = "none";
+          births.style.display = "none";
+          stage.style.display = "";
+        }
+        // update pinned panel visibility (keeps only pinned items inside)
+        renderPinnedPanel();
+      }
+
+      $("gridBtn").addEventListener("click", () => {
+        mode = "grid";
+        applyMode();
+      });
+      $("museumBtn").addEventListener("click", () => {
+        mode = "museum";
+        applyMode();
+      });
+      $("birthdaysBtn").addEventListener("click", () => {
+        mode = "birthdays";
+        applyMode();
+      });
+      $("presentBtn").addEventListener("click", () => {
+        mode = "present";
+        applyMode();
+      });
+
+      $("searchBox").addEventListener("input", () => renderAll());
+      $("monthFilter").addEventListener("change", () => {
+        highlightMonthButton($("monthFilter").value);
+        renderAll();
+      });
+
+      $("pinnedToggleBtn").addEventListener("click", () => {
+        const p = $("pinnedColumn");
+        if (!p) return;
+        p.classList.toggle("hidden");
+      });
+      $("pinCollapseBtn").addEventListener("click", () => {
+        const p = $("pinnedColumn");
+        if (!p) return;
+        p.classList.toggle("hidden");
+      });
+      $("clearPins").addEventListener("click", () => setPinned([]));
+      $("exportPins").addEventListener("click", () => {
+        const pins = getPinned();
+        const rows = [["name", "start", "end"]];
+        for (const i of pins) {
+          if (EVENTS[i])
+            rows.push([
+              EVENTS[i].name,
+              EVENTS[i].start || "",
+              EVENTS[i].end || "",
+            ]);
+        }
+        const csv = rows
+          .map((r) =>
+            r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")
+          )
+          .join("\n");
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "pinned-events.csv";
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      /* close lightbox on background click */
+      $("lightbox").addEventListener("click", (e) => {
+        if (e.target === $("lightbox")) closeLightbox();
+      });
+
+      /* clicking outside pinned panel closes it (desktop) */
+      document.addEventListener("click", (ev) => {
+        const p = $("pinnedColumn");
+        if (!p) return;
+        if (p.classList.contains("hidden")) return;
+        if (window.innerWidth <= 900) return;
+        const target = ev.target;
+        if (!p.contains(target) && !$("pinnedToggleBtn").contains(target))
+          p.classList.add("hidden");
+      });
+
+      /* quick keyboard toggles */
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "p" && !e.metaKey && !e.ctrlKey) {
+          const p = $("pinnedColumn");
+          if (p) p.classList.toggle("hidden");
+        }
+        if (e.key === "m" && !e.metaKey && !e.ctrlKey) {
+          mode = "museum";
+          applyMode();
+        }
+        if (e.key === "g" && !e.metaKey && !e.ctrlKey) {
+          mode = "grid";
+          applyMode();
+        }
+        if (e.key === "b" && !e.metaKey && !e.ctrlKey) {
+          mode = "birthdays";
+          applyMode();
+        }
+      });
+
+      /* -------------------------
+   Init
+   ------------------------- */
+      async function init() {
+        // set hero src, sample accent, gen month buttons, render all
+        $("heroImg").src = HERO;
+        $("heroImg").crossOrigin = "anonymous";
+        generateMonthButtons();
+        await sampleAccent();
+        renderAll();
+        renderGallery();
+        renderBirthdays();
+        // run birthday popups for today (sequential)
+        runBirthdayPopups();
+
+        // ensure pinned toggle visibility if pins exist initially
+        if (getPinned().length > 0) {
+          $("pinnedToggleBtn").classList.remove("hidden");
+          $("pinnedColumn").classList.remove("hidden");
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", init);
+
+      /* -------------------------
+   Small utilities used above
+   ------------------------- */
+      function updateYearProgress() {
+        /* called previously in renderAll but re-def to avoid duplication */
+      }
+      function formatDateBadge(s, e) {
+        return formatDateBadge;
+      } // stub - actual used earlier
+      /* (formatDateBadge defined above as function; duplicate names avoided) */
     </script>
   </body>
 </html>
