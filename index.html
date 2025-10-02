@@ -1,18 +1,4 @@
 <!DOCTYPE html>
-<!--
-  Maxwell Events — single-file HTML
-  Features:
-  - Grid (events), Museum (gallery with square thumbnails), Birthdays (separate section), Present mode
-  - Right-side pinned panel (hidden when empty). Pins persist in localStorage.
-  - Hero image (desktop-cropped to top), sampled accent color, year progress
-  - Gallery "square cubicles" via aspect-ratio; month grouping remains
-  - Birthdays: ordered by next upcoming (closest first). On load, shows centered white popup(s)
-    with "Happy Birthday" and smooth confetti/fireworks for each birthday today (2s each).
-  - Countdown to next occurrence (always shows time until next birthday)
-  - Accessible lightbox for gallery images
-  - Touch + keyboard niceties, swipe-to-pin, reorder pinned chips, export/clear pins
-  - Many UX polish details requested
--->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -498,6 +484,12 @@
         margin: 18px auto;
         padding: 0 12px;
       }
+      .birth-controls {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 12px;
+      }
       .birth-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -547,6 +539,13 @@
         box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
         transform-origin: center;
         pointer-events: auto;
+        opacity: 0;
+        transform: scale(0.98);
+      }
+      .bd-popup.show {
+        opacity: 1;
+        transform: scale(1);
+        transition: transform 0.28s ease, opacity 0.28s ease;
       }
       .bd-popup h2 {
         font-size: 1.5rem;
@@ -811,6 +810,59 @@
             Shown by next upcoming
           </div>
         </div>
+
+        <div class="birth-controls">
+          <input
+            id="bdSearch"
+            type="search"
+            placeholder="Search birthdays (name)..."
+            aria-label="Search birthdays"
+            style="
+              min-width: 220px;
+              padding: 8px;
+              border-radius: 10px;
+              border: 1px solid rgba(255, 255, 255, 0.06);
+              background: rgba(255, 255, 255, 0.03);
+              color: #fff;
+            "
+          />
+          <select
+            id="bdMonthFilter"
+            aria-label="Filter birthdays by month"
+            style="
+              padding: 8px;
+              border-radius: 10px;
+              border: 1px solid rgba(255, 255, 255, 0.06);
+              background: rgba(255, 255, 255, 0.03);
+              color: #fff;
+            "
+          >
+            <option value="">All months</option>
+            <option value="01">Jan</option>
+            <option value="02">Feb</option>
+            <option value="03">Mar</option>
+            <option value="04">Apr</option>
+            <option value="05">May</option>
+            <option value="06">Jun</option>
+            <option value="07">Jul</option>
+            <option value="08">Aug</option>
+            <option value="09">Sep</option>
+            <option value="10">Oct</option>
+            <option value="11">Nov</option>
+            <option value="12">Dec</option>
+          </select>
+          <div
+            style="
+              margin-left: auto;
+              color: rgba(255, 255, 255, 0.85);
+              font-weight: 700;
+            "
+          >
+            Tip: press <code>g</code>/<code>m</code>/<code>b</code> to switch
+            views
+          </div>
+        </div>
+
         <div id="birthGrid" class="birth-grid" aria-live="polite"></div>
       </section>
 
@@ -841,7 +893,7 @@
       </div>
     </div>
 
-    <!-- birthday popup container (invisible until used) -->
+    <!-- birthdays popup wrapper -->
     <div
       id="bdPopupWrap"
       class="bd-popup-wrap"
@@ -851,12 +903,12 @@
 
     <script>
       /* -------------------------
-   Data
+   Data & constants
    ------------------------- */
       const HERO =
         "https://i0.wp.com/maxwellsda.org/wp-content/uploads/2025/04/VideoCover-1.jpeg?resize=767%2C500&ssl=1";
 
-      /* Full EVENTS (from your earlier list; ensure nothing missing) */
+      /* Events (Peanut Carnival added on Oct 5, 2025) */
       const EVENTS = [
         { name: "Summer Holiday", start: "2025-08-01", end: "2025-08-09" },
         {
@@ -873,6 +925,7 @@
         { name: "Camping Trip", start: "2025-09-21", end: "2025-09-23" },
         { name: "Online Parent-Teacher Conferences", start: "2025-09-30" },
         { name: "Midterm Break", start: "2025-10-09", end: "2025-10-20" },
+        { name: "Peanut Carnival", start: "2025-10-05" }, // newly added
         { name: "Music Sabbath", start: "2025-10-25" },
         {
           name: "Weekend of Spiritual Emphasis",
@@ -936,7 +989,6 @@
         { name: "GRADDDDD!!!!", start: "2026-06-05", end: "2026-06-07" },
       ];
 
-      /* MONTH COLORS */
       const MONTH_COLORS = {
         "01": "#e74c3c",
         "02": "#ff8a65",
@@ -978,7 +1030,7 @@
           month: "08",
           year: 2025,
         },
-        // extras
+        /* extras */
         { src: HERO, caption: "Maxwell — Banner", month: "08", year: 2025 },
         {
           src: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1600&q=80&auto=format&fit=crop",
@@ -1012,9 +1064,7 @@
         },
       ];
 
-      /* STUDENT BIRTHDAYS (full dataset you provided) — format: name — MM/DD/YYYY
-   Note: some entries in source had commas in names; user asked to remove comma after Arcella — included accordingly.
-*/
+      /* STUDENT BIRTHDAYS (as requested) */
       const BIRTHDAYS_RAW = [
         ["Clerick Blessing Duke", "01/05/2013"],
         ["Bonde Joseph", "01/09/2012"],
@@ -1026,7 +1076,6 @@
         ["Mbanza Gisa", "01/14/2009"],
         ["Kimori Trinah", "01/26/2008"],
         ["Mlacha Ishal", "01/27/2012"],
-
         ["Iganze Eva", "02/03/2010"],
         ["Mwarekwa Alvin", "02/04/2009"],
         ["Mwarekwa Calvin", "02/04/2009"],
@@ -1038,7 +1087,6 @@
         ["Karasi Jayda", "02/20/2012"],
         ["Kemoabe Ofile", "02/23/2023"],
         ["Sam-Nwaomah Umanu", "02/28/2009"],
-
         ["Fares Farena", "03/01/2012"],
         ["Kazoya Muhezagiro", "03/01/2013"],
         ["Mulama Ian", "03/03/2009"],
@@ -1051,7 +1099,6 @@
         ["Gwatiringa Shekainah", "03/27/2013"],
         ["Musi Meloy", "03/28/2008"],
         ["Mutangana Mariam", "03/30/2009"],
-
         ["Obse Gelila", "04/01/2007"],
         ["Gichana Bernice", "04/04/2008"],
         ["Mandela Teddy", "04/04/2012"],
@@ -1064,7 +1111,6 @@
         ["Shange Neserian", "04/28/2010"],
         ["Muhune Glodi", "04/29/2025"],
         ["Remir Nathan", "04/30/2013"],
-
         ["Galgao Eleon Ythan", "05/02/2019"],
         ["Oriko Breanna", "05/03/2009"],
         ["Ganza Keza", "05/05/2008"],
@@ -1075,7 +1121,6 @@
         ["Kedas Arnav", "05/26/2010"],
         ["Neza Shevaun", "05/29/2012"],
         ["Wasilwa Aneesa", "05/30/2011"],
-
         ["Githinji Abigail", "06/05/2009"],
         ["Lugembe Sallyrose louise", "06/06/2008"],
         ["Ombaba Enock", "06/06/2010"],
@@ -1093,7 +1138,6 @@
         ["Guvi Michael", "06/26/2009"],
         ["Silva Ana", "06/26/2007"],
         ["Jackson Edward-Ebenezer", "06/29/2012"],
-
         ["Onserio Angel", "07/03/2009"],
         ["Javaid Nathan", "07/04/2008"],
         ["Mugisha Ines", "07/07/2009"],
@@ -1104,7 +1148,6 @@
         ["Tarpeh Mearaf", "07/23/2009"],
         ["Alemayehu Paulos", "07/24/2010"],
         ["Gilliam Danson Hirwa", "07/25/2006"],
-
         ["Sivako Oleyo", "08/01/2013"],
         ["Ombaba Orel", "08/03/2012"],
         ["Hope Haeven Ajeneza", "08/12/2012"],
@@ -1119,8 +1162,7 @@
         ["Riziki Mycah", "08/25/2009"],
         ["Javaid Jayson", "08/27/2016"],
         ["Kamau Cungu", "08/29/2008"],
-
-        /* September (user previously emphasized these names) */
+        /* September (user emphasized) */
         ["Ochieng Adrian", "09/02/2011"],
         ["Wenyika Ethan", "09/04/2009"],
         ["Koome Kris", "09/06/2007"],
@@ -1130,14 +1172,10 @@
         ["Daniel Daniela", "09/17/2008"],
         ["Castroe Tendai", "09/20/2013"],
         ["Masasabi Olive", "09/24/2012"],
-        [
-          "Ineza Arcella",
-          "09/25/2011",
-        ] /* removed comma after Arcella per request */,
+        ["Ineza Arcella", "09/25/2011"],
         ["Lwanzo Salome", "09/25/2011"],
         ["Omonte Tito Jael", "09/25/2011"],
         ["Omonte Tito Julian", "09/25/2011"],
-
         ["Gadi Charissa", "10/03/2012"],
         ["Katongo Joshua", "10/03/2011"],
         ["Rampart Esolwazi", "10/03/2008"],
@@ -1154,7 +1192,6 @@
         ["Okiya Saha", "10/25/2011"],
         ["Mahamba Furaha", "10/26/2007"],
         ["Rumiti Neslie", "10/26/2007"],
-
         ["Omare Chantelle", "11/03/2009"],
         ["Nyabuga Maya", "11/05/2010"],
         ["Both Ruot", "11/16/2007"],
@@ -1168,7 +1205,6 @@
         ["Sheja Daniel", "11/27/2009"],
         ["Ineza Andrea", "11/29/2007"],
         ["Mugisha Kamugisha", "11/30/2008"],
-
         ["Mwasumbi Lupakisyo", "12/03/2007"],
         ["Simankane Taelo", "12/05/2010"],
         ["Igiraneza Betha-Claudia", "12/06/2010"],
@@ -1188,7 +1224,6 @@
       const $ = (id) => document.getElementById(id);
       const pad = (n) => (n < 10 ? "0" + n : String(n));
       const parseDate = (s) => {
-        // input forms "YYYY-MM-DD" or "MM/DD/YYYY"
         if (/\d{4}-\d{2}-\d{2}/.test(s)) return new Date(s + "T00:00:00");
         const [m, d, y] = s.split("/").map(Number);
         return new Date(y, m - 1, d, 0, 0, 0, 0);
@@ -1204,30 +1239,69 @@
       };
       const formatISO = (d) =>
         `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-      const daysBetween = (a, b) => Math.ceil((b - a) / 86400000);
+      const shortMonth = (d) => d.toLocaleString("en", { month: "short" });
 
-      /* compute next occurrence of month/day relative to today */
+      function formatDateBadge(start, end) {
+        const s = parseStart(start);
+        const e = end ? parseStart(end) : null;
+        if (!e) return `${shortMonth(s)} ${s.getDate()}`;
+        if (
+          s.getFullYear() === e.getFullYear() &&
+          s.getMonth() === e.getMonth()
+        )
+          return `${shortMonth(s)} ${s.getDate()}–${e.getDate()}`;
+        return `${shortMonth(s)} ${s.getDate()} – ${shortMonth(
+          e
+        )} ${e.getDate()}`;
+      }
+
+      function slugify(name, idx) {
+        return (
+          String(name)
+            .toLowerCase()
+            .replace(/[’'"]/g, "")
+            .replace(/[:\/\\(),.!?#\u2013\u2014]/g, "")
+            .replace(/\s+/g, "-")
+            .replace(/[^a-z0-9\-]/g, "") +
+          "-" +
+          idx
+        );
+      }
+
+      function eventIcon(name) {
+        const n = name.toLowerCase();
+        if (/exam|final|midterm|test|act|map/.test(n)) return "📝";
+        if (
+          /break|holiday|christmas|spring|long weekend|summer|vacation/.test(n)
+        )
+          return "🎉";
+        if (/trip|camp|mt|mountain|mission/.test(n)) return "🏕️";
+        if (/concert|chorale|music/.test(n)) return "🎵";
+        if (/sports|track|field/.test(n)) return "🏅";
+        return "📅";
+      }
+
+      /* next occurrence helper for birthdays */
       function nextOccurrence(month, day, from = new Date()) {
         const year = from.getFullYear();
         let candidate = new Date(year, month - 1, day, 0, 0, 0, 0);
-        if (
-          candidate <
-          new Date(
-            from.getFullYear(),
-            from.getMonth(),
-            from.getDate(),
-            0,
-            0,
-            0,
-            0
-          )
-        ) {
+        // compare date-only
+        const todayDate = new Date(
+          from.getFullYear(),
+          from.getMonth(),
+          from.getDate(),
+          0,
+          0,
+          0,
+          0
+        );
+        if (candidate < todayDate)
           candidate = new Date(year + 1, month - 1, day, 0, 0, 0, 0);
-        }
         return candidate;
       }
-
-      /* format countdown */
+      function daysBetween(a, b) {
+        return Math.ceil((b - a) / 86400000);
+      }
       function formatUntil(date) {
         const now = new Date();
         let diff = Math.max(0, date - now);
@@ -1240,14 +1314,12 @@
       }
 
       /* -------------------------
-   State & persistence
+   State & storage
    ------------------------- */
       let items = [],
         tickHandle = null,
         mode = "grid";
-      const STORAGE_KEY = "maxwell_positions_v3";
       const PINNED_KEY = "maxwell_pinned_v3";
-      const PIN_LIMIT = 12;
 
       function getPinned() {
         try {
@@ -1274,7 +1346,7 @@
       }
 
       /* -------------------------
-   Event rendering (grid)
+   Render events grid
    ------------------------- */
       function sortEvents() {
         EVENTS.sort((a, b) => parseStart(a.start) - parseStart(b.start));
@@ -1287,51 +1359,29 @@
           ) || null
         );
       }
+
+      function updateYearProgress() {
+        if (EVENTS.length === 0) return;
+        const start = parseStart(EVENTS[0].start);
+        const last = EVENTS[EVENTS.length - 1];
+        const end = parseEnd(last.end, parseStart(last.start));
+        const now = new Date();
+        const total = end.getTime() - start.getTime();
+        const passed = Math.max(
+          0,
+          Math.min(total, now.getTime() - start.getTime())
+        );
+        const pct = Math.round((passed / total) * 100);
+        $("yearProgressBar").style.width = pct + "%";
+      }
+
       function renderNextUp() {
         const next = findNext();
-        const banner = $("nextUp");
-        if (!banner) return;
-        if (!next) {
-          banner.style.display = "none";
-          return;
-        }
-        banner.style.display = "flex";
-        $("nextUpName").textContent = next.name;
-        $("nextUpDetail").textContent = next.end
-          ? `From ${formatISO(parseStart(next.start))} → ${formatISO(
-              parseStart(next.end)
-            )}`
-          : `On ${formatISO(parseStart(next.start))}`;
-      }
-
-      function eventIcon(name) {
-        const n = name.toLowerCase();
-        if (/exam|final|midterm|test|act|map/.test(n)) return "📝";
-        if (
-          /break|holiday|christmas|spring|long weekend|summer|vacation/.test(n)
-        )
-          return "🎉";
-        if (/trip|camp|mt|mountain|mission/.test(n)) return "🏕️";
-        if (/concert|chorale|music/.test(n)) return "🎵";
-        if (/sports|track|field/.test(n)) return "🏅";
-        return "📅";
-      }
-
-      function slugify(name, idx) {
-        return (
-          String(name)
-            .toLowerCase()
-            .replace(/[’'"]/g, "")
-            .replace(/[:\/\\(),.!?#\u2013\u2014]/g, "")
-            .replace(/\s+/g, "-")
-            .replace(/[^a-z0-9\-]/g, "") +
-          "-" +
-          idx
-        );
+        // we don't have "nextUp" section in this build (kept minimal). If you want it, can re-add.
+        return next;
       }
 
       function renderAll() {
-        // clear previous tick
         if (tickHandle) {
           clearInterval(tickHandle);
           tickHandle = null;
@@ -1341,7 +1391,6 @@
         if (!grid) return;
         grid.innerHTML = "";
         sortEvents();
-        renderNextUp();
         const q = ($("searchBox").value || "").toLowerCase();
         const monthVal = $("monthFilter").value || "";
 
@@ -1402,7 +1451,7 @@
     `;
           grid.appendChild(card);
 
-          // preload fill background (use HERO for consistency)
+          // preload fill background
           (function (iid, url) {
             const im = new Image();
             im.crossOrigin = "anonymous";
@@ -1423,12 +1472,10 @@
 
           items.push({ id, name: ev.name, start, end, el: card, idx });
 
-          // pin button wiring
+          // pin
           const pb = card.querySelector(".pin-btn");
           if (pb) {
-            function refresh() {
-              pb.classList.toggle("active", isPinned(idx));
-            }
+            const refresh = () => pb.classList.toggle("active", isPinned(idx));
             pb.addEventListener("click", (e) => {
               e.stopPropagation();
               togglePin(idx);
@@ -1437,17 +1484,16 @@
             refresh();
           }
 
-          // keyboard
           card.tabIndex = 0;
           card.addEventListener("keydown", (e) => {
             if (e.key === "Enter") card.click();
           });
 
-          // swipe-to-pin for touch
+          // swipe-to-pin
           addSwipeToPin(card, idx);
         });
 
-        // tick updates
+        // tick
         tickHandle = setInterval(() => {
           const now = new Date();
           items.forEach((i) => updateOne(i, now));
@@ -1460,19 +1506,6 @@
         if (mode === "birthdays") renderBirthdays();
         updateYearProgress();
         applyMode();
-      }
-
-      function formatDateBadge(start, end) {
-        const s = parseStart(start);
-        const e = end ? parseStart(end) : null;
-        const shortMon = (d) => d.toLocaleString("en", { month: "short" });
-        if (!e) return `${shortMon(s)} ${s.getDate()}`;
-        if (
-          s.getFullYear() === e.getFullYear() &&
-          s.getMonth() === e.getMonth()
-        )
-          return `${shortMon(s)} ${s.getDate()}–${e.getDate()}`;
-        return `${shortMon(s)} ${s.getDate()} – ${shortMon(e)} ${e.getDate()}`;
       }
 
       function updateOne(item, now) {
@@ -1518,15 +1551,8 @@
         container.innerHTML = "";
         if (header) container.appendChild(header);
 
-        const now = new Date();
         const pinnedIndices = getPinned();
-        const mapped = EVENTS.map((ev, i) => ({
-          ev,
-          i,
-          start: parseStart(ev.start),
-          end: parseEnd(ev.end, parseStart(ev.start)),
-        }));
-        // if no pins hide panel & toggle
+
         if (pinnedIndices.length === 0) {
           container.classList.add("hidden");
           $("pinnedToggleBtn").classList.add("hidden");
@@ -1537,11 +1563,11 @@
         }
 
         pinnedIndices.forEach((idx) => {
-          const o = EVENTS[idx];
-          if (!o) return;
-          const start = parseStart(o.start);
-          const end = parseEnd(o.end, start);
-          const id = "pin_" + slugify(o.name + "-" + idx, idx);
+          const ev = EVENTS[idx];
+          if (!ev) return;
+          const start = parseStart(ev.start);
+          const end = parseEnd(ev.end, start);
+          const id = "pin_" + slugify(ev.name + "-" + idx, idx);
           const chip = document.createElement("div");
           chip.className = "pinned-chip";
           chip.id = id;
@@ -1549,10 +1575,12 @@
           chip.innerHTML = `
       <div class="pinned-row-top">
         <div style="min-width:0">
-          <div class="pinned-title">${o.name}</div>
-          <div class="pinned-sub">${
-            o.end
-              ? formatISO(start) + " → " + formatISO(parseStart(o.end))
+          <div class="pinned-title" style="font-weight:800;color:#072238;font-size:14px">${
+            ev.name
+          }</div>
+          <div class="pinned-sub" style="font-size:12px;color:#2a3b57">${
+            ev.end
+              ? formatISO(start) + " → " + formatISO(parseStart(ev.end))
               : formatISO(start)
           }</div>
         </div>
@@ -1560,7 +1588,6 @@
       </div>
       <div class="pinned-progress"><i style="width:0%"></i></div>
     `;
-          // click scroll to item
           chip.addEventListener("click", () => {
             const idx = Number(chip.dataset.eventIndex);
             const target = items.find((it) => it.idx === idx);
@@ -1576,6 +1603,7 @@
           });
           container.appendChild(chip);
         });
+
         updatePinnedCounts(new Date());
       }
 
@@ -1624,7 +1652,7 @@
       }
 
       /* -------------------------
-   Swipe to pin (mobile)
+   Touch swipe-to-pin
    ------------------------- */
       function addSwipeToPin(card, idx) {
         let pointerDown = false,
@@ -1675,14 +1703,13 @@
       }
 
       /* -------------------------
-   Gallery (museum)
+   Gallery
    ------------------------- */
       function renderGallery() {
         const wrap = $("gallerySection");
         if (!wrap) return;
         wrap.innerHTML = "";
         const monthFilter = $("monthFilter").value || "";
-        // group by year-month
         const months = new Map();
         MUSEUM_PHOTOS.forEach((photo) => {
           const key = `${photo.year}-${photo.month}`;
@@ -1776,25 +1803,26 @@
       });
 
       /* -------------------------
-   Birthdays rendering & popup
+   Birthdays: build, render & popups
    ------------------------- */
       function buildBirthdayList() {
         return BIRTHDAYS_RAW.map(([name, mmddyyyy]) => {
-          // mm/dd/yyyy -> extract month/day/year
           const [mm, dd, yyyy] = mmddyyyy.split("/").map(Number);
-          const dob = new Date(yyyy, mm - 1, dd, 0, 0, 0, 0);
-          return { name, dob, month: pad(mm), day: pad(dd), year: yyyy };
+          return {
+            name,
+            dob: new Date(yyyy, mm - 1, dd, 0, 0, 0, 0),
+            month: pad(mm),
+            day: pad(dd),
+            year: yyyy,
+          };
         });
       }
-
       const BIRTHDAYS = buildBirthdayList();
 
       function daysUntilNext(birth) {
         const now = new Date();
-        const mm = Number(birth.month),
-          dd = Number(birth.day);
-        const nxt = nextOccurrence(mm, dd, now);
-        const diff = Math.ceil(
+        const nxt = nextOccurrence(Number(birth.month), Number(birth.day), now);
+        return Math.ceil(
           (nxt -
             new Date(
               now.getFullYear(),
@@ -1807,28 +1835,36 @@
             )) /
             86400000
         );
-        return diff;
       }
       function ageAtNext(birth) {
         const now = new Date();
-        const mm = Number(birth.month),
-          dd = Number(birth.day);
-        const nxt = nextOccurrence(mm, dd, now);
+        const nxt = nextOccurrence(Number(birth.month), Number(birth.day), now);
         return nxt.getFullYear() - birth.year;
       }
 
-      /* show birthdays section sorted by closest upcoming */
+      /* Render birthdays (filterable by search + month). Sorted by closest */
       function renderBirthdays() {
         const wrap = $("birthGrid");
         if (!wrap) return;
+        const searchVal = ($("bdSearch").value || "").trim().toLowerCase();
+        const monthFilter = $("bdMonthFilter").value || "";
         wrap.innerHTML = "";
-        // compute next occurrence for each and sort by days until next
         const enriched = BIRTHDAYS.map((b) => ({
           ...b,
           daysUntil: daysUntilNext(b),
-          ageNext: ageAtNext(b),
-        })).sort((a, b) => a.daysUntil - b.daysUntil);
-        enriched.forEach((b) => {
+          nextAge: ageAtNext(b),
+        }));
+        const filtered = enriched
+          .filter((b) => {
+            if (searchVal && !b.name.toLowerCase().includes(searchVal))
+              return false;
+            if (monthFilter && b.month !== monthFilter) return false;
+            return true;
+          })
+          .sort(
+            (a, b) => a.daysUntil - b.daysUntil || a.name.localeCompare(b.name)
+          );
+        filtered.forEach((b) => {
           const card = document.createElement("div");
           card.className = "bd-card";
           const name = document.createElement("div");
@@ -1836,7 +1872,7 @@
           name.textContent = b.name;
           const dob = document.createElement("div");
           dob.className = "bd-date";
-          dob.textContent = `${b.month}/${b.day}/${b.year} • Turning ${b.ageNext}`;
+          dob.textContent = `${b.month}/${b.day}/${b.year} • Turning ${b.nextAge}`;
           const count = document.createElement("div");
           count.className = "bd-count";
           if (b.daysUntil === 0) count.textContent = `Today! 🎉`;
@@ -1848,16 +1884,11 @@
         });
       }
 
-      /* Birthday popup sequence on page load (for any birthdays that are today)
-   - Shows a centered white box with name + "Happy Birthday"
-   - 2 seconds each (customizable)
-   - confetti/fireworks canvas animation during each popup
-*/
+      /* birthday popups for today's birthdays (sequential) */
       async function runBirthdayPopups() {
         const today = new Date();
         const mm = pad(today.getMonth() + 1),
           dd = pad(today.getDate());
-        // find all birthdays matching today
         const todays = BIRTHDAYS.filter((b) => b.month === mm && b.day === dd);
         if (!todays.length) return;
         const wrap = $("bdPopupWrap");
@@ -1872,11 +1903,10 @@
         }
         resize();
         window.addEventListener("resize", resize);
-        // simple confetti/fireworks system
+
+        // simple particle bursts
         function playParticlesFor(seconds) {
           const particles = [];
-          const now = Date.now();
-          let running = true;
           const colors = [
             "#ffb84d",
             "#ffd24a",
@@ -1885,9 +1915,10 @@
             "#9b59b6",
             "#6ab04c",
           ];
+          const now = Date.now();
           function spawnBurst() {
             const cx = innerWidth / 2;
-            const cy = innerHeight / 2 - 20;
+            const cy = innerHeight / 2 - 40;
             const count = 36;
             for (let i = 0; i < count; i++) {
               const angle =
@@ -1931,34 +1962,29 @@
               if (Math.random() < 0.05) spawnBurst();
               raf = requestAnimationFrame(step);
             } else {
-              running = false;
               cancelAnimationFrame(raf);
               ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
           }
           step();
-          return new Promise((r) => setTimeout(r, seconds * 1000 + 120));
+          return new Promise((r) => setTimeout(r, seconds * 1000 + 80));
         }
 
         for (const person of todays) {
-          // create popup box (centered)
           const box = document.createElement("div");
-          box.className = "bd-popup shake";
+          box.className = "bd-popup show shake";
           box.innerHTML = `<h2>Happy Birthday</h2><p style="font-size:1.2rem;font-weight:900">${person.name}</p>`;
           wrap.appendChild(box);
-          // animate scale & confetti
-          box.style.transform = "scale(.95)";
-          setTimeout(() => (box.style.transform = "scale(1)"), 50);
-          await playParticlesFor(2.0); // 2 seconds per user
+          // show for 2 seconds with particles
+          await playParticlesFor(2.0);
           box.remove();
         }
         wrap.style.display = "none";
-        wrap.setAttribute("aria-hidden", "true");
         ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
 
       /* -------------------------
-   Month buttons generation & utilities
+   Month buttons
    ------------------------- */
       function generateMonthButtons() {
         const container = $("monthButtons");
@@ -1998,9 +2024,8 @@
             container.appendChild(btn);
           });
 
-        // also highlight current month button
-        const curMonth = pad(new Date().getMonth() + 1);
-        highlightMonthButton(curMonth, true);
+        // set current month marker
+        highlightMonthButton(pad(new Date().getMonth() + 1), true);
       }
       function highlightMonthButton(month, markCurrent = false) {
         const btns = Array.from(document.querySelectorAll(".month-btn"));
@@ -2012,25 +2037,7 @@
       }
 
       /* -------------------------
-   Year progress
-   ------------------------- */
-      function updateYearProgress() {
-        if (EVENTS.length === 0) return;
-        const start = parseStart(EVENTS[0].start);
-        const last = EVENTS[EVENTS.length - 1];
-        const end = parseEnd(last.end, parseStart(last.start));
-        const now = new Date();
-        const total = end.getTime() - start.getTime();
-        const passed = Math.max(
-          0,
-          Math.min(total, now.getTime() - start.getTime())
-        );
-        const pct = Math.round((passed / total) * 100);
-        $("yearProgressBar").style.width = pct + "%";
-      }
-
-      /* -------------------------
-   Color sampling for accent (attempt)
+   Accent sampling from hero
    ------------------------- */
       async function sampleAccent() {
         const img = $("heroImg");
@@ -2074,7 +2081,11 @@
             accentText
           );
         } catch (e) {
-          const next = findNext();
+          // fallback to next event month color
+          const next = EVENTS.find(
+            (ev) =>
+              parseEnd(ev.end, parseStart(ev.start)).getTime() >= Date.now()
+          );
           if (next) {
             const m = pad(parseStart(next.start).getMonth() + 1);
             const col = MONTH_COLORS[m] || "#ffd24a";
@@ -2088,7 +2099,7 @@
       }
 
       /* -------------------------
-   UI wiring & modes
+   UI wiring & mode switching
    ------------------------- */
       function applyMode() {
         const gallery = $("gallerySection"),
@@ -2102,31 +2113,29 @@
           gallery.style.display = "none";
           births.style.display = "none";
           stage.style.display = "";
+          document.body.classList.remove("present-mode");
         } else if (mode === "museum") {
           $("museumBtn").classList.add("active");
           gallery.style.display = "";
           births.style.display = "none";
           stage.style.display = "none";
           renderGallery();
+          document.body.classList.remove("present-mode");
         } else if (mode === "birthdays") {
           $("birthdaysBtn").classList.add("active");
           gallery.style.display = "none";
           births.style.display = "";
           stage.style.display = "none";
           renderBirthdays();
+          document.body.classList.remove("present-mode");
         } else if (mode === "present") {
           $("presentBtn").classList.add("active");
           document.documentElement.requestFullscreen?.();
           document.body.classList.add("present-mode");
-          stage.style.display = "";
-          gallery.style.display = "none";
-          births.style.display = "none";
-        } else {
           gallery.style.display = "none";
           births.style.display = "none";
           stage.style.display = "";
         }
-        // update pinned panel visibility (keeps only pinned items inside)
         renderPinnedPanel();
       }
 
@@ -2152,6 +2161,9 @@
         highlightMonthButton($("monthFilter").value);
         renderAll();
       });
+
+      $("bdSearch").addEventListener("input", () => renderBirthdays());
+      $("bdMonthFilter").addEventListener("change", () => renderBirthdays());
 
       $("pinnedToggleBtn").addEventListener("click", () => {
         const p = $("pinnedColumn");
@@ -2189,22 +2201,6 @@
         URL.revokeObjectURL(url);
       });
 
-      /* close lightbox on background click */
-      $("lightbox").addEventListener("click", (e) => {
-        if (e.target === $("lightbox")) closeLightbox();
-      });
-
-      /* clicking outside pinned panel closes it (desktop) */
-      document.addEventListener("click", (ev) => {
-        const p = $("pinnedColumn");
-        if (!p) return;
-        if (p.classList.contains("hidden")) return;
-        if (window.innerWidth <= 900) return;
-        const target = ev.target;
-        if (!p.contains(target) && !$("pinnedToggleBtn").contains(target))
-          p.classList.add("hidden");
-      });
-
       /* quick keyboard toggles */
       document.addEventListener("keydown", (e) => {
         if (e.key === "p" && !e.metaKey && !e.ctrlKey) {
@@ -2225,11 +2221,26 @@
         }
       });
 
+      /* close lightbox on background click */
+      $("lightbox").addEventListener("click", (e) => {
+        if (e.target === $("lightbox")) closeLightbox();
+      });
+
+      /* clicking outside pinned panel closes it (desktop) */
+      document.addEventListener("click", (ev) => {
+        const p = $("pinnedColumn");
+        if (!p) return;
+        if (p.classList.contains("hidden")) return;
+        if (window.innerWidth <= 900) return;
+        const target = ev.target;
+        if (!p.contains(target) && !$("pinnedToggleBtn").contains(target))
+          p.classList.add("hidden");
+      });
+
       /* -------------------------
    Init
    ------------------------- */
       async function init() {
-        // set hero src, sample accent, gen month buttons, render all
         $("heroImg").src = HERO;
         $("heroImg").crossOrigin = "anonymous";
         generateMonthButtons();
@@ -2237,28 +2248,14 @@
         renderAll();
         renderGallery();
         renderBirthdays();
-        // run birthday popups for today (sequential)
         runBirthdayPopups();
-
-        // ensure pinned toggle visibility if pins exist initially
+        // show pinned toggle only if pins exist
         if (getPinned().length > 0) {
           $("pinnedToggleBtn").classList.remove("hidden");
           $("pinnedColumn").classList.remove("hidden");
         }
       }
-
       document.addEventListener("DOMContentLoaded", init);
-
-      /* -------------------------
-   Small utilities used above
-   ------------------------- */
-      function updateYearProgress() {
-        /* called previously in renderAll but re-def to avoid duplication */
-      }
-      function formatDateBadge(s, e) {
-        return formatDateBadge;
-      } // stub - actual used earlier
-      /* (formatDateBadge defined above as function; duplicate names avoided) */
     </script>
   </body>
 </html>
